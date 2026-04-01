@@ -19,20 +19,25 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
-  title: "Samuel Stanley | Full Stack Developer in Lagos, Nigeria",
+  title: "Samuel Stanley | Full Stack Developer — Next.js, Node.js, React",
   description:
-    "Samuel Stanley is an expert Full Stack Developer based in Lagos, Nigeria. Specializing in Next.js, Node.js, and scaling high-performance software. Available for engineering roles and bespoke freelance projects globally.",
+    "Samuel Stanley is a world-class Full Stack Developer specialising in Next.js, NestJS, Node.js, PostgreSQL, and scalable SaaS architecture. Available globally for freelance projects, remote roles, and hybrid engagements.",
   keywords: [
     "Samuel Stanley",
-    "Full Stack Developer Lagos",
-    "Software Engineer Nigeria",
-    "Next.js Developer Lagos",
-    "React Developer Nigeria",
-    "Freelance Web Developer Lagos",
-    "Node.js Expert Nigeria",
-    "Samuel Stanley Portfolio",
-    "Nigerian Software Developer",
-    "Senior Full Stack Engineer Lagos"
+    "Full Stack Developer",
+    "Next.js Developer",
+    "React Developer",
+    "Node.js Developer",
+    "NestJS Developer",
+    "SaaS Developer",
+    "Freelance Full Stack Developer",
+    "Remote Software Engineer",
+    "Senior Full Stack Engineer",
+    "PostgreSQL Developer",
+    "TypeScript Developer",
+    "Software Engineer for hire",
+    "Full Stack Developer available for hire",
+    "Samuel Stanley developer",
   ],
   authors: [{ name: "Samuel Stanley" }],
   creator: "Samuel Stanley",
@@ -43,8 +48,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "Samuel Stanley | Full Stack Developer - Lagos, Nigeria",
-    description: "Expert software engineer building high-performance web and mobile applications with Next.js, NestJS, and Node.js. Based in Lagos.",
+    title: "Samuel Stanley | Full Stack Developer — Next.js, Node.js, React",
+    description: "World-class full-stack engineer. Building scalable SaaS, e-commerce platforms, and production-grade APIs. Available for remote & freelance work globally.",
     type: "website",
     locale: "en_NG",
     url: "https://samuelstanley.com", // Assuming domain
@@ -61,7 +66,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Samuel Stanley | Full Stack Developer",
-    description: "Architecting robust systems and stunning interfaces in Lagos, Nigeria.",
+    description: "Building scalable SaaS, stunning interfaces, and production-grade APIs. Available globally for freelance and remote roles.",
     creator: "@samuelstanley", // Assuming handle
   },
   robots: {
@@ -94,7 +99,7 @@ export default function RootLayout({
       "addressLocality": "Lagos",
       "addressCountry": "Nigeria"
     },
-    "description": "Samuel Stanley is a professional Full Stack Developer from Lagos, Nigeria, specializing in modern web architecture and UI/UX design.",
+    "description": "Samuel Stanley is a professional Full Stack Developer specialising in Next.js, NestJS, Node.js, and SaaS architecture. Available globally for remote, freelance, and hybrid engineering roles.",
     "sameAs": [
       "https://www.linkedin.com/in/samuel-stanley-345174234/",
       "https://www.instagram.com/samuel.g.stanley"
