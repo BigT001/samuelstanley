@@ -111,10 +111,14 @@ export function ProjectsSection() {
               ))}
             </div>
 
-            {/* Links */}
-            <div style={{ display: "flex", gap: "0.75rem", paddingTop: "0.25rem", borderTop: "1px solid rgba(136,146,176,0.1)", minHeight: "30px" }}>
-              {/* Links */}
-              {p.link && p.link !== "#" && (
+            <div style={{ display: "flex", gap: "0.75rem", paddingTop: "0.25rem", borderTop: "1px solid rgba(136,146,176,0.1)", minHeight: "30px", alignItems: "center" }}>
+              {/* Live Demo — hidden for opnmrt, show launching soon instead */}
+              {p.slug === "opnmrt" ? (
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#facc15", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#facc15", display: "inline-block", boxShadow: "0 0 6px #facc15", animation: "status-pulse 2s infinite" }} />
+                  Launching Soon
+                </span>
+              ) : p.link && p.link !== "#" ? (
                 <a
                   href={p.link}
                   className="coral-link"
@@ -124,7 +128,7 @@ export function ProjectsSection() {
                 >
                   ↗ Live Demo
                 </a>
-              )}
+              ) : null}
               
               {/* Re-enabled Case Study for headline projects */}
               {p.slug && ["OPNMRT", "EMPI Costumes", "Study Express UK"].includes(p.title) && (

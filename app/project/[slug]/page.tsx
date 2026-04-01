@@ -100,14 +100,14 @@ export default function ProjectCaseStudy({
         />
       </div>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 md:px-10 md:py-6 flex justify-between items-center bg-surface/20 backdrop-blur-xl border-b border-border/10">
+      {/* Navigation - no border, no header feel */}
+      <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 md:px-10 md:py-6 flex justify-between items-center">
         <Link
           href="/#projects"
-          className="group relative px-6 py-3 rounded-full border border-border/30 bg-surface/30 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 hover:text-accent hover:border-accent/50 shadow-lg hover:shadow-accent/20 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+          className="group relative px-6 py-3 rounded-full bg-surface/30 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 hover:text-accent shadow-lg hover:shadow-accent/20 transition-all duration-300 flex items-center gap-3 overflow-hidden"
         >
           <span className="relative z-10 transition-transform duration-300 group-hover:-translate-x-1">←</span> 
-          <span className="relative z-10">Back to Hub</span>
+          <span className="relative z-10">Back</span>
           <div className="absolute inset-0 bg-accent/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         </Link>
       </nav>
@@ -161,9 +161,14 @@ export default function ProjectCaseStudy({
 
             <div className="relative z-10">
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/50 mb-3">
-                Live Link
+                {project.slug === "opnmrt" ? "Launch Status" : "Live Link"}
               </h3>
-              {project.link !== "#" ? (
+              {project.slug === "opnmrt" ? (
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
+                  <p className="font-bold tracking-wide text-lg text-yellow-400">Launching Soon</p>
+                </div>
+              ) : project.link !== "#" ? (
                 <a
                   href={project.link}
                   target="_blank"
@@ -199,9 +204,27 @@ export default function ProjectCaseStudy({
             {/* Header */}
             <header className="reveal reveal-up relative">
               <div className="absolute -left-12 top-6 w-32 h-32 bg-accent/30 blur-[100px] rounded-full z-0 pointer-events-none" />
-              <h1 className="relative z-10 text-5xl md:text-6xl lg:text-7xl font-black mb-6 lg:mb-8 tracking-tighter leading-[1.05] drop-shadow-2xl max-w-full break-words">
+              <h1 className="relative z-10 text-5xl md:text-6xl lg:text-7xl font-black mb-4 lg:mb-6 tracking-tighter leading-[1.05] drop-shadow-2xl max-w-full break-words">
                 {project.title}
               </h1>
+              {/* Mobile-only: site link or Launching Soon under the title */}
+              <div className="lg:hidden mb-4">
+                {project.slug === "opnmrt" ? (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
+                    <span className="text-sm font-bold text-yellow-400 tracking-wide">Launching Soon</span>
+                  </div>
+                ) : project.link && project.link !== "#" ? (
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-accent text-sm font-bold tracking-wide hover:underline"
+                  >
+                    ↗ Visit Site
+                  </a>
+                ) : null}
+              </div>
               <div className="w-24 h-1.5 bg-gradient-to-r from-accent to-transparent mb-8 rounded-full" />
               <p className="relative z-10 text-xl md:text-2xl text-primary/70 leading-relaxed font-serif italic">
                 {project.desc}
