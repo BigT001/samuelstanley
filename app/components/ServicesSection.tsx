@@ -56,7 +56,7 @@ export function TechStackSection() {
   return (
     <section
       id="stack"
-      className="reveal reveal-right w-full"
+      className="reveal reveal-up w-full"
       style={{ paddingBottom: "4rem", overflow: "hidden" }}
     >
       <div className="max-w-6xl mx-auto px-4 md:px-8">

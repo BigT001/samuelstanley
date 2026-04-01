@@ -126,7 +126,16 @@ export function ProjectsSection() {
                 </a>
               )}
               
-              {/* Case Study hidden per request */}
+              {/* Re-enabled Case Study for headline projects */}
+              {p.slug && ["OPNMRT", "EMPI Costumes", "Study Express UK"].includes(p.title) && (
+                <Link
+                  href={`/project/${p.slug}`}
+                  className="coral-link"
+                  style={{ fontSize: "0.82rem", marginRight: "1rem" }}
+                >
+                  ↗ Case Study
+                </Link>
+              )}
               {p.repo && p.repo !== "#" && (
                 <a
                   href={p.repo}

@@ -6,14 +6,22 @@ export function HeroSection() {
       id="hero"
       className="flex flex-col items-center justify-center text-center pt-16 pb-6 px-4 w-full max-w-4xl mx-auto"
     >
+      {/* Status Badge */}
+      <div className="reveal reveal-up reveal-delay-1" style={{ marginBottom: "1.5rem" }}>
+        <div className="status-badge shadow-sm shadow-emerald-500/10">
+          <div className="pulse-dot" />
+          <span>Available for New Projects</span>
+        </div>
+      </div>
+
       {/* Profile Photo */}
-      <div className="reveal reveal-up" style={{ marginBottom: "2rem" }}>
+      <div className="reveal reveal-up reveal-delay-2" style={{ marginBottom: "2rem" }}>
         <ProfilePhoto />
       </div>
 
       {/* Name */}
       <h1
-        className="reveal reveal-up reveal-delay-2"
+        className="reveal reveal-up reveal-delay-3"
         style={{
           fontSize: "clamp(2.4rem, 6.5vw, 4.5rem)",
           fontWeight: 800,
@@ -33,7 +41,7 @@ export function HeroSection() {
 
       {/* Tagline */}
       <p
-        className="reveal reveal-up reveal-delay-3"
+        className="reveal reveal-up reveal-delay-4"
         style={{
           fontSize: "clamp(0.65rem, 1.8vw, 0.8rem)",
           fontWeight: 800,
@@ -48,7 +56,7 @@ export function HeroSection() {
 
       {/* Description */}
       <p
-        className="reveal reveal-up reveal-delay-4"
+        className="reveal reveal-up reveal-delay-5"
         style={{
           fontSize: "clamp(0.9rem, 2vw, 1.05rem)",
           color: "var(--text-secondary)",
@@ -63,7 +71,7 @@ export function HeroSection() {
       </p>
 
       {/* NEW badge */}
-      <div className="reveal reveal-up reveal-delay-5">
+      <div className="reveal reveal-up reveal-delay-6">
         <button className="new-badge" aria-label="Latest announcement">
           <span className="badge-tag">New</span>
           <span>Samuel Stanley is open for new projects in 2026</span>
