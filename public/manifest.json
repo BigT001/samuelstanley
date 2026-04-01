@@ -1,0 +1,16 @@
+{
+  "name": "Samuel Stanley | Full Stack Developer",
+  "short_name": "Samuel Stanley",
+  "description": "Samuel Stanley is a professional Full Stack Developer based in Lagos, Nigeria.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050810",
+  "theme_color": "#050810",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

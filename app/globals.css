@@ -435,13 +435,52 @@ body {
   transition: color 0.3s ease;
 }
 
-.theme-pill.dark .pill-moon {
-  color: #fff;
-}
-
 .theme-pill.light .pill-sun {
   color: #fff;
 }
+
+.theme-pill-static {
+  width: 72px;
+  height: 36px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+
+.theme-pill-static .pill-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 26px;
+  height: 26px;
+  background: var(--coral);
+  border-radius: 50%;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 2px 10px rgba(255, 77, 77, 0.3);
+}
+
+.theme-pill-static.light .pill-thumb {
+  transform: translateX(36px);
+}
+
+.theme-pill-static svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-secondary);
+  z-index: 101;
+  transition: color 0.3s ease;
+}
+
+.theme-pill-static.dark .pill-moon { color: #fff; }
+.theme-pill-static.light .pill-sun { color: #fff; }
 
 .theme-pill.light {
   background: #ffffff;
@@ -712,21 +751,59 @@ body {
   .terminal-bar {
     padding: 0.5rem 0.75rem !important;
   }
+  .theme-pill {
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 64px !important;
+    height: 32px !important;
+  }
+  .theme-pill-static {
+    width: 60px !important;
+    height: 30px !important;
+  }
+  .theme-pill-static .pill-thumb {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .theme-pill-static.light .pill-thumb {
+    transform: translateX(30px) !important;
+  }
+  .pill-thumb {
+    width: 22px !important;
+    height: 22px !important;
+    top: 4px !important;
+    left: 4px !important;
+  }
+  .theme-pill.light .pill-thumb {
+    transform: translateX(32px) !important;
+  }
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  /* Nav padding tightens when scrolled (JS adds .scrolled class via style props) */
+  nav {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
 }
 /* Status Pulse Animation */
 .status-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.8rem;
-  background: rgba(39, 201, 63, 0.08);
-  border: 1px solid rgba(39, 201, 63, 0.2);
+  padding: 0.4rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
   border-radius: 100px;
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #27c93f;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .pulse-dot {

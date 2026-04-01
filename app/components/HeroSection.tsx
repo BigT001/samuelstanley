@@ -4,15 +4,9 @@ export function HeroSection() {
   return (
     <section
       id="hero"
-      className="flex flex-col items-center justify-center text-center pt-16 pb-6 px-4 w-full max-w-4xl mx-auto"
+      className="flex flex-col items-center justify-center text-center pt-24 md:pt-32 pb-6 px-4 w-full max-w-4xl mx-auto"
     >
-      {/* Status Badge */}
-      <div className="reveal reveal-up reveal-delay-1" style={{ marginBottom: "1.5rem" }}>
-        <div className="status-badge shadow-sm shadow-emerald-500/10">
-          <div className="pulse-dot" />
-          <span>Available for New Projects</span>
-        </div>
-      </div>
+      {/* Status badge now moved to fixed header in page.tsx */}
 
       {/* Profile Photo */}
       <div className="reveal reveal-up reveal-delay-2" style={{ marginBottom: "2rem" }}>
