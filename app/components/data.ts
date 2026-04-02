@@ -38,6 +38,46 @@ export const testimonials = [
   },
 ];
 
+// ─── Development Philosophy ──────────────────────────────────────────────────
+export const philosophies = [
+  {
+    icon: "⚡",
+    title: "Ship Fast, Iterate",
+    text: "Waiting for perfection kills momentum. I focus on deploying functional MVPs quickly, then iterating based on real user feedback.",
+    color: "#ff7c5c",
+  },
+  {
+    icon: "🏗️",
+    title: "Architecture First",
+    text: "Before writing the first line of code, the database schema and system architecture must be designed to scale flawlessly.",
+    color: "#6b8cff",
+  },
+  {
+    icon: "🤝",
+    title: "Full Transparency",
+    text: "No technical jargon or black boxes. My clients know exactly what is being built, why, and the trade-offs of every decision.",
+    color: "#9b7dff",
+  },
+  {
+    icon: "💼",
+    title: "Business Mindset",
+    text: "Code isn't just logic; it's a tool to solve business problems. I build features that drive revenue, retention, and growth.",
+    color: "#5cb8ff",
+  },
+  {
+    icon: "🧵",
+    title: "End-to-End Ownership",
+    text: "From UI/UX wireframes to backend microservices and CI/CD pipelines, I own the entire lifecycle of the product.",
+    color: "#ff5a5a",
+  },
+  {
+    icon: "🧱",
+    title: "Write Clean Code",
+    text: "Code is read ten times more than it is written. Every pull request and function is written to be comprehensible to the next engineer.",
+    color: "#4ecdc4",
+  },
+];
+
 // ─── Features ──────────────────────────────────────────────────────────────
 export const features = [
   {

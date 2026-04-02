@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Starfield }           from "./components/Starfield";
 import { HeroSection }         from "./components/HeroSection";
-import { TestimonialsSection } from "./components/TestimonialsSection";
+import { PhilosophySection }   from "./components/PhilosophySection";
 import { QuickStartSection }   from "./components/QuickStartSection";
 import { ServicesSection, TechStackSection } from "./components/ServicesSection";
 import { ProjectsSection }     from "./components/ProjectsSection";
@@ -131,7 +131,7 @@ export default function Home() {
       {/* ── Page Content ───────────────────────────────────────────── */}
       <main className="relative z-10 flex flex-col items-center w-full">
         <HeroSection />
-        <TestimonialsSection />
+        <PhilosophySection />
         <QuickStartSection />
         <ServicesSection />
         <TechStackSection />
