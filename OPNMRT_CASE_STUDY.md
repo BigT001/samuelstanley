@@ -33,8 +33,8 @@ The platform integrates advanced AI capabilities (such as the Gemini API or Open
 - **Privacy-First:** The AI models only consume pre-aggregated, anonymized data to ensure strict tenant data privacy.
 
 ### 5. Hyper-Local Logistics with Radar
-Traditional delivery systems ignore the nuances of local geography. We built **Radar** to match merchants with rider pools specifically filtered by Local Government Area (LGA). 
-This pairs merchants with delivery riders from their immediate vicinity. By avoiding cross-city dispatch errors, we ensured sub-hour turnarounds while lowering the overall carbon footprint per delivery.
+Traditional delivery systems ignore the nuances of local geography. I built **Radar** to match merchants with rider pools specifically filtered by Local Government Area (LGA). 
+This pairs merchants with delivery riders from their immediate vicinity. By avoiding cross-city dispatch errors, I ensured sub-hour turnarounds while lowering the overall carbon footprint per delivery.
 > "Logistics must be hyper-local. Global mapping solutions often fail the last-mile test in emerging markets."
 
 ### 6. The Technical Stack
