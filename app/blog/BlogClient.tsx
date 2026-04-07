@@ -8,13 +8,13 @@ import { HireMeSection } from "../components/HireMeSection";
 
 // ─── Category colour map ──────────────────────────────────────────────────────
 const CATEGORY_COLORS: Record<string, string> = {
-  AI:          "#9b7dff",
-  Engineering: "#6b8cff",
+  Innovation:  "#9b7dff",
+  AI:          "#6b8cff",
   Nigeria:     "#4ecdc4",
   Business:    "#febc2e",
-  Career:      "#ff7c5c",
-  DevOps:      "#ff7c5c",
-  TypeScript:  "#5cb8ff",
+  Fintech:     "#ff7c5c",
+  Entertainment: "#ff4d4d",
+  Engineering: "#5cb8ff",
   Tech:        "#ff4d4d",
 };
 
@@ -46,18 +46,31 @@ function FeaturedCard({ post }: { post: BlogPost }) {
       >
         <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full opacity-10 blur-3xl pointer-events-none group-hover:opacity-20 transition-opacity duration-300" style={{ background: accent }} />
 
-        <span className="inline-block text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1 rounded-full mb-5" style={{ background: `${accent}22`, color: accent }}>
-          ★ Featured
-        </span>
-
-        <div className="flex flex-wrap gap-2 items-center mb-4">
-          <span className="text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: `${accent}20`, color: accent }}>
-            {post.category}
+        <div className="flex flex-wrap gap-2 items-center mb-5">
+          <span className="text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1 rounded-full" style={{ background: `${accent}22`, color: accent }}>
+            ★ Featured
           </span>
           <span className="text-xs text-[var(--text-secondary)]">
             {new Date(post.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
           </span>
           <span className="text-xs text-[var(--text-secondary)]">· {post.readTime}</span>
+        </div>
+
+        {post.coverImage && (
+          <div className="relative aspect-[21/9] overflow-hidden rounded-xl mb-8 border border-[var(--border)]">
+            <img 
+              src={post.coverImage} 
+              alt={post.title} 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: `${accent}20`, color: accent }}>
+            {post.category}
+          </span>
         </div>
 
         <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-3 leading-tight group-hover:text-[var(--coral)] transition-colors duration-200">
@@ -91,6 +104,16 @@ function PostCard({ post }: { post: BlogPost }) {
         style={{ background: "var(--surface)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}
       >
         <div className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" style={{ background: `linear-gradient(to right, transparent, ${accent}, transparent)` }} />
+
+        {post.coverImage && (
+          <div className="relative aspect-video overflow-hidden rounded-lg mb-6 border border-[var(--border)]">
+            <img 
+              src={post.coverImage} 
+              alt={post.title} 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          </div>
+        )}
 
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: `${accent}18`, color: accent }}>{post.category}</span>

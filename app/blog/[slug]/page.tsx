@@ -118,6 +118,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         </header>
 
+        {post.coverImage && (
+          <div className="relative aspect-video w-full overflow-hidden rounded-2xl mb-12 border border-[var(--border)] shadow-xl shadow-black/20">
+            <img 
+              src={post.coverImage} 
+              alt={post.title} 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          </div>
+        )}
+
         {/* Divider */}
         <div className="w-full h-px mb-10 opacity-40" style={{ background: `linear-gradient(to right, ${accent}, transparent)` }} />
 

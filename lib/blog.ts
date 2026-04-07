@@ -38,7 +38,7 @@ function parsePost(fileName: string): BlogPost {
     tags:       data.tags      ?? [],
     readTime:   data.readTime  ?? '5 min read',
     sourceUrl:  data.sourceUrl ?? '',
-    coverImage: data.coverImage ?? '',
+    coverImage: data.coverImage ?? data.image ?? '',
     content,
   };
 }

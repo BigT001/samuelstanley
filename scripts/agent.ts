@@ -11,20 +11,19 @@ const rssParser = new Parser();
 const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
 
 // ─── News Sources ─────────────────────────────────────────────────────────────
-// Covers: global tech, AI, Nigeria business/startups, inspiring dev content
+// Broadened to include Business, Startups, Tech-in-Entertainment, and African Venture Capital
 const RSS_SOURCES = [
-  // Global Tech & AI
-  { url: 'https://news.google.com/rss/search?q=artificial+intelligence+startups&hl=en-US&gl=US', category: 'AI' },
-  { url: 'https://news.google.com/rss/search?q=software+engineering+best+practices', category: 'Engineering' },
-  { url: 'https://news.google.com/rss/search?q=nextjs+react+typescript+2026', category: 'Engineering' },
-  { url: 'https://news.google.com/rss/search?q=web+development+trends', category: 'Engineering' },
-  // Nigeria & Africa
-  { url: 'https://news.google.com/rss/search?q=nigeria+tech+startups', category: 'Nigeria' },
-  { url: 'https://news.google.com/rss/search?q=africa+fintech+startup+funding', category: 'Nigeria' },
-  { url: 'https://news.google.com/rss/search?q=nigeria+business+entrepreneurship', category: 'Business' },
-  // Business & Entrepreneurship
-  { url: 'https://news.google.com/rss/search?q=saas+startup+funding+2026', category: 'Business' },
-  { url: 'https://news.google.com/rss/search?q=developer+freelance+career', category: 'Career' },
+  // Global Tech & Business Innovation
+  { url: 'https://news.google.com/rss/search?q=future+of+technology+and+business&hl=en-US&gl=US', category: 'Innovation' },
+  { url: 'https://news.google.com/rss/search?q=global+venture+capital+trends+startups', category: 'Business' },
+  { url: 'https://news.google.com/rss/search?q=generative+ai+business+impact+2026', category: 'AI' },
+  // Nigeria & African Startup Ecosystem (Crucial)
+  { url: 'https://news.google.com/rss/search?q=nigeria+startups+tech+funding+news', category: 'Nigeria' },
+  { url: 'https://news.google.com/rss/search?q=africa+digital+economy+growth', category: 'Nigeria' },
+  { url: 'https://news.google.com/rss/search?q=fintech+innovation+africa+growth', category: 'Fintech' },
+  // Entertainment & Lifestyle Tech
+  { url: 'https://news.google.com/rss/search?q=future+of+entertainment+streaming+ai+gaming', category: 'Entertainment' },
+  { url: 'https://news.google.com/rss/search?q=tech+trends+in+media+and+advertising', category: 'Business' },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -32,6 +31,7 @@ interface ScrapedData {
   title: string;
   url: string;
   content: string;
+  image?: string; // New field for cover images
   sourceType: 'article' | 'youtube';
 }
 
@@ -83,6 +83,11 @@ async function scrapeArticle(url: string): Promise<ScrapedData | null> {
       }
     }
 
+    // IMAGE EXTRACTION: Look for og:image, twitter:image, or first large image
+    const image = $('meta[property="og:image"]').attr('content') || 
+                  $('meta[name="twitter:image"]').attr('content') || 
+                  $('meta[name="image"]').attr('content');
+
     $('script, style, iframe, nav, footer, header, aside, .ad, .social, [class*="ad-"], [id*="ad-"]').remove();
 
     const title = $('h1').first().text().trim() || $('title').text().trim();
@@ -95,7 +100,7 @@ async function scrapeArticle(url: string): Promise<ScrapedData | null> {
       return null;
     }
 
-    return { title, url: resp.url, content: cleaned, sourceType: 'article' };
+    return { title, url: resp.url, content: cleaned, image, sourceType: 'article' };
   } catch (err) {
     console.error(`  ✗ Failed to scrape ${url}:`, err);
     return null;
@@ -115,8 +120,10 @@ async function scrapeYouTube(url: string): Promise<ScrapedData | null> {
     const rawTranscript = segments.map((s) => s.text).join(' ');
     const title = `YouTube Video — ${videoId}`;
     const content = rawTranscript.slice(0, 12000);
+    // YOUTUBE THUMBNAIL: High-quality default image
+    const image = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-    return { title, url, content, sourceType: 'youtube' };
+    return { title, url, content, image, sourceType: 'youtube' };
   } catch (err) {
     console.error(`  ✗ YouTube scrape failed for ${url}:`, err);
     return null;
@@ -141,29 +148,32 @@ async function getTrendingUrl(): Promise<{ url: string; category: string } | nul
 function buildPrompt(data: ScrapedData, category: string): string {
   const isYT = data.sourceType === 'youtube';
   const sourceNote = isYT
-    ? `This content was transcribed from a YouTube video at ${data.url}.`
-    : `This content was sourced from an article at ${data.url}.`;
+    ? `This analysis is based on a visual report at ${data.url}.`
+    : `This analysis is based on report findings at ${data.url}.`;
 
   const today = new Date().toISOString();
   const tags = buildTags(category);
 
   return `
-You are Samuel Stanley's personal AI content writer. Samuel is a full-stack developer from Lagos, Nigeria.
-Your job is to write an engaging, original, and insightful blog post for Samuel's portfolio blog.
+You are the primary voice of "Stanley's Log", a high-end publication for technical insights, venture capital, and strategic innovation.
+Your goal is to provide profound solutions, honest insights, and sharp criticisms on the latest trends.
 
 ${sourceNote}
 
-${isYT ? `Video Transcript:` : `Article Content:`}
+${isYT ? `Raw Source Transcript:` : `Source Content:`}
 ${data.content}
 
 REQUIREMENTS:
-1. Write 500–900 words. Be substantive and analytical — don't just summarise.
-2. Open with a hook that grabs the reader's attention.
-3. Add a "Why This Matters" section that makes the practical impact crystal clear.
-4. If relevant, include a perspective on how this affects Nigerian developers, startups, or the African tech ecosystem.
-5. Write in first-person plural or second-person (e.g., "we", "you as a developer…")
-6. Be opinionated and direct. No fluff, no corporate speak.
-7. End with a concrete takeaway or action point for the reader.
+1. DO NOT center this on "developers". Focus on the broader impacts for industry leaders, entrepreneurs, and thinkers.
+2. Write 600–900 words of hard-hitting, analytical content.
+3. Be provocative and honest. If a trend is overrated, say so. If a solution is profound, explain why.
+4. "The Lagos Perspective": Always tie a portion of the analysis to the Nigerian or African tech/business ecosystem. What does this mean for our local market?
+5. Structure:
+   - "The Hook": A compelling, intelligent opening.
+   - "The Profound Solution": Your unique take on how to solve the problems mentioned in the source.
+   - "Honest Insight & Criticism": A sharp, unfiltered look at the flaws or hidden potentials.
+   - "Action Point": A concrete strategic takeaway for the reader.
+6. Voice: First-person authoritative ("We see...", "The reality is..."). No fluff, no generic corporate jargon.
 
 FORMAT: Start the file with exactly this YAML frontmatter block (fill in the placeholders):
 ---
@@ -172,6 +182,7 @@ date: "${today}"
 excerpt: "[a compelling 2-sentence hook that makes people want to read more]"
 category: "${category}"
 tags: ${tags}
+image: "${data.image || ''}"
 readTime: "[e.g. 6 min read]"
 sourceUrl: "${data.url}"
 ---
