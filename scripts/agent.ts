@@ -194,24 +194,16 @@ function buildTags(category: string): string {
   return tagMap[category] ?? '["Tech", "Development"]';
 }
 
-/** Call Gemini to generate the article markdown with fallback models */
-async function generateArticle(data: ScrapedData, category: string): Promise<string> {
-  console.log(`  → Generating article with Gemini... (${data.sourceType})`);
+/** 
+ * Call Gemini with Exponential Backoff Retries.
+ * This handles 429 (Rate Limit) and 503 (Service Unavailable) errors gracefully.
+ */
+async function callGeminiWithRetry(modelName: string, prompt: string, maxRetries = 3, initialDelay = 5000): Promise<string> {
+  let attempt = 0;
   
-  // Confirmed valid models for THIS specific API key (via ListModels)
-  const modelsToTry = [
-    'gemini-3.1-pro-preview',
-    'gemini-flash-latest',
-    'gemini-2.5-pro',
-    'gemini-2.0-flash'
-  ];
-  
-  const prompt = buildPrompt(data, category);
-  let lastErrorMsg = '';
-  
-  for (const modelName of modelsToTry) {
+  while (attempt < maxRetries) {
     try {
-      console.log(`    Trying model: ${modelName}...`);
+      console.log(`    Trying model: ${modelName} (Attempt ${attempt + 1}/${maxRetries})...`);
       const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -228,29 +220,60 @@ async function generateArticle(data: ScrapedData, category: string): Promise<str
         text = lines.join('\n');
       }
 
-      console.log(`    ✅ Generation successful with: ${modelName}`);
       return text;
     } catch (err: any) {
-      lastErrorMsg = err.message;
+      const isRetryable = err.message.includes('429') || 
+                        err.message.includes('503') || 
+                        err.message.includes('Quota') ||
+                        err.message.includes('exhausted');
       
-      // If it's a rate limit error (429), just wait and try the next one or wait longer
-      if (err.message.includes('429') || err.message.includes('Quota')) {
-        console.warn(`    ⚠️ Rate limit on ${modelName}. Waiting 5s...`);
-        await new Promise(r => setTimeout(r, 5000));
-        continue; // go to next model
+      if (isRetryable && attempt < maxRetries - 1) {
+        const delay = initialDelay * Math.pow(2, attempt);
+        console.warn(`    ⚠️ ${modelName} hit a limit or is busy. Retrying in ${delay/1000}s...`);
+        await new Promise(r => setTimeout(r, delay));
+        attempt++;
+        continue;
       }
+      
+      // If not retryable or max retries reached, throw to let the fallback chain handle it
+      throw err;
+    }
+  }
+  throw new Error(`Model ${modelName} failed after ${maxRetries} attempts`);
+}
 
-      console.warn(`    ⚠️ Model ${modelName} failed: ${lastErrorMsg}`);
+/** 
+ * Generate article markdown with a fallback chain of models. 
+ * Each model in the chain now has its own internal retry logic.
+ */
+async function generateArticle(data: ScrapedData, category: string): Promise<string> {
+  console.log(`  → Generating article with Gemini... (${data.sourceType})`);
+  
+  const modelsToTry = [
+    'gemini-1.5-pro',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-2.0-flash-exp'
+  ];
+  
+  const prompt = buildPrompt(data, category);
+  let lastErrorMsg = '';
+  
+  for (const modelName of modelsToTry) {
+    try {
+      const result = await callGeminiWithRetry(modelName, prompt);
+      console.log(`    ✅ Generation successful with: ${modelName}`);
+      return result;
+    } catch (err: any) {
+      lastErrorMsg = err.message;
+      console.warn(`    ⚠️ ${modelName} fallback chain failed: ${lastErrorMsg}`);
       
-      if (modelName === modelsToTry[modelsToTry.length - 1]) {
-        throw new Error(`All Gemini models failed. Last error: ${lastErrorMsg}`);
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Short delay before trying the NEXT model in the chain
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
   
-  throw new Error('Critical: Exhausted all fallback models without success.');
+  throw new Error(`Critical: Exhausted all fallback models including retries. Last error: ${lastErrorMsg}`);
 }
 
 /** Save the generated markdown to content/blog/ */
