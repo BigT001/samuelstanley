@@ -56,7 +56,7 @@ function extractYouTubeId(url: string): string | null {
 }
 
 /** Scrape full article text from a web URL */
-async function scrapeArticle(url: string): Promise<ScrapedData | null> {
+async function scrapeArticle(url: string, category: string): Promise<ScrapedData | null> {
   try {
     console.log(`  → Scraping article: ${url}`);
     let resp = await fetch(url, {
@@ -83,10 +83,27 @@ async function scrapeArticle(url: string): Promise<ScrapedData | null> {
       }
     }
 
-    // IMAGE EXTRACTION: Look for og:image, twitter:image, or first large image
-    const image = $('meta[property="og:image"]').attr('content') || 
-                  $('meta[name="twitter:image"]').attr('content') || 
-                  $('meta[name="image"]').attr('content');
+    // SLICK IMAGE ENGINE: Detect generic logos and swap for Unsplash
+    let image = $('meta[property="og:image"]').attr('content') || 
+                $('meta[name="twitter:image"]').attr('content') || 
+                $('meta[name="image"]').attr('content');
+
+    const isGeneric = !image || image.includes('googleusercontent') || image.includes('gstatic') || image.includes('news.google') || image.includes('youtube.com/img');
+    
+    if (isGeneric) {
+      // Intelligent fallbacks based on category
+      const feeds: Record<string, string> = {
+        'Innovation': '1451187580241-7f57548a608d',
+        'Business': '1460925895917-afdab827c52f',
+        'AI': '1677442136019-21780ecad995',
+        'Nigeria': '1550005810-ca9161a0215a',
+        'Fintech': '1551288049-bebda4e38f71',
+        'Entertainment': '1470225620780-dba8ba36b745',
+        'Engineering': '1581094794329-c8112a89af12'
+      };
+      const photoId = feeds[category] || '1518770660439-4636190af475';
+      image = `https://images.unsplash.com/photo-${photoId}?q=80&w=1200&auto=format&fit=crop`;
+    }
 
     $('script, style, iframe, nav, footer, header, aside, .ad, .social, [class*="ad-"], [id*="ad-"]').remove();
 
@@ -168,16 +185,17 @@ REQUIREMENTS:
 2. Write 600–900 words of hard-hitting, analytical content.
 3. Be provocative and honest. If a trend is overrated, say so. If a solution is profound, explain why.
 4. "The Lagos Perspective": Always tie a portion of the analysis to the Nigerian or African tech/business ecosystem. What does this mean for our local market?
-5. Structure:
+5. "Minimal Developer Pivot": You MAY include a single-sentence technical or developer-centric pivot ONLY if it adds direct value to the solution. Keep it extremely minimal and surgical.
+6. Structure:
    - "The Hook": A compelling, intelligent opening.
    - "The Profound Solution": Your unique take on how to solve the problems mentioned in the source.
    - "Honest Insight & Criticism": A sharp, unfiltered look at the flaws or hidden potentials.
    - "Action Point": A concrete strategic takeaway for the reader.
-6. Voice: First-person authoritative ("We see...", "The reality is..."). No fluff, no generic corporate jargon.
+7. Voice: First-person authoritative ("We see...", "The reality is..."). No fluff, no generic corporate jargon.
 
 FORMAT: Start the file with exactly this YAML frontmatter block (fill in the placeholders):
 ---
-title: "[an engaging click-worthy title, max 70 chars]"
+title: "[a sharp, authoritative title (e.g. 'The Fallacy of...', 'The Profound Future of...'), max 70 chars]"
 date: "${today}"
 excerpt: "[a compelling 2-sentence hook that makes people want to read more]"
 category: "${category}"
@@ -329,7 +347,7 @@ export async function runAgent(targetUrl?: string): Promise<AgentResult> {
     finalCategory = isYouTubeUrl(url) ? 'Engineering' : 'Tech';
     console.log(`\n▶ Running agent on provided URL: ${url}`);
     
-    finalData = isYouTubeUrl(url) ? await scrapeYouTube(url) : await scrapeArticle(url);
+    finalData = isYouTubeUrl(url) ? await scrapeYouTube(url) : await scrapeArticle(url, finalCategory);
     if (!finalData?.content) throw new Error(`Failed to extract content from: ${url}`);
   } else {
     console.log('\n▶ Random mode — looking for a trending topic from RSS...');
@@ -345,7 +363,7 @@ export async function runAgent(targetUrl?: string): Promise<AgentResult> {
       finalCategory = category;
       console.log(`  Checking: ${url} [${category}]`);
 
-      const data = isYouTubeUrl(url) ? await scrapeYouTube(url) : await scrapeArticle(url);
+      const data = isYouTubeUrl(url) ? await scrapeYouTube(url) : await scrapeArticle(url, category);
       if (data?.content) {
         finalData = data;
         break; // Success!

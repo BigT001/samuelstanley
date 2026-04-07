@@ -41,53 +41,52 @@ function FeaturedCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
       <div
-        className="relative h-full overflow-hidden rounded-2xl p-8 md:p-10 transition-all duration-300 hover:-translate-y-1 border border-[var(--border)]"
-        style={{ background: "var(--surface)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}
+        className="relative h-full overflow-hidden rounded-2xl p-6 md:p-7 transition-all duration-300 hover:-translate-y-1 border border-[var(--border)]"
+        style={{ background: "var(--surface)", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
       >
         <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full opacity-10 blur-3xl pointer-events-none group-hover:opacity-20 transition-opacity duration-300" style={{ background: accent }} />
 
-        <div className="flex flex-wrap gap-2 items-center mb-5">
-          <span className="text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1 rounded-full" style={{ background: `${accent}22`, color: accent }}>
+        <div className="flex flex-wrap gap-2 items-center mb-4">
+          <span className="text-[9px] font-bold tracking-[0.18em] uppercase px-2.5 py-1 rounded-full text-white" style={{ background: accent }}>
             ★ Featured
           </span>
-          <span className="text-xs text-[var(--text-secondary)]">
+          <span className="text-[11px] text-[var(--text-secondary)]">
             {new Date(post.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
           </span>
-          <span className="text-xs text-[var(--text-secondary)]">· {post.readTime}</span>
+          <span className="text-[11px] text-[var(--text-secondary)]">· {post.readTime}</span>
         </div>
 
         {post.coverImage && (
-          <div className="relative aspect-[21/9] overflow-hidden rounded-xl mb-8 border border-[var(--border)]">
+          <div className="relative aspect-[16/7] overflow-hidden rounded-xl mb-6 border border-[var(--border)]">
             <img 
               src={post.coverImage} 
               alt={post.title} 
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
         )}
 
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: `${accent}20`, color: accent }}>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm" style={{ borderLeft: `3px solid ${accent}`, background: `${accent}10`, color: accent }}>
             {post.category}
           </span>
         </div>
 
-        <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-3 leading-tight group-hover:text-[var(--coral)] transition-colors duration-200">
+        <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] mb-3 leading-tight group-hover:text-[var(--coral)] transition-colors duration-200">
           {post.title}
         </h2>
 
-        <p className="text-[var(--text-secondary)] leading-relaxed mb-6 max-w-2xl">{post.excerpt}</p>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-5 line-clamp-2">{post.excerpt}</p>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          {post.tags.map((tag) => (
-            <span key={tag} className="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">{tag}</span>
+          {post.tags.slice(0, 4).map((tag) => (
+            <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">{tag}</span>
           ))}
         </div>
 
-        <span className="inline-flex items-center gap-2 text-sm font-semibold transition-all duration-200 group-hover:gap-3" style={{ color: accent }}>
-          Read article
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+        <span className="inline-flex items-center gap-2 text-xs font-bold transition-all duration-200 group-hover:gap-3" style={{ color: accent }}>
+          Read analysis
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
         </span>
       </div>
     </Link>
@@ -100,42 +99,36 @@ function PostCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
       <div
-        className="relative h-full overflow-hidden rounded-2xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 border border-[var(--border)] hover:border-[var(--coral)]"
-        style={{ background: "var(--surface)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}
+        className="relative h-full overflow-hidden rounded-2xl p-5 flex flex-col transition-all duration-300 hover:-translate-y-1 border border-[var(--border)] hover:border-[var(--coral)]"
+        style={{ background: "var(--surface)", boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}
       >
         <div className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" style={{ background: `linear-gradient(to right, transparent, ${accent}, transparent)` }} />
 
         {post.coverImage && (
-          <div className="relative aspect-video overflow-hidden rounded-lg mb-6 border border-[var(--border)]">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-lg mb-5 border border-[var(--border)]">
             <img 
               src={post.coverImage} 
               alt={post.title} 
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </div>
         )}
 
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: `${accent}18`, color: accent }}>{post.category}</span>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm" style={{ borderLeft: `3px solid ${accent}`, background: `${accent}12`, color: accent }}>{post.category}</span>
         </div>
 
-        <h3 className="text-base font-bold text-[var(--text-primary)] mb-2 leading-snug flex-1 group-hover:text-[var(--coral)] transition-colors duration-200">
+        <h3 className="text-sm font-bold text-[var(--text-primary)] mb-2 leading-snug flex-1 group-hover:text-[var(--coral)] transition-colors duration-200">
           {post.title}
         </h3>
 
-        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-5 line-clamp-3">{post.excerpt}</p>
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-4 line-clamp-2">{post.excerpt}</p>
 
-        <div className="flex flex-wrap gap-1.5 mb-5">
-          {post.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">{tag}</span>
-          ))}
-        </div>
-
-        <div className="mt-auto flex items-center justify-between text-xs text-[var(--text-secondary)]">
+        <div className="mt-auto flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
           <span>{new Date(post.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-          <span className="font-semibold flex items-center gap-1 group-hover:gap-2 transition-all" style={{ color: accent }}>
+          <span className="font-bold flex items-center gap-1 group-hover:gap-2 transition-all" style={{ color: accent }}>
             {post.readTime}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
           </span>
         </div>
       </div>
