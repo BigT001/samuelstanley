@@ -7,10 +7,11 @@ import { Starfield } from "../components/Starfield";
 type AgentMode = "auto" | "url" | "youtube";
 
 type RunResult = {
-  slug: string;
-  title: string;
-  filePath: string;
+  slug?: string;
+  title?: string;
+  filePath?: string;
   message: string;
+  status?: 'dispatched';
 };
 
 export default function AgentPage() {
@@ -242,16 +243,36 @@ export default function AgentPage() {
             {result && (
               <div className="mt-5 p-5 rounded-xl border border-green-500/20 bg-green-500/8">
                 <div className="flex items-center gap-2 font-semibold text-green-400 mb-2">
-                  <span className="w-2 h-2 rounded-full bg-green-400" />
-                  Post Published!
+                  <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                  {result.status === 'dispatched' ? 'GitHub Job Started!' : 'Post Published!'}
                 </div>
-                <p className="text-sm text-[var(--text-secondary)] mb-1 font-medium">{result.title}</p>
-                <Link
-                  href={`/blog/${result.slug}`}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--coral)] hover:text-[var(--coral-light)] transition-colors"
-                >
-                  View article →
-                </Link>
+                
+                <p className="text-sm text-[var(--text-secondary)] mb-4 leading-relaxed">
+                  {result.status === 'dispatched' 
+                    ? "I've sent the instructions to GitHub. The agent is now generating your post on the server. Your blog will automatically update and redeploy in about 2-3 minutes."
+                    : result.title
+                  }
+                </p>
+
+                {result.slug && (
+                  <Link
+                    href={`/blog/${result.slug}`}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--coral)] hover:text-[var(--coral-light)] transition-colors"
+                  >
+                    View article →
+                  </Link>
+                )}
+                
+                {result.status === 'dispatched' && (
+                  <a 
+                    href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'BigT001/samuelstanley'}/actions`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)] hover:underline opacity-80"
+                  >
+                    Track progress on GitHub →
+                  </a>
+                )}
               </div>
             )}
           </div>

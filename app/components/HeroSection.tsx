@@ -76,7 +76,7 @@ export function HeroSection() {
       <div className="reveal reveal-up reveal-delay-6">
         <button className="new-badge" aria-label="Latest announcement">
           <span className="badge-tag">New</span>
-          <span>Samuel Stanley is open for new projects in 2026</span>
+          <span>Samuel Stanley Portfolio v2: AI Ecosystem is live!</span>
           <span style={{ color: "#8892b0" }}>→</span>
         </button>
       </div>

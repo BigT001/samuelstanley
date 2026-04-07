@@ -26,7 +26,7 @@ export function ProjectsSection() {
         style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.25rem" }}
         className="projects-grid"
       >
-        {projects.slice(0, 3).map((p, i) => (
+        {projects.slice(0, 6).map((p, i) => (
           <div
             key={i}
             className={`glass-card project-card reveal reveal-up reveal-delay-${i + 1}`}
@@ -131,7 +131,7 @@ export function ProjectsSection() {
               ) : null}
               
               {/* Re-enabled Case Study for headline projects */}
-              {p.slug && ["OPNMRT", "EMPI Costumes", "Study Express UK"].includes(p.title) && (
+              {p.slug && ["OPNMRT", "EMPI Costumes", "Study Express UK", "Stanley’s Log"].includes(p.title) && (
                 <Link
                   href={`/project/${p.slug}`}
                   className="coral-link"

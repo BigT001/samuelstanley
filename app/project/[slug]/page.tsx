@@ -267,6 +267,23 @@ export default function ProjectCaseStudy({
                     className="w-full h-auto object-cover transition-transform hover:scale-[1.02] duration-500"
                   />
                 </div>
+              ) : project.slug === "stanleys-log" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-2xl overflow-hidden border border-border/20 shadow-2xl">
+                    <img
+                      src="/stanleyslog/image.png"
+                      alt="Stanley's Log Index"
+                      className="w-full h-auto object-cover transition-transform hover:scale-[1.02] duration-500"
+                    />
+                  </div>
+                  <div className="rounded-2xl overflow-hidden border border-border/20 shadow-2xl">
+                    <img
+                      src="/stanleyslog/imagecopy.png"
+                      alt="Stanley's Log Article"
+                      className="w-full h-auto object-cover transition-transform hover:scale-[1.02] duration-500"
+                    />
+                  </div>
+                </div>
               ) : (
                 <div className="w-full h-[300px] md:h-[400px] rounded-3xl bg-gradient-to-br from-surface to-[#0a0f1a] border border-border/20 flex flex-col items-center justify-center relative overflow-hidden group shadow-2xl">
                   <div className="absolute inset-0 bg-accent/5 opacity-50 mix-blend-overlay" />
@@ -603,6 +620,63 @@ export default function ProjectCaseStudy({
                     directly beside deep user retention analytics and
                     interactive event performance reports.
                   </p>
+                </>
+              ) : project.slug === "stanleys-log" ? (
+                <>
+                  <p className="text-2xl md:text-3xl leading-relaxed font-semibold">
+                    <strong>Stanley’s Log v2</strong> is more than just a blog — it is a sophisticated, autonomous AI content ecosystem. It was engineered to bridge the gap between intelligent data scraping and automated, high-end digital publishing.
+                  </p>
+                  <p className="mt-6">
+                    This project demonstrates a full-stack engineering approach to AI integration, prioritizing security, resilience, and operational efficiency through a "Sovereign AI" philosophy.
+                  </p>
+
+                  <h2 className="text-3xl md:text-4xl font-black tracking-tight mt-16 mb-6">
+                    1. Autonomous Intelligence & Fallback Resilience
+                  </h2>
+                  <p className="mb-6">
+                    The heart of the system is the <strong>Content Agent</strong>. Using a custom TypeScript engine, it intelligently scrapes and resolves complex redirects from Google News and global RSS feeds.
+                  </p>
+                  <ul className="space-y-4 mb-16 text-primary/80">
+                    <li className="flex gap-4 items-start"><span className="text-accent mt-1 font-bold">✦</span><span><strong>Multi-Model Intelligence:</strong> To ensure 100% uptime, I implemented a robust fallback chain using <strong>Gemini 1.5 Pro, Flash, and 8B</strong>. If one model hits a rate limit, the agent automatically "downgrades" or retries to maintain the publishing schedule.</span></li>
+                    <li className="flex gap-4 items-start"><span className="text-accent mt-1 font-bold">✦</span><span><strong>Dynamic Scrapers:</strong> The scraper uses advanced Cheerio selectors and mobile User-Agent spoofing to bypass common robot protections, ensuring fresh Nigerian and global tech news is always available.</span></li>
+                  </ul>
+
+                  <h2 className="text-3xl md:text-4xl font-black tracking-tight mt-16 mb-6">
+                    2. Enterprise Workflow & Dispatch System
+                  </h2>
+                  <p className="mb-6">
+                    One of the most complex challenges was enabling a web-based dashboard on a read-only serverless platform (Vercel). I engineered an <strong>Enterprise Workflow Dispatch</strong> system:
+                  </p>
+                  <ul className="space-y-4 mb-16 text-primary/80">
+                    <li className="flex gap-4 items-start"><span className="text-accent mt-1 font-bold">✦</span><span>When you click "Run Agent" on the live site, the API signals a <strong>GitHub Action Workflow</strong> via a secure, tokenized dispatch.</span></li>
+                    <li className="flex gap-4 items-start"><span className="text-accent mt-1 font-bold">✦</span><span>GitHub launches a virtual machine to generate the post, commits it back to the repository, and triggers a fresh Vercel deployment — all without human intervention.</span></li>
+                  </ul>
+
+                  <h2 className="text-3xl md:text-4xl font-black tracking-tight mt-16 mb-6">
+                    3. Security & Admin Infrastructure
+                  </h2>
+                  <p className="mb-6">
+                    Security was treated as a first-class citizen. I built a private <strong>Admin Gateway</strong> that protects the manual triggers:
+                  </p>
+                  <ul className="space-y-4 mb-16 text-primary/80">
+                    <li className="flex gap-4 items-start"><span className="text-accent mt-1 font-bold">✦</span><span><strong>Lock-Screen Access:</strong> A session-based authentication layer requires a secure <code>AGENT_SECRET</code> before any administrative UI is revealed.</span></li>
+                    <li className="flex gap-4 items-start"><span className="text-accent mt-1 font-bold">✦</span><span><strong>Session Management:</strong> Utilizes browser-native <code>sessionStorage</code> to manage access tokens securely without long-term tracking.</span></li>
+                  </ul>
+                  
+                  <blockquote className="border-l-[3px] border-accent pl-8 py-2 my-12 text-2xl md:text-3xl font-serif italic text-primary/80 reveal reveal-left">
+                    "Automation without security is a liability. In v2, we ensured that the agent is both incredibly powerful and strictly protected."
+                  </blockquote>
+
+                  <h2 className="text-3xl md:text-4xl font-black tracking-tight mt-16 mb-6">
+                    4. Professional SEO & Visibility
+                  </h2>
+                  <p className="mb-6">
+                    The blog was optimized for maximum discovery. Every post is automatically wrapped in <strong>Schema.org JSON-LD</strong> structured data (Article schema), with dynamic metadata titles, canonical URLs, and OpenGraph tags to ensure it looks professional in search results and social shares.
+                  </p>
+
+                  <blockquote className="border-l-[3px] border-accent pl-8 py-2 my-12 text-2xl md:text-3xl font-serif italic text-primary/80 reveal reveal-left">
+                    "Stanley’s Log v2 is a showcase of Sovereign Software Engineering. It demonstrates a mastery of AI workflows, API-driven automation, and secure, high-performance web architecture."
+                  </blockquote>
                 </>
               ) : (
                 <>

@@ -59,22 +59,42 @@ function extractYouTubeId(url: string): string | null {
 async function scrapeArticle(url: string): Promise<ScrapedData | null> {
   try {
     console.log(`  → Scraping article: ${url}`);
-    const resp = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SamuelBlog/1.0)' },
+    let resp = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1' }, // Better UA
       signal: AbortSignal.timeout(12000),
     });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const html = await resp.text();
-    const $ = cheerio.load(html);
 
-    $('script, style, iframe, nav, footer, header, aside, [class*="ad"], [id*="ad"]').remove();
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    let html = await resp.text();
+    let $ = cheerio.load(html);
+
+    // Google News special handling: it uses meta-refresh redirects
+    if (url.includes('news.google.com')) {
+      const metaUrl = $('meta[property="og:url"]').attr('content') || $('a[jsname="t79S7c"]').attr('href');
+      if (metaUrl && metaUrl !== url) {
+        console.log(`    ↳ Following Google News redirect to: ${metaUrl}`);
+        resp = await fetch(metaUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!resp.ok) throw new Error(`Redirect HTTP ${resp.status}`);
+        html = await resp.text();
+        $ = cheerio.load(html);
+      }
+    }
+
+    $('script, style, iframe, nav, footer, header, aside, .ad, .social, [class*="ad-"], [id*="ad-"]').remove();
 
     const title = $('h1').first().text().trim() || $('title').text().trim();
-    const content = $('article, main, [role="main"]').text() || $('body').text();
-    const cleaned = content.replace(/\s+/g, ' ').trim().slice(0, 10000);
+    const content = $('article, main, .post-content, .article-body, #article-body').text() || $('body').text();
+    const cleaned = content.replace(/\s+/g, ' ').replace(/\n+/g, ' ').trim().slice(0, 10000);
 
-    if (!cleaned || cleaned.length < 200) return null;
-    return { title, url, content: cleaned, sourceType: 'article' };
+    if (!cleaned || cleaned.length < 300) {
+      console.warn(`    ⚠ Extracted content too short (${cleaned.length} chars). Possible paywall or bot protection.`);
+      return null;
+    }
+
+    return { title, url: resp.url, content: cleaned, sourceType: 'article' };
   } catch (err) {
     console.error(`  ✗ Failed to scrape ${url}:`, err);
     return null;
@@ -263,41 +283,56 @@ function savePost(title: string, markdown: string): AgentResult {
  */
 export async function runAgent(targetUrl?: string): Promise<AgentResult> {
   if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not set. Add it to your .env.local file.');
+    throw new Error('GEMINI_API_KEY is not set. Add it to your .env file.');
   }
 
-  let url: string;
-  let category = 'Engineering';
+  let finalData: ScrapedData | null = null;
+  let finalCategory = 'Engineering';
+  let retries = 5;
 
   if (targetUrl) {
-    url = targetUrl;
-    // Auto-detect category for YouTube links
-    category = isYouTubeUrl(url) ? 'Engineering' : 'Tech';
+    const url = targetUrl;
+    finalCategory = isYouTubeUrl(url) ? 'Engineering' : 'Tech';
     console.log(`\n▶ Running agent on provided URL: ${url}`);
+    
+    finalData = isYouTubeUrl(url) ? await scrapeYouTube(url) : await scrapeArticle(url);
+    if (!finalData?.content) throw new Error(`Failed to extract content from: ${url}`);
   } else {
-    console.log('\n▶ No URL provided — picking a trending topic from RSS...');
-    const trending = await getTrendingUrl();
-    if (!trending) throw new Error('Could not find a trending topic from any RSS source.');
-    url = trending.url;
-    category = trending.category;
-    console.log(`  Found trending: ${url} [${category}]`);
+    console.log('\n▶ Random mode — looking for a trending topic from RSS...');
+    
+    while (retries > 0) {
+      const trending = await getTrendingUrl();
+      if (!trending) {
+        retries--;
+        continue;
+      }
+      
+      const { url, category } = trending;
+      finalCategory = category;
+      console.log(`  Checking: ${url} [${category}]`);
+
+      const data = isYouTubeUrl(url) ? await scrapeYouTube(url) : await scrapeArticle(url);
+      if (data?.content) {
+        finalData = data;
+        break; // Success!
+      }
+      
+      console.warn(`  ⚠ Content extraction failed. Retrying with another URL... (${retries-1} left)`);
+      retries--;
+      await new Promise(r => setTimeout(r, 1000));
+    }
   }
 
-  // Scrape content
-  const data = isYouTubeUrl(url)
-    ? await scrapeYouTube(url)
-    : await scrapeArticle(url);
-
-  if (!data?.content) {
-    throw new Error(`Failed to extract content from: ${url}`);
+  if (!finalData?.content) {
+    throw new Error('Could not extract content from any trending sources after multiple attempts.');
   }
 
   // Generate with Gemini
-  const markdown = await generateArticle(data, category);
+  const markdown = await generateArticle(finalData, finalCategory);
 
   // Save to disk
   const titleMatch = markdown.match(/title:\s*"?(.+?)"?\s*\n/);
-  const title = titleMatch?.[1] ?? data.title;
+  const title = titleMatch?.[1] ?? (finalData ? finalData.title : 'Untitled');
   return savePost(title, markdown);
 }
 

@@ -179,10 +179,6 @@ export function BlogClient({ posts }: { posts: BlogPost[] }) {
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-12">
         {/* Header */}
         <header className="mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wider mb-5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--coral)] animate-pulse" />
-            Engineering Insights · Daily Updates
-          </div>
           <h1 className="text-4xl md:text-6xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none mb-4">
             Stanley’s <span style={{ color: "var(--coral)" }}>Log</span>
           </h1>
