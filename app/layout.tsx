@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
+import { ThemeToggle } from "./components/ThemeToggle";
 import "./globals.css";
 
 const inter = Inter({
@@ -134,6 +135,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-[#050810] text-[#f0f4ff]">
+        <ThemeToggle />
         {children}
         <Script id="microsoft-clarity" strategy="afterInteractive">
           {`

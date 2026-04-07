@@ -1,0 +1,60 @@
+name: AI Blog Content Agent
+
+on:
+  schedule:
+    # Publishes 4 posts per day at: 6AM, 10AM, 2PM, 7PM (UTC)
+    - cron: '0 6  * * *'
+    - cron: '0 10 * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 19 * * *'
+  workflow_dispatch:  # Allows manual trigger from GitHub Actions UI
+    inputs:
+      url:
+        description: 'Optional article/YouTube URL to convert to a blog post'
+        required: false
+        type: string
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required so the action can commit content/blog/*.md back
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run AI Agent
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AGENT_CLI: 'true'
+        run: |
+          URL="${{ github.event.inputs.url }}"
+          if [ -n "$URL" ]; then
+            npx tsx scripts/agent.ts "$URL"
+          else
+            npx tsx scripts/agent.ts
+          fi
+
+      - name: Commit and Push Blog Post
+        run: |
+          git config --global user.name  "Samuel AI Agent"
+          git config --global user.email "agent@samuelstanley.com"
+          git add content/blog/
+          git diff --quiet && git diff --staged --quiet \
+            || git commit -m "feat(blog): ai-generated post $(date +'%Y-%m-%d %H:%M UTC')" \
+            && git push

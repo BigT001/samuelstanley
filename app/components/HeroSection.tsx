@@ -9,8 +9,16 @@ export function HeroSection() {
       {/* Status badge now moved to fixed header in page.tsx */}
 
       {/* Profile Photo */}
-      <div className="reveal reveal-up reveal-delay-2" style={{ marginBottom: "2rem" }}>
+      <div className="reveal reveal-up reveal-delay-1 flex justify-center" style={{ marginBottom: "1rem" }}>
         <ProfilePhoto />
+      </div>
+
+      {/* Status Badge - Shows right below avatar on all screens */}
+      <div className="flex justify-center reveal reveal-up reveal-delay-2 mb-8">
+        <div className="status-badge">
+          <div className="pulse-dot" />
+          <span>Available for Work</span>
+        </div>
       </div>
 
       {/* Name */}
