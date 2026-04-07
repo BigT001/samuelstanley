@@ -29,16 +29,24 @@ export async function POST(request: Request) {
     // ── Production: Trigger GitHub Action ─────────────────────────────────────
     if (process.env.NODE_ENV !== 'development' || process.env.FORCE_DISPATCH === 'true') {
       const GH_TOKEN = process.env.GITHUB_TOKEN;
-      const GH_REPO = process.env.GITHUB_REPO; // e.g. "username/repo"
+      let GH_REPO = process.env.GITHUB_REPO; // could be "owner/repo" or full URL
 
       if (!GH_TOKEN || !GH_REPO) {
         return NextResponse.json({ 
           success: false, 
-          error: 'Production credentials missing (GITHUB_TOKEN or GITHUB_REPO). Please check environment variables.' 
+          error: 'Production credentials missing (GITHUB_TOKEN or GITHUB_REPO). please check environment variables.' 
         }, { status: 500 });
       }
 
-      console.log(`🚀 Production mode: Dispatching workflow for ${GH_REPO}...`);
+      // Cleanup GH_REPO if it's a full URL
+      GH_REPO = GH_REPO
+        .replace('https://github.com/', '')
+        .replace('http://github.com/', '')
+        .replace('.git', '')
+        .replace(/\/$/, '') // remove trailing slash
+        .trim();
+
+      console.log(`🚀 Dispatching workflow for cleaned repo: ${GH_REPO}...`);
 
       const res = await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/agent.yml/dispatches`, {
         method: 'POST',
@@ -48,7 +56,7 @@ export async function POST(request: Request) {
           'X-GitHub-Api-Version': '2022-11-28',
         },
         body: JSON.stringify({
-          ref: 'main', // or your primary branch
+          ref: 'main', 
           inputs: { url: url || '' }
         }),
       });
