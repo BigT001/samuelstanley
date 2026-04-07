@@ -11,19 +11,19 @@ const rssParser = new Parser();
 const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
 
 // ─── News Sources ─────────────────────────────────────────────────────────────
-// Broadened to include Business, Startups, Tech-in-Entertainment, and African Venture Capital
+// Narrowed to provide high-end Business, Venture, Fintech, and Tech strategy
 const RSS_SOURCES = [
-  // Global Tech & Business Innovation
-  { url: 'https://news.google.com/rss/search?q=future+of+technology+and+business&hl=en-US&gl=US', category: 'Innovation' },
-  { url: 'https://news.google.com/rss/search?q=global+venture+capital+trends+startups', category: 'Business' },
-  { url: 'https://news.google.com/rss/search?q=generative+ai+business+impact+2026', category: 'AI' },
-  // Nigeria & African Startup Ecosystem (Crucial)
-  { url: 'https://news.google.com/rss/search?q=nigeria+startups+tech+funding+news', category: 'Nigeria' },
-  { url: 'https://news.google.com/rss/search?q=africa+digital+economy+growth', category: 'Nigeria' },
-  { url: 'https://news.google.com/rss/search?q=fintech+innovation+africa+growth', category: 'Fintech' },
-  // Entertainment & Lifestyle Tech
-  { url: 'https://news.google.com/rss/search?q=future+of+entertainment+streaming+ai+gaming', category: 'Entertainment' },
-  { url: 'https://news.google.com/rss/search?q=tech+trends+in+media+and+advertising', category: 'Business' },
+  // Global Market & Venture Trends
+  { url: 'https://news.google.com/rss/search?q=venture+capital+funding+tech+trends&hl=en-US&gl=US', category: 'Venture' },
+  { url: 'https://news.google.com/rss/search?q=global+business+innovation+and+strategy', category: 'Business' },
+  { url: 'https://news.google.com/rss/search?q=future+of+digital+finance+and+banking', category: 'Fintech' },
+  // African Startup & Economic Innovation
+  { url: 'https://news.google.com/rss/search?q=nigeria+tech+startups+funding+fintech', category: 'Nigeria' },
+  { url: 'https://news.google.com/rss/search?q=africa+startup+funding+news+and+analysis', category: 'Business' },
+  { url: 'https://news.google.com/rss/search?q=high+tech+manufacturing+and+innovation+africa', category: 'Innovation' },
+  // Professional Tech & AI Strategy
+  { url: 'https://news.google.com/rss/search?q=artificial+intelligence+for+enterprise+strategy', category: 'AI' },
+  { url: 'https://news.google.com/rss/search?q=quantum+computing+and+future+technologies', category: 'Innovation' },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -68,11 +68,10 @@ async function scrapeArticle(url: string, category: string): Promise<ScrapedData
     let html = await resp.text();
     let $ = cheerio.load(html);
 
-    // Google News special handling: it uses meta-refresh redirects
+    // Google News special handling: redirect following
     if (url.includes('news.google.com')) {
       const metaUrl = $('meta[property="og:url"]').attr('content') || $('a[jsname="t79S7c"]').attr('href');
       if (metaUrl && metaUrl !== url) {
-        console.log(`    ↳ Following Google News redirect to: ${metaUrl}`);
         resp = await fetch(metaUrl, {
           headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
           signal: AbortSignal.timeout(10000),
@@ -83,40 +82,41 @@ async function scrapeArticle(url: string, category: string): Promise<ScrapedData
       }
     }
 
-    // SLICK IMAGE ENGINE: Detect generic logos and swap for Unsplash
+    // ELITE IMAGE ENGINE: Detecting generic logos more aggressively
     let image = $('meta[property="og:image"]').attr('content') || 
                 $('meta[name="twitter:image"]').attr('content') || 
                 $('meta[name="image"]').attr('content');
 
-    const isGeneric = !image || image.includes('googleusercontent') || image.includes('gstatic') || image.includes('news.google') || image.includes('youtube.com/img');
+    const isGeneric = !image || 
+                     image.includes('googleusercontent') || 
+                     image.includes('gstatic') || 
+                     image.includes('news.google') || 
+                     image.includes('youtube.com/img') ||
+                     image.includes('/logo') ||
+                     image.includes('icon-') ||
+                     image.length < 15; // Too short to be a real URL
     
     if (isGeneric) {
-      // Intelligent fallbacks based on category
-      const feeds: Record<string, string> = {
-        'Innovation': '1451187580241-7f57548a608d',
-        'Business': '1460925895917-afdab827c52f',
-        'AI': '1677442136019-21780ecad995',
-        'Nigeria': '1550005810-ca9161a0215a',
-        'Fintech': '1551288049-bebda4e38f71',
-        'Entertainment': '1470225620780-dba8ba36b745',
-        'Engineering': '1581094794329-c8112a89af12'
+      // Curated photo pools for a "Premium Business Journal" look
+      const pools: Record<string, string[]> = {
+        'Innovation': ['1451187580241-7f57548a608d', '1485827404703-89b55fcc595e', '1519389950473-47ba0277781c'],
+        'Business': ['1460925895917-afdab827c52f', '1504384308090-c564bd4668a3', '1507679799987-c7377f0f49f9'],
+        'AI': ['1677442136019-21780ecad995', '1485827404703-89b55fcc595e', '1531297484001-80022131f5a1'],
+        'Nigeria': ['1550005810-ca9161a0215a', '1520110120302-851250430b42', '1611273298532-a31c62b0f89d'],
+        'Fintech': ['1551288049-bebda4e38f71', '1563986768609-322da13575f3', '1550565114-1f061e808383'],
+        'Venture': ['1460925895917-afdab827c52f', '1454165833467-cd356ed9942e', '1553484771-3710605d0b92']
       };
-      const photoId = feeds[category] || '1518770660439-4636190af475';
+      const pool = pools[category] || pools['Business'];
+      const photoId = pool[Math.floor(Math.random() * pool.length)];
       image = `https://images.unsplash.com/photo-${photoId}?q=80&w=1200&auto=format&fit=crop`;
     }
 
     $('script, style, iframe, nav, footer, header, aside, .ad, .social, [class*="ad-"], [id*="ad-"]').remove();
-
     const title = $('h1').first().text().trim() || $('title').text().trim();
     const content = $('article, main, .post-content, .article-body, #article-body').text() || $('body').text();
-    // LEAN MODE: Truncate to 4000 chars to stay under free tier daily token limits
     const cleaned = content.replace(/\s+/g, ' ').replace(/\n+/g, ' ').trim().slice(0, 4000);
 
-    if (!cleaned || cleaned.length < 300) {
-      console.warn(`    ⚠ Extracted content too short (${cleaned.length} chars). Possible paywall or bot protection.`);
-      return null;
-    }
-
+    if (!cleaned || cleaned.length < 300) return null;
     return { title, url: resp.url, content: cleaned, image, sourceType: 'article' };
   } catch (err) {
     console.error(`  ✗ Failed to scrape ${url}:`, err);
@@ -165,15 +165,15 @@ async function getTrendingUrl(): Promise<{ url: string; category: string } | nul
 function buildPrompt(data: ScrapedData, category: string): string {
   const isYT = data.sourceType === 'youtube';
   const sourceNote = isYT
-    ? `This analysis is based on a visual report at ${data.url}.`
-    : `This analysis is based on report findings at ${data.url}.`;
+    ? `Analysis based on video: ${data.url}`
+    : `Analysis based on findings: ${data.url}`;
 
   const today = new Date().toISOString();
   const tags = buildTags(category);
 
   return `
 You are the primary voice of "Stanley's Log", a high-end publication for technical insights, venture capital, and strategic innovation.
-Your goal is to provide profound solutions, honest insights, and sharp criticisms on the latest trends.
+Focus 100% on high-level strategy, business impact, and profound market solutions.
 
 ${sourceNote}
 
@@ -181,21 +181,23 @@ ${isYT ? `Raw Source Transcript:` : `Source Content:`}
 ${data.content}
 
 REQUIREMENTS:
-1. DO NOT center this on "developers". Focus on the broader impacts for industry leaders, entrepreneurs, and thinkers.
-2. Write 600–900 words of hard-hitting, analytical content.
-3. Be provocative and honest. If a trend is overrated, say so. If a solution is profound, explain why.
-4. "The Lagos Perspective": Always tie a portion of the analysis to the Nigerian or African tech/business ecosystem. What does this mean for our local market?
-5. "Minimal Developer Pivot": You MAY include a single-sentence technical or developer-centric pivot ONLY if it adds direct value to the solution. Keep it extremely minimal and surgical.
-6. Structure:
-   - "The Hook": A compelling, intelligent opening.
-   - "The Profound Solution": Your unique take on how to solve the problems mentioned in the source.
-   - "Honest Insight & Criticism": A sharp, unfiltered look at the flaws or hidden potentials.
-   - "Action Point": A concrete strategic takeaway for the reader.
-7. Voice: First-person authoritative ("We see...", "The reality is..."). No fluff, no generic corporate jargon.
+1. AUDIENCE: Professional Industry Leaders, Venture Capitalists, and High-Tech Entrepreneurs.
+2. NO DEVELOPER TALK: Do not address the reader as a "developer". Do not center the article on coding.
+3. MINIMAL DEV PIVOT: You may include a SINGLE technical takeaway sentence in a "Technical Footnote" section only if it provides unique strategic value.
+4. ANALYTICAL DEPTH: Provide profound solutions and sharp criticisms. If a trend is failing, explain why from a business perspective.
+5. "THE NIGERIAN ANGLE": Dedicate a section to how this specific innovation or market shift impacts the local Nigerian ecosystem or youth empowerment.
+6. Tone: Authoritative, cynical yet optimistic, and deeply insightful.
+7. Structure:
+   - "The Strategic Hook": An opening for high-level thinkers.
+   - "The Profound Solution": Your unique strategic take on the problem.
+   - "Critical Analysis": Honest, sharp insights into the flaws and potential.
+   - "The Forward Look": What this means for tech in Africa.
+   - "Minimal Technical Footnote" (ONLY IF VALUABLE).
+   - "Actionable Strategy": A concrete takeaway for leaders.
 
-FORMAT: Start the file with exactly this YAML frontmatter block (fill in the placeholders):
+FORMAT: Start with exactly this YAML frontmatter:
 ---
-title: "[a sharp, authoritative title (e.g. 'The Fallacy of...', 'The Profound Future of...'), max 70 chars]"
+title: "[a sharp, professional title (e.g. 'The Strategic Deficit of...', 'The Profound Future of...'), max 70 chars]"
 date: "${today}"
 excerpt: "[a compelling 2-sentence hook that makes people want to read more]"
 category: "${category}"
