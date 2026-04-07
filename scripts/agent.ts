@@ -87,7 +87,8 @@ async function scrapeArticle(url: string): Promise<ScrapedData | null> {
 
     const title = $('h1').first().text().trim() || $('title').text().trim();
     const content = $('article, main, .post-content, .article-body, #article-body').text() || $('body').text();
-    const cleaned = content.replace(/\s+/g, ' ').replace(/\n+/g, ' ').trim().slice(0, 10000);
+    // LEAN MODE: Truncate to 4000 chars to stay under free tier daily token limits
+    const cleaned = content.replace(/\s+/g, ' ').replace(/\n+/g, ' ').trim().slice(0, 4000);
 
     if (!cleaned || cleaned.length < 300) {
       console.warn(`    ⚠ Extracted content too short (${cleaned.length} chars). Possible paywall or bot protection.`);
@@ -250,10 +251,9 @@ async function generateArticle(data: ScrapedData, category: string): Promise<str
   console.log(`  → Generating article with Gemini... (${data.sourceType})`);
   
   const modelsToTry = [
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash-latest',
-    'gemini-pro-latest'
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash'
   ];
   
   const prompt = buildPrompt(data, category);
