@@ -268,7 +268,7 @@ export default function AgentPage() {
                     href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'BigT001/samuelstanley'}/actions`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)] hover:underline opacity-80"
+                    className="ml-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)] hover:underline opacity-80"
                   >
                     Track progress on GitHub →
                   </a>
@@ -278,11 +278,113 @@ export default function AgentPage() {
           </div>
         )}
 
+        {/* Content Manager */}
+        {isAuthorized && <ContentManager secret={secret} key={result?.slug} />}
+
         {/* Footer info */}
         <p className="text-center text-[10px] text-[var(--text-secondary)] mt-8 opacity-40">
           Manual mode requires AGENT_SECRET. Automatic runs occur 4× daily.
         </p>
       </div>
+    </div>
+  );
+}
+
+function ContentManager({ secret }: { secret: string }) {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const fetchPosts = async () => {
+    try {
+      const res = await fetch(`/api/agent/list?secret=${encodeURIComponent(secret)}`);
+      const data = await res.json();
+      if (data.success) setPosts(data.posts);
+    } catch (err) {
+      console.error('Failed to load posts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (secret) fetchPosts();
+  }, [secret]);
+
+  const handleDelete = async (slug: string) => {
+    if (!confirm(`Are you sure you want to delete "${slug}"?`)) return;
+    setDeleting(slug);
+    try {
+      const res = await fetch('/api/agent/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, secret }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPosts(posts.filter(p => p.slug !== slug));
+      } else {
+        alert(data.error || 'Delete failed');
+      }
+    } catch (err) {
+      alert('Delete failed');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <div className="mt-8 rounded-3xl border border-[var(--border)] p-8 overflow-hidden" style={{ background: "var(--surface)", backdropFilter: "blur(20px)" }}>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+          <span className="text-lg">🗂️</span> Manage Content
+        </h2>
+        <button onClick={fetchPosts} className="text-xs text-[var(--text-secondary)] hover:text-[var(--coral)]">Refresh List</button>
+      </div>
+
+      {loading ? (
+        <div className="py-10 text-center animate-pulse text-[var(--text-secondary)]">Loading archive...</div>
+      ) : posts.length === 0 ? (
+        <div className="py-10 text-center text-sm text-[var(--text-secondary)] italic">Your archive is empty.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border)] text-[var(--text-secondary)] font-medium">
+                <th className="pb-3 pr-4">Title</th>
+                <th className="pb-3 pr-4">Category</th>
+                <th className="pb-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border)]">
+              {posts.map((post) => (
+                <tr key={post.slug} className="group">
+                  <td className="py-4 pr-4">
+                    <Link href={`/blog/${post.slug}`} target="_blank" className="font-medium text-[var(--text-primary)] hover:text-[var(--coral)] transition-colors line-clamp-1">
+                      {post.title}
+                    </Link>
+                    <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                      {new Date(post.date).toLocaleDateString()} · {post.slug}
+                    </div>
+                  </td>
+                  <td className="py-4 pr-4">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-[var(--border)]">{post.category}</span>
+                  </td>
+                  <td className="py-4 text-right">
+                    <button
+                      onClick={() => handleDelete(post.slug)}
+                      disabled={deleting === post.slug}
+                      className="text-xs text-red-400 hover:text-red-300 font-bold opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                    >
+                      {deleting === post.slug ? '...' : 'Delete'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
