@@ -111,191 +111,148 @@ export default function AgentPage() {
         </Link>
 
         {!isAuthorized ? (
-          /* Lock Screen UI */
-          <div className="rounded-3xl border border-[var(--border)] p-8 text-center" style={{ background: "var(--surface)", backdropFilter: "blur(20px)" }}>
-            <div className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl" style={{ background: "rgba(255,100,100,0.1)" }}>
+          /* UNIFIED CITADEL LOCK SCREEN */
+          <div className="rounded-3xl border border-[var(--border)] p-10 text-center shadow-2xl" style={{ background: "var(--surface)", backdropFilter: "blur(40px)" }}>
+            <div className="w-20 h-20 rounded-full mx-auto mb-8 flex items-center justify-center text-4xl shadow-inner" style={{ background: "rgba(255,100,100,0.05)", border: "1px solid rgba(255,255,255,0.05)" }}>
               🔒
             </div>
-            <h1 className="text-2xl font-extrabold text-[var(--text-primary)] mb-2">Access Restricted</h1>
-            <p className="text-sm text-[var(--text-secondary)] mb-8">Enter the Agent Secret to manage your content.</p>
+            <h1 className="text-3xl font-extrabold text-[var(--text-primary)] mb-3 tracking-tighter">Stanley’s Citadel</h1>
+            <p className="text-sm text-[var(--text-secondary)] mb-10 max-w-xs mx-auto leading-relaxed">System is encrypted. Provide the administrative secret to initialize the dashboard.</p>
 
-            <form onSubmit={handleVerify} className="space-y-4">
+            <form onSubmit={handleVerify} className="space-y-4 max-w-sm mx-auto">
               <input
                 type="password"
                 value={secret}
                 onChange={(e) => setSecret(e.target.value)}
-                placeholder="Agent Secret Key..."
+                placeholder="Administrative Secret Key..."
                 required
                 disabled={verifying}
                 autoFocus
-                className="w-full border border-[var(--border)] rounded-xl px-4 py-3.5 text-center text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--coral)] transition-colors disabled:opacity-50"
+                className="w-full border border-[var(--border)] rounded-2xl px-5 py-4 text-center text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--coral)] transition-all disabled:opacity-50 shadow-inner"
                 style={{ background: "var(--bg)" }}
               />
               <button
                 type="submit"
                 disabled={verifying || !secret.trim()}
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5"
-                style={{ background: "var(--coral)", boxShadow: "0 4px 20px rgba(255,77,77,0.3)" }}
+                className="w-full py-4 rounded-2xl font-bold text-sm text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 active:scale-95"
+                style={{ background: "var(--coral)", boxShadow: "0 8px 32px rgba(255,77,77,0.4)" }}
               >
-                {verifying ? "Verifying..." : "Unlock Access"}
+                {verifying ? "Initializing..." : "Unlock Dashboard"}
               </button>
             </form>
 
-            {error && <p className="mt-4 text-xs text-red-400 font-medium">❌ {error}</p>}
+            {error && <p className="mt-6 text-xs text-[var(--coral)] font-bold animate-pulse">✕ {error}</p>}
           </div>
         ) : (
-          /* Main Agent UI */
-          <div className="rounded-3xl border border-[var(--border)] p-8" style={{ background: "var(--surface)", backdropFilter: "blur(20px)" }}>
+          /* UNIFIED MISSION CONTROL */
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
             
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: "rgba(255,77,77,0.12)" }}>
-                  🤖
-                </div>
-                <div>
-                  <h1 className="text-2xl font-extrabold text-[var(--text-primary)]">AI Content Agent</h1>
-                  <p className="text-sm text-[var(--text-secondary)]">Powered by Gemini AI</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={async () => {
-                    const confirmLogout = confirm("Are you sure you want to logout?");
-                    if (confirmLogout) {
+            {/* GLOBAL TOOLBAR */}
+            <div className="flex items-center justify-between px-2">
+               <div className="flex items-center gap-3">
+                 <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
+                 <span className="text-[10px] uppercase font-black tracking-[0.3em] text-[var(--text-secondary)]">Secure Session Active</span>
+               </div>
+               <button 
+                  onClick={() => {
+                    if (confirm("Terminate administrative session?")) {
                       setIsAuthorized(false); 
                       setSecret("");
                       sessionStorage.removeItem('agent_secret');
                       window.location.reload(); 
                     }
                   }}
-                  className="px-3 py-1.5 rounded-xl border border-[var(--border)] text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] hover:text-red-400 hover:border-red-400/30 transition-all"
+                  className="group flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--coral)] hover:border-[var(--coral)] transition-all bg-[var(--surface)]"
                 >
-                  Logout 🔓
+                  Terminate Session <span className="text-sm">🔓</span>
                 </button>
-                <button 
-                  onClick={() => { setIsAuthorized(false); }}
-                  className="p-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-red-400 hover:border-red-400/30 transition-all"
-                  title="Lock Session"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                </button>
-              </div>
             </div>
 
-            <form onSubmit={handleRun} className="space-y-6">
-
-              {/* Mode selector */}
-              <div>
-                <label className="block text-sm font-semibold text-[var(--text-primary)] mb-3">Content Source</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {modes.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => { setMode(m.id); setUrl(""); }}
-                      className="flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all duration-200 text-xs font-medium"
-                      style={
-                        mode === m.id
-                          ? { borderColor: "var(--coral)", background: "rgba(255,77,77,0.08)", color: "var(--text-primary)" }
-                          : { borderColor: "var(--border)", color: "var(--text-secondary)", background: "transparent" }
-                      }
-                    >
-                      <span className="text-xl">{m.icon}</span>
-                      {m.label}
-                    </button>
-                  ))}
+            {/* AI AGENT CARD */}
+            <div className="rounded-3xl border border-[var(--border)] p-8 shadow-xl" style={{ background: "var(--surface)", backdropFilter: "blur(20px)" }}>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: "rgba(255,77,77,0.12)" }}>
+                  🤖
                 </div>
-                <p className="mt-2 text-xs text-[var(--text-secondary)]">
-                  {modes.find((m) => m.id === mode)?.description}
-                </p>
+                <div>
+                  <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight">AI Content Agent</h1>
+                  <p className="text-sm text-[var(--text-secondary)]">Strategic Content Generation Engine</p>
+                </div>
               </div>
 
-              {/* URL input (hidden for auto mode) */}
-              {mode !== "auto" && (
+              <form onSubmit={handleRun} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-[var(--text-primary)] mb-2">
-                    {mode === "youtube" ? "YouTube URL" : "Article URL"}
-                  </label>
-                  <input
-                    type="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder={urlPlaceholder}
-                    required
-                    disabled={loading}
-                    className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--coral)] transition-colors disabled:opacity-50"
-                    style={{ background: "var(--bg)" }}
-                  />
+                  <label className="block text-sm font-bold text-[var(--text-primary)] mb-3 opacity-80">Intelligence Source</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {modes.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => { setMode(m.id); setUrl(""); }}
+                        className="flex flex-col items-center gap-2 p-4 rounded-2xl border text-center transition-all duration-300 text-xs font-bold"
+                        style={
+                          mode === m.id
+                            ? { borderColor: "var(--coral)", background: "rgba(255,77,77,0.1)", color: "var(--text-primary)", boxShadow: "0 0 15px rgba(255,77,77,0.1)" }
+                            : { borderColor: "var(--border)", color: "var(--text-secondary)", background: "transparent" }
+                        }
+                      >
+                        <span className="text-2xl">{m.icon}</span>
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {mode !== "auto" && (
+                  <div className="animate-in slide-in-from-top-2 duration-300">
+                    <label className="block text-sm font-bold text-[var(--text-primary)] mb-2 opacity-80">
+                      Target {mode === "youtube" ? "YouTube" : "Article"} URL
+                    </label>
+                    <input
+                      type="url"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder={urlPlaceholder}
+                      required
+                      className="w-full border border-[var(--border)] rounded-2xl px-5 py-3.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--coral)] transition-all shadow-inner"
+                      style={{ background: "var(--bg)" }}
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || (mode !== "auto" && !url.trim())}
+                  className="w-full py-4 rounded-2xl font-black text-sm text-white transition-all duration-300 disabled:opacity-50 hover:-translate-y-1"
+                  style={{ background: "var(--coral)", boxShadow: "0 10px 40px rgba(255,77,77,0.3)" }}
+                >
+                  {loading ? "System Writing..." : `Execute Agent Run`}
+                </button>
+              </form>
+
+              {error && <div className="mt-6 p-4 rounded-2xl border border-red-500/20 text-xs font-bold text-[var(--coral)] bg-red-900/10">✕ {error}</div>}
+
+              {result && (
+                <div className="mt-6 p-6 rounded-2xl border border-green-500/20 bg-green-500/5 animate-in zoom-in-95 duration-500">
+                  <div className="flex items-center gap-3 font-black text-[10px] uppercase tracking-widest text-green-400 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    {result.status === 'dispatched' ? 'Engine Dispatched' : 'Content Secured'}
+                  </div>
+                  <h3 className="text-sm font-extrabold text-[var(--text-primary)] mb-2">{result.title || "Processing..."}</h3>
+                  {result.slug && (
+                    <Link href={`/blog/${result.slug}`} className="inline-flex items-center gap-2 text-xs font-bold text-[var(--coral)] hover:underline">
+                      View Live Post →
+                    </Link>
+                  )}
                 </div>
               )}
+            </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading || (mode !== "auto" && !url.trim())}
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5"
-                style={{ background: "var(--coral)", boxShadow: "0 4px 20px rgba(255,77,77,0.3)" }}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" /></svg>
-                    Thinking &amp; Writing…
-                  </span>
-                ) : (
-                  `Run Agent — ${modes.find((m) => m.id === mode)?.label}`
-                )}
-              </button>
-            </form>
+            {/* CONTENT MANAGER CARD */}
+            <ContentManager secret={secret} key={result?.slug} />
 
-            {/* Error */}
-            {error && (
-              <div className="mt-5 p-4 rounded-xl border border-red-500/20 text-sm text-red-100 bg-red-900/20">
-                ❌ {error}
-              </div>
-            )}
-
-            {/* Success */}
-            {result && (
-              <div className="mt-5 p-5 rounded-xl border border-green-500/20 bg-green-500/8">
-                <div className="flex items-center gap-2 font-semibold text-green-400 mb-2">
-                  <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
-                  {result.status === 'dispatched' ? 'GitHub Job Started!' : 'Post Published!'}
-                </div>
-                
-                <p className="text-sm text-[var(--text-secondary)] mb-4 leading-relaxed">
-                  {result.status === 'dispatched' 
-                    ? "I've sent the instructions to GitHub. The agent is now generating your post on the server. Your blog will automatically update and redeploy in about 2-3 minutes."
-                    : result.title
-                  }
-                </p>
-
-                {result.slug && (
-                  <Link
-                    href={`/blog/${result.slug}`}
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--coral)] hover:text-[var(--coral-light)] transition-colors"
-                  >
-                    View article →
-                  </Link>
-                )}
-                
-                {result.status === 'dispatched' && (
-                  <a 
-                    href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'BigT001/samuelstanley'}/actions`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)] hover:underline opacity-80"
-                  >
-                    Track progress on GitHub →
-                  </a>
-                )}
-              </div>
-            )}
           </div>
         )}
-
-        {/* Content Manager */}
-        {isAuthorized && <ContentManager secret={secret} key={result?.slug} />}
 
         {/* Footer info */}
         <p className="text-center text-[10px] text-[var(--text-secondary)] mt-8 opacity-40">
@@ -316,7 +273,7 @@ function ContentManager({ secret }: { secret: string }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/agent/list?secret=${encodeURIComponent(secret)}`);
+      const res = await fetch(`/api/agent/list`);
       const data = await res.json();
       if (data.success) {
         setPosts(data.posts);
@@ -331,8 +288,8 @@ function ContentManager({ secret }: { secret: string }) {
   };
 
   useEffect(() => {
-    if (secret) fetchPosts();
-  }, [secret]);
+    fetchPosts();
+  }, []);
 
   const handleDelete = async (slug: string) => {
     if (!confirm(`Are you sure you want to delete "${slug}"?`)) return;
@@ -341,7 +298,7 @@ function ContentManager({ secret }: { secret: string }) {
       const res = await fetch('/api/agent/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, secret }),
+        body: JSON.stringify({ slug }),
       });
       const data = await res.json();
       if (data.success) {
@@ -365,9 +322,9 @@ function ContentManager({ secret }: { secret: string }) {
           </h2>
           <div className="flex items-center gap-2 mt-1">
              <div className={`w-1.5 h-1.5 rounded-full ${posts.length > 0 ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-yellow-500'}`} />
-             <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-secondary)]">
-               {loading ? 'Analyzing...' : error ? 'Access Restricted' : `Authorized — ${posts.length} Posts`}
-             </span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-secondary)]">
+                {loading ? 'Analyzing...' : `Status: Live — ${posts.length} Posts`}
+              </span>
           </div>
         </div>
         <button onClick={fetchPosts} className="text-xs px-3 py-1 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-all">
@@ -377,11 +334,6 @@ function ContentManager({ secret }: { secret: string }) {
 
       {loading ? (
         <div className="py-10 text-center animate-pulse text-[var(--text-secondary)]">Loading archive...</div>
-      ) : error ? (
-        <div className="py-10 text-center">
-          <p className="text-sm text-red-400 font-medium mb-3">❌ {error}</p>
-          <button onClick={fetchPosts} className="text-xs px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Try Again</button>
-        </div>
       ) : posts.length === 0 ? (
         <div className="py-10 text-center text-sm text-[var(--text-secondary)] italic">Your archive is empty.</div>
       ) : (

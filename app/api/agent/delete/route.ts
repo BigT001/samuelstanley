@@ -6,10 +6,8 @@ export async function POST(req: NextRequest) {
   try {
     const { slug, secret } = await req.json();
 
-    // 1. Security Check
-    if (secret?.trim() !== process.env.AGENT_SECRET?.trim()) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid AGENT_SECRET' }, { status: 401 });
-    }
+    // Security Check - REMOVED AT USER REQUEST
+    // if (secret?.trim() !== process.env.AGENT_SECRET?.trim()) { ... }
 
     if (!slug) {
       return NextResponse.json({ error: 'Missing slug' }, { status: 400 });

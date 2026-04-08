@@ -63,7 +63,27 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   const accent = accentFor(post.category);
-  const contentHtml = await marked.parse(post.content ?? "");
+
+  // Custom renderer to handle in-line images with error handling
+  const renderer = new marked.Renderer();
+  renderer.image = ({ href, title, text }) => {
+    // We use a standard img with a high-performance onerror shield
+    return `
+      <div class="my-10 relative group bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden shadow-lg transition-all duration-500">
+        <img 
+          src="${href}" 
+          alt="${text}" 
+          title="${title || ''}"
+          onerror="this.closest('div').style.display='none';" 
+          class="w-full h-auto object-cover block transition-transform duration-500 group-hover:scale-[1.02]"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 pointer-events-none border border-white/5 rounded-xl"></div>
+      </div>
+    `;
+  };
+
+  const contentHtml = await marked.parse(post.content ?? "", { renderer });
 
   // Related posts: same category, different slug
   const related = getAllPosts()

@@ -9,18 +9,8 @@ export async function GET(req: NextRequest) {
     const expected = (process.env.AGENT_SECRET || '').trim();
     const received = (secret || '').trim();
 
-    // Security Check
-    if (received !== expected) {
-      console.error('❌ AUTH ERROR (LIST):', { 
-        receivedLength: received.length, 
-        expectedLength: expected.length,
-        receivedFirst: received[0],
-        expectedFirst: expected[0],
-        receivedLast: received[received.length - 1],
-        expectedLast: expected[expected.length - 1]
-      });
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Security Check - REMOVED AT USER REQUEST
+    // if (received !== expected) { ... }
 
     const posts = getAllPosts();
     console.log(`🔍 [API/LIST] Found ${posts.length} posts in folder.`);
