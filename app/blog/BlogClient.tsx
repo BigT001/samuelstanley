@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { BlogPost } from "@/lib/blog";
+import BlogImage from "@/app/components/BlogImage";
 import { Starfield } from "../components/Starfield";
 import { HireMeSection } from "../components/HireMeSection";
 
@@ -38,7 +39,6 @@ function CategoryPill({ label, active, onClick }: { label: string; active: boole
 // ─── Featured Card ────────────────────────────────────────────────────────────
 function FeaturedCard({ post }: { post: BlogPost }) {
   const accent = accentFor(post.category);
-  const [imgError, setImgError] = useState(false);
 
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
@@ -58,20 +58,7 @@ function FeaturedCard({ post }: { post: BlogPost }) {
           <span className="text-[11px] text-[var(--text-secondary)]">· {post.readTime}</span>
         </div>
 
-        {post.coverImage && !imgError ? (
-          <div className="relative aspect-[16/7] overflow-hidden rounded-xl mb-6 border border-[var(--border)] bg-[var(--bg)]">
-            <img 
-              src={post.coverImage} 
-              alt={post.title} 
-              onError={() => setImgError(true)}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          </div>
-        ) : (
-          <div className="relative aspect-[16/7] overflow-hidden rounded-xl mb-6 border border-[var(--border)] opacity-20 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${accent}44, transparent)` }}>
-             <span className="text-4xl">{post.category === 'Nigeria' ? '🇳🇬' : '🛰️'}</span>
-          </div>
-        )}
+        <BlogImage src={post.coverImage || ''} alt={post.title} category={post.category} aspect="aspect-[16/7]" />
 
         <div className="flex items-center gap-2 mb-3">
           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm" style={{ borderLeft: `3px solid ${accent}`, background: `${accent}10`, color: accent }}>
@@ -103,7 +90,6 @@ function FeaturedCard({ post }: { post: BlogPost }) {
 // ─── Regular Post Card ────────────────────────────────────────────────────────
 function PostCard({ post }: { post: BlogPost }) {
   const accent = accentFor(post.category);
-  const [imgError, setImgError] = useState(false);
 
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
@@ -113,20 +99,7 @@ function PostCard({ post }: { post: BlogPost }) {
       >
         <div className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" style={{ background: `linear-gradient(to right, transparent, ${accent}, transparent)` }} />
 
-        {post.coverImage && !imgError ? (
-          <div className="relative aspect-[16/9] overflow-hidden rounded-lg mb-5 border border-[var(--border)] bg-[var(--bg)]">
-            <img 
-              src={post.coverImage} 
-              alt={post.title} 
-              onError={() => setImgError(true)}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          </div>
-        ) : (
-          <div className="relative aspect-[16/9] overflow-hidden rounded-lg mb-5 border border-[var(--border)] opacity-20 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${accent}33, transparent)` }}>
-             <span className="text-2xl">{post.category === 'Nigeria' ? '🇳🇬' : '🛰️'}</span>
-          </div>
-        )}
+        <BlogImage src={post.coverImage || ''} alt={post.title} category={post.category} aspect="aspect-[16/9]" />
 
         <div className="flex items-center gap-2 mb-3">
           <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm" style={{ borderLeft: `3px solid ${accent}`, background: `${accent}12`, color: accent }}>{post.category}</span>
