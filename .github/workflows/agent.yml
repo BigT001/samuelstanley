@@ -2,9 +2,11 @@ name: AI Blog Content Agent
 
 on:
   schedule:
-    # Publishes 2 posts per day to stay within Free Tier quotas
+    # Publishes 4 posts per day at: 6AM, 10AM, 2PM, 7PM (UTC)
     - cron: '0 6  * * *'
-    - cron: '0 18 * * *'
+    - cron: '0 10 * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 19 * * *'
   workflow_dispatch:  # Allows manual trigger from GitHub Actions UI
     inputs:
       url:

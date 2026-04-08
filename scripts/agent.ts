@@ -13,17 +13,23 @@ const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
 // ─── News Sources ─────────────────────────────────────────────────────────────
 // Narrowed to provide high-end Business, Venture, Fintech, and Tech strategy
 const RSS_SOURCES = [
-  // Global Market & Venture Trends
+  // GLOBAL STRATEGY & VENTURE
   { url: 'https://news.google.com/rss/search?q=venture+capital+funding+tech+trends&hl=en-US&gl=US', category: 'Venture' },
   { url: 'https://news.google.com/rss/search?q=global+business+innovation+and+strategy', category: 'Business' },
   { url: 'https://news.google.com/rss/search?q=future+of+digital+finance+and+banking', category: 'Fintech' },
-  // African Startup & Economic Innovation
-  { url: 'https://news.google.com/rss/search?q=nigeria+tech+startups+funding+fintech', category: 'Nigeria' },
-  { url: 'https://news.google.com/rss/search?q=africa+startup+funding+news+and+analysis', category: 'Business' },
-  { url: 'https://news.google.com/rss/search?q=high+tech+manufacturing+and+innovation+africa', category: 'Innovation' },
-  // Professional Tech & AI Strategy
-  { url: 'https://news.google.com/rss/search?q=artificial+intelligence+for+enterprise+strategy', category: 'AI' },
-  { url: 'https://news.google.com/rss/search?q=quantum+computing+and+future+technologies', category: 'Innovation' },
+  { url: 'https://venturebeat.com/category/entrepreneur/feed/', category: 'Venture' },
+  { url: 'https://www.mckinsey.com/featured-insights/rss.xml', category: 'Innovation' },
+  
+  // AFRICAN STARTUP & ECONOMIC INNOVATION
+  { url: 'https://techcabal.com/feed/', category: 'Nigeria' },
+  { url: 'https://disrupt-africa.com/feed/', category: 'Venture' },
+  { url: 'https://news.google.com/rss/search?q=nigeria+economy+and+youth+empowerment+tech', category: 'Nigeria' },
+  { url: 'https://news.google.com/rss/search?q=central+bank+of+nigeria+fintech+regulations', category: 'Fintech' },
+  
+  // EMERGING TECH SECRETS
+  { url: 'https://news.google.com/rss/search?q=generative+ai+business+adoption+strategies', category: 'AI' },
+  { url: 'https://news.google.com/rss/search?q=semiconductor+industry+geopolitics+innovation', category: 'Innovation' },
+  { url: 'https://news.google.com/rss/search?q=renewable+energy+innovation+africa+funding', category: 'Innovation' }
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -93,18 +99,19 @@ async function scrapeArticle(url: string, category: string): Promise<ScrapedData
                      image.includes('news.google') || 
                      image.includes('youtube.com/img') ||
                      image.includes('/logo') ||
+                     image.includes('favicon') ||
                      image.includes('icon-') ||
-                     image.length < 15; // Too short to be a real URL
+                     image.length < 25; // Too short to be a valid absolute URL
     
     if (isGeneric) {
-      // Curated photo pools for a "Premium Business Journal" look
+      // PREMIUM CURATED STOCK POOLS
       const pools: Record<string, string[]> = {
-        'Innovation': ['1451187580241-7f57548a608d', '1485827404703-89b55fcc595e', '1519389950473-47ba0277781c'],
-        'Business': ['1460925895917-afdab827c52f', '1504384308090-c564bd4668a3', '1507679799987-c7377f0f49f9'],
-        'AI': ['1677442136019-21780ecad995', '1485827404703-89b55fcc595e', '1531297484001-80022131f5a1'],
-        'Nigeria': ['1550005810-ca9161a0215a', '1520110120302-851250430b42', '1611273298532-a31c62b0f89d'],
-        'Fintech': ['1551288049-bebda4e38f71', '1563986768609-322da13575f3', '1550565114-1f061e808383'],
-        'Venture': ['1460925895917-afdab827c52f', '1454165833467-cd356ed9942e', '1553484771-3710605d0b92']
+        'Innovation': ['1451187580241-7f57548a608d', '1485827404703-89b55fcc595e', '1519389950473-47ba0277781c', '1526628953301-3e589a6a127e'],
+        'Business': ['1460925895917-afdab827c52f', '1504384308090-c564bd4668a3', '1507679799987-c7377f0f49f9', '1553484771-3710605d0b92'],
+        'AI': ['1677442136019-21780ecad995', '1485827404703-89b55fcc595e', '1531297484001-80022131f5a1', '1620712946101-da6128032483'],
+        'Nigeria': ['1550005810-ca9161a0215a', '1520110120302-851250430b42', '1611273298532-a31c62b0f89d', '1589133860010-388e40439603'],
+        'Fintech': ['1551288049-bebda4e38f71', '1563986768609-322da13575f3', '1550565114-1f061e808383', '1526304640581-d334cd06f69d'],
+        'Venture': ['1460925895917-afdab827c52f', '1454165833467-cd356ed9942e', '1553484771-3710605d0b92', '1552664730-d307ca884978']
       };
       const pool = pools[category] || pools['Business'];
       const photoId = pool[Math.floor(Math.random() * pool.length)];
@@ -195,11 +202,22 @@ REQUIREMENTS:
    - "Minimal Technical Footnote" (ONLY IF VALUABLE).
    - "Actionable Strategy": A concrete takeaway for leaders.
 
+IMPORTANT:
+- TONE: Professional, CLEAR, and accessible. Avoid unnecessary "SAT vocabulary" or convoluted grammar.
+- IMAGES: Use markdown ![caption](url) to inject 2-3 relevant images from the list below into the BODY of the article.
+
+STOCK IMAGE POOL (Use these URLs in the body):
+- https://images.unsplash.com/photo-1454165833467-cd356ed9942e?q=80&w=1200&auto=format&fit=crop (Business Strategy)
+- https://images.unsplash.com/photo-1526304640581-d334cd06f69d?q=80&w=1200&auto=format&fit=crop (Finance/Data)
+- https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop (Modern Innovation)
+- https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop (Growth/Charts)
+- https://images.unsplash.com/photo-1550005810-ca9161a0215a?q=80&w=1200&auto=format&fit=crop (Nigeria/Infrastructure)
+
 FORMAT: Start with exactly this YAML frontmatter:
 ---
 title: "[a sharp, professional title (e.g. 'The Strategic Deficit of...', 'The Profound Future of...'), max 70 chars]"
 date: "${today}"
-excerpt: "[a compelling 2-sentence hook that makes people want to read more]"
+excerpt: "[a compelling  hook for leaders]"
 category: "${category}"
 tags: ${tags}
 image: "${data.image || ''}"
@@ -282,9 +300,14 @@ async function generateArticle(data: ScrapedData, category: string): Promise<str
   console.log(`  → Generating article with Gemini... (${data.sourceType})`);
   
   const modelsToTry = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-8b' // The '8b' variant has higher rate limits, perfect for free tier fallback
+    'gemini-flash-latest',       // Priority 1
+    'gemini-2.5-flash',         // Priority 2
+    'gemini-flash-lite-latest',  // Priority 3
+    'gemini-1.5-flash',         // Standard fallback
+    'gemini-1.5-flash-latest',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro',
+    'gemini-pro'
   ];
   
   const prompt = buildPrompt(data, category);
