@@ -158,13 +158,29 @@ export default function AgentPage() {
                   <p className="text-sm text-[var(--text-secondary)]">Powered by Gemini AI</p>
                 </div>
               </div>
-              <button 
-                onClick={() => { setIsAuthorized(false); sessionStorage.removeItem('agent_secret'); }}
-                className="p-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-red-400 hover:border-red-400/30 transition-all"
-                title="Lock Session"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={async () => {
+                    const confirmLogout = confirm("Are you sure you want to logout?");
+                    if (confirmLogout) {
+                      setIsAuthorized(false); 
+                      setSecret("");
+                      sessionStorage.removeItem('agent_secret');
+                      window.location.reload(); 
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl border border-[var(--border)] text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] hover:text-red-400 hover:border-red-400/30 transition-all"
+                >
+                  Logout 🔓
+                </button>
+                <button 
+                  onClick={() => { setIsAuthorized(false); }}
+                  className="p-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-red-400 hover:border-red-400/30 transition-all"
+                  title="Lock Session"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleRun} className="space-y-6">
@@ -293,15 +309,22 @@ export default function AgentPage() {
 function ContentManager({ secret }: { secret: string }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchPosts = async () => {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetch(`/api/agent/list?secret=${encodeURIComponent(secret)}`);
       const data = await res.json();
-      if (data.success) setPosts(data.posts);
+      if (data.success) {
+        setPosts(data.posts);
+      } else {
+        setError(data.error || "Failed to load archive");
+      }
     } catch (err) {
-      console.error('Failed to load posts');
+      setError("Network error: Could not connect to list API");
     } finally {
       setLoading(false);
     }
@@ -336,14 +359,29 @@ function ContentManager({ secret }: { secret: string }) {
   return (
     <div className="mt-8 rounded-3xl border border-[var(--border)] p-8 overflow-hidden" style={{ background: "var(--surface)", backdropFilter: "blur(20px)" }}>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
-          <span className="text-lg">🗂️</span> Manage Content
-        </h2>
-        <button onClick={fetchPosts} className="text-xs text-[var(--text-secondary)] hover:text-[var(--coral)]">Refresh List</button>
+        <div>
+          <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <span className="text-lg">🗂️</span> Manage Content
+          </h2>
+          <div className="flex items-center gap-2 mt-1">
+             <div className={`w-1.5 h-1.5 rounded-full ${posts.length > 0 ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-yellow-500'}`} />
+             <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-secondary)]">
+               {loading ? 'Analyzing...' : error ? 'Access Restricted' : `Authorized — ${posts.length} Posts`}
+             </span>
+          </div>
+        </div>
+        <button onClick={fetchPosts} className="text-xs px-3 py-1 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-all">
+          Refresh List
+        </button>
       </div>
 
       {loading ? (
         <div className="py-10 text-center animate-pulse text-[var(--text-secondary)]">Loading archive...</div>
+      ) : error ? (
+        <div className="py-10 text-center">
+          <p className="text-sm text-red-400 font-medium mb-3">❌ {error}</p>
+          <button onClick={fetchPosts} className="text-xs px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Try Again</button>
+        </div>
       ) : posts.length === 0 ? (
         <div className="py-10 text-center text-sm text-[var(--text-secondary)] italic">Your archive is empty.</div>
       ) : (

@@ -282,9 +282,9 @@ async function generateArticle(data: ScrapedData, category: string): Promise<str
   console.log(`  → Generating article with Gemini... (${data.sourceType})`);
   
   const modelsToTry = [
-    'gemini-2.5-flash',
     'gemini-2.0-flash',
-    'gemini-1.5-flash'
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b' // The '8b' variant has higher rate limits, perfect for free tier fallback
   ];
   
   const prompt = buildPrompt(data, category);
