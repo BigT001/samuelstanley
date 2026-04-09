@@ -23,7 +23,7 @@ export function FooterSection() {
             <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f4ff" }}>LinkedIn</span>
             <span style={{ fontSize: "0.82rem", color: "#8892b0" }}>Connect with me</span>
           </a>
-          <a href="/Samuel-Stanley-CV.pdf" target="_blank" rel="noopener noreferrer" className="cta-card" id="cta-cv">
+          <a href="/Samuel-Stanley-Resume.pdf" target="_blank" rel="noopener noreferrer" className="cta-card" id="cta-cv">
             <span style={{ fontSize: "1.75rem", color: "#ff4d4d" }}>📎</span>
             <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f4ff" }}>Resume</span>
             <span style={{ fontSize: "0.82rem", color: "#8892b0" }}>View & Download CV</span>

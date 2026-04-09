@@ -75,7 +75,7 @@ export function HeroSection() {
       {/* Actions */}
       <div className="reveal reveal-up reveal-delay-6 flex flex-wrap justify-center gap-4 mb-10">
         <a 
-          href="/Samuel-Stanley-CV.pdf" 
+          href="/Samuel-Stanley-Resume.pdf" 
           target="_blank"
           rel="noopener noreferrer"
           className="px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-300 flex items-center gap-2 group"
