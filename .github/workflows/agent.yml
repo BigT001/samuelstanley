@@ -3,7 +3,7 @@ name: AI Blog Content Agent
 on:
   schedule:
     # Publishes 4 posts per day at: 6AM, 10AM, 2PM, 7PM (UTC)
-    - cron: '0 6  * * *'
+    - cron: '0 6 * * *'
     - cron: '0 10 * * *'
     - cron: '0 14 * * *'
     - cron: '0 19 * * *'
