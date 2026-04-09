@@ -252,6 +252,13 @@ function buildTags(category: string): string {
     Career: '["Career", "Freelance", "Developer Life"]',
     DevOps: '["DevOps", "Infrastructure", "Cloud"]',
     TypeScript: '["TypeScript", "JavaScript", "Code"]',
+    Finance: '["Finance", "Stock Market", "NGX", "Investment"]',
+    Agriculture: '["Agriculture", "Agritech", "Farming", "Nigeria"]',
+    Grants: '["Grants", "Funding", "Small Business", "Nigeria"]',
+    Tech: '["Tech", "Innovation", "Digital"]',
+    Venture: '["Venture Capital", "Startups", "Investment"]',
+    Innovation: '["Innovation", "Technology", "Future"]',
+    Fintech: '["Fintech", "Finance", "Banking", "Nigeria"]',
   };
   return tagMap[category] ?? '["Tech", "Development"]';
 }
