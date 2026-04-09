@@ -69,16 +69,6 @@ export default function Home() {
               Blog
             </a>
 
-            {/* Resume */}
-            <a
-              href="/Samuel-Stanley-Resume.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-bold tracking-wide text-[var(--text-primary)] hover:text-[var(--coral)] transition-colors"
-            >
-              Resume
-            </a>
-
             {/* Agent UI — dev only */}
             {process.env.NODE_ENV === "development" && (
               <a

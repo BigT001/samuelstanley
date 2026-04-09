@@ -5,9 +5,9 @@ export function FooterSection() {
       <section
         id="links"
         className="reveal reveal-up w-full max-w-6xl mx-auto px-4 md:px-8"
-        style={{ paddingBottom: "4rem" }}
+        style={{ paddingBottom: "2rem", display: "none" }}
       >
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }} className="cta-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }} className="cta-grid">
           <a href="mailto:samuel@samuelstanley.dev" className="cta-card" id="cta-email">
             <span style={{ fontSize: "1.75rem", color: "#ff4d4d" }}>✉</span>
             <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f4ff" }}>Email Me</span>
