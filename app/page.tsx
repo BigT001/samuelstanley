@@ -71,7 +71,7 @@ export default function Home() {
 
             {/* Resume */}
             <a
-              href="/cv/cv.pdf"
+              href="/Samuel-Stanley-CV.pdf"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-bold tracking-wide text-[var(--text-primary)] hover:text-[var(--coral)] transition-colors"
