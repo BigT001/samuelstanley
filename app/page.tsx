@@ -72,7 +72,8 @@ export default function Home() {
             {/* Resume */}
             <a
               href="/cv/cv.pdf"
-              download="Samuel_Stanley_CV.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm font-bold tracking-wide text-[var(--text-primary)] hover:text-[var(--coral)] transition-colors"
             >
               Resume
