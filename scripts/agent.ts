@@ -13,23 +13,40 @@ const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
 // ─── News Sources ─────────────────────────────────────────────────────────────
 // Narrowed to provide high-end Business, Venture, Fintech, and Tech strategy
 const RSS_SOURCES = [
-  // GLOBAL STRATEGY & VENTURE
-  { url: 'https://news.google.com/rss/search?q=venture+capital+funding+tech+trends&hl=en-US&gl=US', category: 'Venture' },
-  { url: 'https://news.google.com/rss/search?q=global+business+innovation+and+strategy', category: 'Business' },
-  { url: 'https://news.google.com/rss/search?q=future+of+digital+finance+and+banking', category: 'Fintech' },
-  { url: 'https://venturebeat.com/category/entrepreneur/feed/', category: 'Venture' },
-  { url: 'https://www.mckinsey.com/featured-insights/rss.xml', category: 'Innovation' },
-  
-  // AFRICAN STARTUP & ECONOMIC INNOVATION
+  // AFRICAN BUSINESS & TECH PLATFORMS
   { url: 'https://techcabal.com/feed/', category: 'Nigeria' },
-  { url: 'https://disrupt-africa.com/feed/', category: 'Venture' },
-  { url: 'https://news.google.com/rss/search?q=nigeria+economy+and+youth+empowerment+tech', category: 'Nigeria' },
-  { url: 'https://news.google.com/rss/search?q=central+bank+of+nigeria+fintech+regulations', category: 'Fintech' },
+  { url: 'https://techpoint.africa/feed/', category: 'Nigeria' },
+  { url: 'https://businessday.ng/feed/', category: 'Business' },
+  { url: 'https://weetracker.com/feed/', category: 'Venture' },
+  { url: 'https://technologytimes.ng/feed/', category: 'Nigeria' },
+  { url: 'https://www.techcityng.com/feed/', category: 'Tech' },
+  { url: 'https://news.google.com/rss/search?q=site:techafricanews.com+tech+business', category: 'Innovation' },
+  { url: 'https://nairametrics.com/feed/', category: 'Business' },
+
+  // STOCK MARKET TRENDS & ANALYSIS (NIGERIA)
+  { url: 'https://news.google.com/rss/search?q=nigeria+stock+market+ngx+simply+wall+st', category: 'Finance' },
+  { url: 'https://news.google.com/rss/search?q=nigeria+trading+economics+stocks', category: 'Finance' },
   
-  // EMERGING TECH SECRETS
-  { url: 'https://news.google.com/rss/search?q=generative+ai+business+adoption+strategies', category: 'AI' },
-  { url: 'https://news.google.com/rss/search?q=semiconductor+industry+geopolitics+innovation', category: 'Innovation' },
-  { url: 'https://news.google.com/rss/search?q=renewable+energy+innovation+africa+funding', category: 'Innovation' }
+  // AGRICULTURAL TRENDS & AGRIBUSINESS
+  { url: 'https://news.google.com/rss/search?q=nigeria+agriculture+cropsense+agritech', category: 'Agriculture' },
+  { url: 'https://news.google.com/rss/search?q=nigeria+ministry+of+agriculture+fmafs', category: 'Agriculture' },
+  { url: 'https://news.google.com/rss/search?q=nigeria+investment+promotion+commission+nipc+business', category: 'Agriculture' },
+  
+  // GOVERNMENT GRANTS, LOANS, & SMALL BUSINESS OPPORTUNITIES
+  { url: 'https://news.google.com/rss/search?q=nigeria+federal+government+grant+presidential', category: 'Grants' },
+  { url: 'https://news.google.com/rss/search?q=bank+of+industry+boi+intervention+portal+msme', category: 'Grants' },
+  { url: 'https://news.google.com/rss/search?q=smedan+loans+matching+fund+nigeria+business', category: 'Grants' },
+  { url: 'https://news.google.com/rss/search?q=nirsal+microfinance+bank+agsmeis+loans', category: 'Grants' },
+  { url: 'https://news.google.com/rss/search?q=nelfund+student+loans+nigeria', category: 'Grants' },
+  
+  // PRIVATE & NON-PROFIT GRANTS
+  { url: 'https://news.google.com/rss/search?q=tony+elumelu+foundation+tef+grants+entrepreneurs', category: 'Grants' },
+  { url: 'https://news.google.com/rss/search?q=fundsforngos+nigeria+youth+futures+fund+nyff', category: 'Grants' },
+  { url: 'https://news.google.com/rss/search?q=scholarshipair+nigeria+entrepreneurship', category: 'Grants' },
+
+  // GLOBAL TECH
+  { url: 'https://news.google.com/rss/search?q=cnn+business+tech+news', category: 'Tech' },
+  { url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19854910', category: 'Business' } // CNBC Tech
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -179,32 +196,27 @@ function buildPrompt(data: ScrapedData, category: string): string {
   const tags = buildTags(category);
 
   return `
-You are the primary voice of "Stanley's Log", a high-end publication for technical insights, venture capital, and strategic innovation.
-Focus 100% on high-level strategy, business impact, and profound market solutions.
+You are Samuel Stanley, a developer and tech enthusiast running "Stanley's Log". 
+This is your personal blog where you share your genuine opinions, perspectives, and advice.
 
 ${sourceNote}
 
 ${isYT ? `Raw Source Transcript:` : `Source Content:`}
 ${data.content}
 
-REQUIREMENTS:
-1. AUDIENCE: Professional Industry Leaders, Venture Capitalists, and High-Tech Entrepreneurs.
-2. NO DEVELOPER TALK: Do not address the reader as a "developer". Do not center the article on coding.
-3. MINIMAL DEV PIVOT: You may include a SINGLE technical takeaway sentence in a "Technical Footnote" section only if it provides unique strategic value.
-4. ANALYTICAL DEPTH: Provide profound solutions and sharp criticisms. If a trend is failing, explain why from a business perspective.
-5. "THE NIGERIAN ANGLE": Dedicate a section to how this specific innovation or market shift impacts the local Nigerian ecosystem or youth empowerment.
-6. Tone: Authoritative, cynical yet optimistic, and deeply insightful.
-7. Structure:
-   - "The Strategic Hook": An opening for high-level thinkers.
-   - "The Profound Solution": Your unique strategic take on the problem.
-   - "Critical Analysis": Honest, sharp insights into the flaws and potential.
-   - "The Forward Look": What this means for tech in Africa.
-   - "Minimal Technical Footnote" (ONLY IF VALUABLE).
-   - "Actionable Strategy": A concrete takeaway for leaders.
+CRITICAL INSTRUCTIONS FOR TONE AND STYLE:
+1. FIRST-PERSON PERSPECTIVE: Write completely in the first-person ("I", "my view", "from my perspective", "as a developer"). This must sound exactly like a real human expressing their own thoughts. 
+2. HIGHLY HUMAN & AUTHENTIC: Do NOT sound like an AI. Avoid robotic structures, typical AI buzzwords ("In conclusion", "delve into", "multifaceted", "a testament to"), and overly formal phrasing. Write conversationally but professionally, like a passionate developer talking to a colleague.
+3. YOUR VOICE: You are lending your voice as a software developer to help people, startups, and businesses grow. Share your candid opinion on the source content. Provide your unique take.
+4. FOCUS AREAS: Depending on the article's core subject, naturally tie your thoughts to its SPECIFIC nuances (e.g., specific stock trends, practical agritech tools, precise grant application logic). 
+   **CRITICAL AVOID REPETITION:** DO NOT repeat generic, pre-packaged narratives about "Nigerian youth empowerment" or "the vast potential of the startup ecosystem" in every single article. Every post MUST have a completely unique angle and observation derived purely from the fresh source data.
+5. NO GENERIC AI SUMMARIES: Do not just summarize the article. Use the article as a springboard to share YOUR original, unrepeated opinion on the matter. You can disagree, be critical, or be excited about it.
 
-IMPORTANT:
-- TONE: Professional, CLEAR, and accessible. Avoid unnecessary "SAT vocabulary" or convoluted grammar.
-- IMAGES: Use markdown ![caption](url) to inject 2-3 relevant images from the list below into the BODY of the article.
+FORMATTING AND STRUCTURE:
+- Use natural headings (not robotic ones).
+- Keep paragraphs relatively short and readable.
+- If relevant, include a section on how this directly impacts Nigerian startups or small businesses.
+- Inject 2-3 relevant images from the list below naturally into the flow using standard Markdown: ![A descriptive caption](url)
 
 STOCK IMAGE POOL (Use these URLs in the body):
 - https://images.unsplash.com/photo-1454165833467-cd356ed9942e?q=80&w=1200&auto=format&fit=crop (Business Strategy)
@@ -215,9 +227,9 @@ STOCK IMAGE POOL (Use these URLs in the body):
 
 FORMAT: Start with exactly this YAML frontmatter:
 ---
-title: "[a sharp, professional title (e.g. 'The Strategic Deficit of...', 'The Profound Future of...'), max 70 chars]"
+title: "[Write a catchy, non-clickbaity, human-sounding title, max 70 chars]"
 date: "${today}"
-excerpt: "[a compelling  hook for leaders]"
+excerpt: "[Write a highly conversational, personal hook...]"
 category: "${category}"
 tags: ${tags}
 image: "${data.image || ''}"
