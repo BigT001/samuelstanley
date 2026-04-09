@@ -5,9 +5,9 @@ export function FooterSection() {
       <section
         id="links"
         className="reveal reveal-up w-full max-w-6xl mx-auto px-4 md:px-8"
-        style={{ paddingBottom: "2rem", display: "none" }}
+        style={{ paddingBottom: "4rem" }}
       >
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }} className="cta-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }} className="cta-grid">
           <a href="mailto:samuel@samuelstanley.dev" className="cta-card" id="cta-email">
             <span style={{ fontSize: "1.75rem", color: "#ff4d4d" }}>✉</span>
             <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f4ff" }}>Email Me</span>
@@ -23,10 +23,10 @@ export function FooterSection() {
             <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f4ff" }}>LinkedIn</span>
             <span style={{ fontSize: "0.82rem", color: "#8892b0" }}>Connect with me</span>
           </a>
-          <a href="#" className="cta-card" id="cta-cv">
-            <span style={{ fontSize: "1.75rem", color: "#ff4d4d" }}>☆</span>
-            <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f4ff" }}>Resume</span>
-            <span style={{ fontSize: "0.82rem", color: "#8892b0" }}>Download my CV</span>
+          <a href="/cv/cv.pdf" download="Samuel_Stanley_CV.pdf" className="cta-card" id="cta-cv">
+            <span style={{ fontSize: "1.75rem", color: "#ff4d4d" }}>📎</span>
+            <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#f0f4ff" }}>Download CV</span>
+            <span style={{ fontSize: "0.82rem", color: "#8892b0" }}>Get my full resume</span>
           </a>
         </div>
       </section>

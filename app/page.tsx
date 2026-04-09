@@ -69,6 +69,15 @@ export default function Home() {
               Blog
             </a>
 
+            {/* Resume */}
+            <a
+              href="/cv/cv.pdf"
+              download="Samuel_Stanley_CV.pdf"
+              className="text-sm font-bold tracking-wide text-[var(--text-primary)] hover:text-[var(--coral)] transition-colors"
+            >
+              Resume
+            </a>
+
             {/* Agent UI — dev only */}
             {process.env.NODE_ENV === "development" && (
               <a
