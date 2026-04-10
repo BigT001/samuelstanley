@@ -9,44 +9,39 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const rssParser = new Parser();
 const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
+const HISTORY_FILE = path.join(process.cwd(), 'scripts', 'agent-history.json');
+
+// ─── Content Filtering ────────────────────────────────────────────────────────
+const NEGATIVE_KEYWORDS = [
+  'geopolitical', 'ceasefire', 'war', 'israel', 'iran', 'lebanon', 'hezbollah',
+  'military', 'diplomacy', 'nuclear', 'sanctions', 'ministry', 'government',
+  'politics', 'election', 'protest', 'governor', 'senate', 'presidency'
+];
 
 // ─── News Sources ─────────────────────────────────────────────────────────────
-// Narrowed to provide high-end Business, Venture, Fintech, and Tech strategy
 const RSS_SOURCES = [
-  // AFRICAN BUSINESS & TECH PLATFORMS
+  // NIGERIA TECH & STARTUPS (Highest Priority)
   { url: 'https://techcabal.com/feed/', category: 'Nigeria' },
   { url: 'https://techpoint.africa/feed/', category: 'Nigeria' },
-  { url: 'https://businessday.ng/feed/', category: 'Business' },
-  { url: 'https://weetracker.com/feed/', category: 'Venture' },
+  { url: 'https://benjamindada.com/feed/', category: 'Nigeria' },
+  { url: 'https://www.techcityng.com/feed/', category: 'Nigeria' },
   { url: 'https://technologytimes.ng/feed/', category: 'Nigeria' },
-  { url: 'https://www.techcityng.com/feed/', category: 'Tech' },
-  { url: 'https://news.google.com/rss/search?q=site:techafricanews.com+tech+business', category: 'Innovation' },
-  { url: 'https://nairametrics.com/feed/', category: 'Business' },
+  { url: 'https://nairametrics.com/category/tech/feed/', category: 'Fintech' },
+  
+  // BUSINESS & VENTURE (AFRICA FOCUS)
+  { url: 'https://businessday.ng/category/technology/feed/', category: 'Business' },
+  { url: 'https://weetracker.com/feed/', category: 'Venture' },
+  { url: 'https://disrupt-africa.com/feed/', category: 'Venture' },
+  
+  // PRACTICAL DEV & ENGINEERING
+  { url: 'https://dev.to/feed', category: 'Engineering' },
+  { url: 'https://hashnode.com/res/rss.xml', category: 'Engineering' },
+  { url: 'https://hackernoon.com/feed', category: 'Tech' },
 
-  // STOCK MARKET TRENDS & ANALYSIS (NIGERIA)
-  { url: 'https://news.google.com/rss/search?q=nigeria+stock+market+ngx+simply+wall+st', category: 'Finance' },
-  { url: 'https://news.google.com/rss/search?q=nigeria+trading+economics+stocks', category: 'Finance' },
-  
-  // AGRICULTURAL TRENDS & AGRIBUSINESS
-  { url: 'https://news.google.com/rss/search?q=nigeria+agriculture+cropsense+agritech', category: 'Agriculture' },
-  { url: 'https://news.google.com/rss/search?q=nigeria+ministry+of+agriculture+fmafs', category: 'Agriculture' },
-  { url: 'https://news.google.com/rss/search?q=nigeria+investment+promotion+commission+nipc+business', category: 'Agriculture' },
-  
-  // GOVERNMENT GRANTS, LOANS, & SMALL BUSINESS OPPORTUNITIES
-  { url: 'https://news.google.com/rss/search?q=nigeria+federal+government+grant+presidential', category: 'Grants' },
-  { url: 'https://news.google.com/rss/search?q=bank+of+industry+boi+intervention+portal+msme', category: 'Grants' },
-  { url: 'https://news.google.com/rss/search?q=smedan+loans+matching+fund+nigeria+business', category: 'Grants' },
-  { url: 'https://news.google.com/rss/search?q=nirsal+microfinance+bank+agsmeis+loans', category: 'Grants' },
-  { url: 'https://news.google.com/rss/search?q=nelfund+student+loans+nigeria', category: 'Grants' },
-  
-  // PRIVATE & NON-PROFIT GRANTS
-  { url: 'https://news.google.com/rss/search?q=tony+elumelu+foundation+tef+grants+entrepreneurs', category: 'Grants' },
-  { url: 'https://news.google.com/rss/search?q=fundsforngos+nigeria+youth+futures+fund+nyff', category: 'Grants' },
-  { url: 'https://news.google.com/rss/search?q=scholarshipair+nigeria+entrepreneurship', category: 'Grants' },
-
-  // GLOBAL TECH
-  { url: 'https://news.google.com/rss/search?q=cnn+business+tech+news', category: 'Tech' },
-  { url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19854910', category: 'Business' } // CNBC Tech
+  // SPECIFIC NIGERIAN OPPORTUNITIES
+  { url: 'https://news.google.com/rss/search?q=nigeria+startups+funding+tech', category: 'Venture' },
+  { url: 'https://news.google.com/rss/search?q=nigeria+fintech+innovation', category: 'Fintech' },
+  { url: 'https://news.google.com/rss/search?q=nigeria+software+engineering+jobs+trends', category: 'Engineering' }
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -54,7 +49,7 @@ interface ScrapedData {
   title: string;
   url: string;
   content: string;
-  image?: string; // New field for cover images
+  image?: string;
   sourceType: 'article' | 'youtube';
 }
 
@@ -126,13 +121,19 @@ async function scrapeArticle(url: string, category: string): Promise<ScrapedData
         'Innovation': ['1451187580241-7f57548a608d', '1485827404703-89b55fcc595e', '1519389950473-47ba0277781c', '1526628953301-3e589a6a127e'],
         'Business': ['1460925895917-afdab827c52f', '1504384308090-c564bd4668a3', '1507679799987-c7377f0f49f9', '1553484771-3710605d0b92'],
         'AI': ['1677442136019-21780ecad995', '1485827404703-89b55fcc595e', '1531297484001-80022131f5a1', '1620712946101-da6128032483'],
-        'Nigeria': ['1550005810-ca9161a0215a', '1520110120302-851250430b42', '1611273298532-a31c62b0f89d', '1589133860010-388e40439603'],
+        'Nigeria': ['1550005810-ca9161a0215a', '1520110120302-851250430b42', '1611273298532-a31c62b0f89d', '1589133860010-388e40439603', '1541915085-30100f92dd24'],
         'Fintech': ['1551288049-bebda4e38f71', '1563986768609-322da13575f3', '1550565114-1f061e808383', '1526304640581-d334cd06f69d'],
-        'Venture': ['1460925895917-afdab827c52f', '1454165833467-cd356ed9942e', '1553484771-3710605d0b92', '1552664730-d307ca884978']
+        'Venture': ['1460925895917-afdab827c52f', '1454165833467-cd356ed9942e', '1553484771-3710605d0b92', '1552664730-d307ca884978'],
+        'Engineering': ['1498050108023-c5249f4df085', '1555066931-4365d14bab8c', '1517694712282-14f494bc6f0e', '1587629990302-cd30be059f13']
       };
-      const pool = pools[category] || pools['Business'];
+      const pool = pools[category] || pools['Nigeria'];
       const photoId = pool[Math.floor(Math.random() * pool.length)];
       image = `https://images.unsplash.com/photo-${photoId}?q=80&w=1200&auto=format&fit=crop`;
+    }
+
+    // ENSURE IMAGE IS NEVER EMPTY
+    if (!image) {
+      image = 'https://images.unsplash.com/photo-1550005810-ca9161a0215a?q=80&w=1200&auto=format&fit=crop';
     }
 
     $('script, style, iframe, nav, footer, header, aside, .ad, .social, [class*="ad-"], [id*="ad-"]').remove();
@@ -171,18 +172,68 @@ async function scrapeYouTube(url: string): Promise<ScrapedData | null> {
   }
 }
 
-/** Pick a random trending URL from RSS sources */
-async function getTrendingUrl(): Promise<{ url: string; category: string } | null> {
-  const source = RSS_SOURCES[Math.floor(Math.random() * RSS_SOURCES.length)];
+/** Get list of recently used sources */
+function getSourceHistory(): string[] {
   try {
-    const feed = await rssParser.parseURL(source.url);
-    if (!feed.items?.length) return null;
-    const item = feed.items[Math.floor(Math.random() * Math.min(8, feed.items.length))];
-    return item.link ? { url: item.link, category: source.category } : null;
-  } catch (err) {
-    console.error(`  ✗ RSS fetch failed for ${source.url}:`, err);
-    return null;
+    if (fs.existsSync(HISTORY_FILE)) {
+      const data = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
+      return Array.isArray(data) ? data : [];
+    }
+  } catch (e) {
+    console.warn('  ⚠ Failed to read history file.');
   }
+  return [];
+}
+
+/** Save source to history */
+function saveSourceToHistory(url: string) {
+  try {
+    const history = getSourceHistory();
+    const domain = new URL(url).hostname;
+    const newHistory = [domain, ...history].slice(0, 15); // Track last 15 domains
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(newHistory, null, 2));
+  } catch (e) {
+    console.warn('  ⚠ Failed to save history.');
+  }
+}
+
+/** Pick a random trending URL from RSS sources with filtering */
+async function getTrendingUrl(): Promise<{ url: string; category: string } | null> {
+  const history = getSourceHistory();
+  
+  // Shuffle sources to ensure variety
+  const shuffledSources = [...RSS_SOURCES].sort(() => Math.random() - 0.5);
+  
+  for (const source of shuffledSources) {
+    const domain = new URL(source.url).hostname;
+    
+    // Skip if we used this domain very recently (unless we run out of options)
+    if (history.includes(domain) && Math.random() > 0.2) continue;
+
+    try {
+      console.log(`  → Fetching from source: ${source.url}`);
+      const feed = await rssParser.parseURL(source.url);
+      if (!feed.items?.length) continue;
+
+      // Filter items for negative keywords
+      const validItems = feed.items.filter(item => {
+        const text = (item.title + ' ' + (item.contentSnippet || '')).toLowerCase();
+        return !NEGATIVE_KEYWORDS.some(word => text.includes(word));
+      });
+
+      if (!validItems.length) continue;
+
+      // Pick one of the top 5 valid items
+      const item = validItems[Math.floor(Math.random() * Math.min(5, validItems.length))];
+      if (item.link) {
+        saveSourceToHistory(item.link);
+        return { url: item.link, category: source.category };
+      }
+    } catch (err) {
+      console.error(`  ✗ RSS fetch failed for ${source.url}`);
+    }
+  }
+  return null;
 }
 
 /** Build the prompt for Gemini based on source type */
@@ -196,8 +247,8 @@ function buildPrompt(data: ScrapedData, category: string): string {
   const tags = buildTags(category);
 
   return `
-You are Samuel Stanley, a developer and tech enthusiast running "Stanley's Log". 
-This is your personal blog where you share your genuine opinions, perspectives, and advice.
+You are Samuel Stanley, a software developer, technical founder, and creative thinker based in Nigeria. 
+This is "Stanley's Log", your personal space for candid reflections on technology, building products, and navigating the Nigerian ecosystem.
 
 ${sourceNote}
 
@@ -205,40 +256,37 @@ ${isYT ? `Raw Source Transcript:` : `Source Content:`}
 ${data.content}
 
 CRITICAL INSTRUCTIONS FOR TONE AND STYLE:
-1. FIRST-PERSON PERSPECTIVE: Write completely in the first-person ("I", "my view", "from my perspective", "as a developer"). This must sound exactly like a real human expressing their own thoughts. 
-2. HIGHLY HUMAN & AUTHENTIC: Do NOT sound like an AI. Avoid robotic structures, typical AI buzzwords ("In conclusion", "delve into", "multifaceted", "a testament to"), and overly formal phrasing. Write conversationally but professionally, like a passionate developer talking to a colleague.
-3. YOUR VOICE: You are lending your voice as a software developer to help people, startups, and businesses grow. Share your candid opinion on the source content. Provide your unique take.
-4. FOCUS AREAS: Depending on the article's core subject, naturally tie your thoughts to its SPECIFIC nuances (e.g., specific stock trends, practical agritech tools, precise grant application logic). 
-   **CRITICAL AVOID REPETITION:** DO NOT repeat generic, pre-packaged narratives about "Nigerian youth empowerment" or "the vast potential of the startup ecosystem" in every single article. Every post MUST have a completely unique angle and observation derived purely from the fresh source data.
-5. NO GENERIC AI SUMMARIES: Do not just summarize the article. Use the article as a springboard to share YOUR original, unrepeated opinion on the matter. You can disagree, be critical, or be excited about it.
+1. **Developer Perspective**: Write as a person who builds things. Talk about the "how", the "tech stack", the "user experience", or the "execution". Avoid high-level corporate jargon like "strategic innovation", "geopolitical corridors", or "C-suite imperatives".
+2. **First-Person & Relatable**: Use "I", "me", "my". Be authentic, slightly informal, and opinionated. Share your thoughts as if you're talking to a fellow developer over a drink in Lagos.
+3. **Avoid the "Geopolitics" Trap**: Do NOT turn this into a political or geopolitical analysis. If the source material is political, pivot immediately to how it affects developers, small business owners, or the local tech market.
+4. **Concrete & Grounded**: Use specific Nigerian references where they fit naturally (e.g., mention specific neighborhoods, the reality of "Lagos traffic", the struggle with "NEPA", or the vibe of the local tech hubs).
+5. **No AI Buzzwords**: Avoid: "In conclusion", "delve", "multifaceted", "testament", "nuanced", "strategic", "paradigm shift". Just talk like a human.
 
-FORMATTING AND STRUCTURE:
-- Use natural headings (not robotic ones).
-- Keep paragraphs relatively short and readable.
-- If relevant, include a section on how this directly impacts Nigerian startups or small businesses.
-- Inject 2-3 relevant images from the list below naturally into the flow using standard Markdown: ![A descriptive caption](url)
+FORMATTING:
+- Use natural headings that reflect your personal opinion (e.g., "The Problem with X", "Why I'm Excited About Y").
+- Keep it punchy. Use short paragraphs.
+- Inject 2-3 relevant images from the list below naturally using Markdown: ![A descriptive caption](url)
 
-STOCK IMAGE POOL (Use these URLs in the body):
-- https://images.unsplash.com/photo-1454165833467-cd356ed9942e?q=80&w=1200&auto=format&fit=crop (Business Strategy)
-- https://images.unsplash.com/photo-1526304640581-d334cd06f69d?q=80&w=1200&auto=format&fit=crop (Finance/Data)
-- https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop (Modern Innovation)
-- https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop (Growth/Charts)
-- https://images.unsplash.com/photo-1550005810-ca9161a0215a?q=80&w=1200&auto=format&fit=crop (Nigeria/Infrastructure)
+STOCK IMAGE POOL (Body Usage):
+- https://images.unsplash.com/photo-1550005810-ca9161a0215a?q=80&w=1200&auto=format&fit=crop (Nigeria Scenes)
+- https://images.unsplash.com/photo-1517694712282-14f494bc6f0e?q=80&w=1200&auto=format&fit=crop (Coding/Laptop)
+- https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop (Lines of Code)
+- https://images.unsplash.com/photo-1526304640581-d334cd06f69d?q=80&w=1200&auto=format&fit=crop (Data/Finance)
+- https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop (Graph/Success)
 
 FORMAT: Start with exactly this YAML frontmatter:
 ---
-title: "[Write a catchy, non-clickbaity, human-sounding title, max 70 chars]"
+title: "[Catchy, human title - avoid corporate speak]"
 date: "${today}"
-excerpt: "[Write a highly conversational, personal hook...]"
+excerpt: "[A 1-2 sentence hook starting with 'I was just reading...' or 'I've been thinking about...']"
 category: "${category}"
 tags: ${tags}
-image: "${data.image || ''}"
-readTime: "[e.g. 6 min read]"
+image: "${data.image || 'https://images.unsplash.com/photo-1550005810-ca9161a0215a?q=80&w=1200&auto=format&fit=crop'}"
+readTime: "[X min read]"
 sourceUrl: "${data.url}"
 ---
 
-Then write the blog post body in clean markdown. Use ## for section headings, **bold** for emphasis.
-DO NOT wrap everything in a \`\`\`markdown code block. Start straight with the frontmatter dashes.
+Write the blog post body below. No code blocks for the whole file.
 `;
 }
 
@@ -252,9 +300,9 @@ function buildTags(category: string): string {
     Career: '["Career", "Freelance", "Developer Life"]',
     DevOps: '["DevOps", "Infrastructure", "Cloud"]',
     TypeScript: '["TypeScript", "JavaScript", "Code"]',
-    Finance: '["Finance", "Stock Market", "NGX", "Investment"]',
-    Agriculture: '["Agriculture", "Agritech", "Farming", "Nigeria"]',
-    Grants: '["Grants", "Funding", "Small Business", "Nigeria"]',
+    Finance: '["Finance", "Stock Market", "Investment"]',
+    Agriculture: '["Agriculture", "Agritech", "Farmed"]',
+    Grants: '["Grants", "Funding", "Nigeria"]',
     Tech: '["Tech", "Innovation", "Digital"]',
     Venture: '["Venture Capital", "Startups", "Investment"]',
     Innovation: '["Innovation", "Technology", "Future"]',
