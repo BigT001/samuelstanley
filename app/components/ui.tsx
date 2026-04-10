@@ -117,3 +117,78 @@ export function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     </div>
   );
 }
+
+// ─── CV Viewer Modal ───────────────────────────────────────────────────────
+export function CVModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  useEffect(() => {
+    if (isOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in"
+        onClick={onClose}
+      />
+      
+      {/* Modal Content */}
+      <div 
+        className="relative w-full max-w-5xl glass-card animate-fade-in-up"
+        style={{ 
+          height: "90vh", 
+          display: "flex",
+          flexDirection: "column",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          overflow: "hidden",
+          borderRadius: "24px"
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding: "1.25rem 2rem", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--surface)" }}>
+          <div className="flex items-center gap-3">
+             <SectionHeading>Resume / CV</SectionHeading>
+          </div>
+          <div className="flex items-center gap-4">
+             <a 
+               href="/Samuel-Stanley-Resume.pdf" 
+               download="Samuel_Stanley_CV.pdf"
+               className="px-6 py-2.5 rounded-full font-bold text-xs transition-all duration-200 flex items-center gap-2 group"
+               style={{ 
+                 background: "var(--coral)", 
+                 color: "white",
+               }}
+             >
+               Download PDF
+             </a>
+             <button 
+               onClick={onClose}
+               className="text-secondary hover:text-primary transition-colors text-xl p-2"
+             >
+               ✕
+             </button>
+          </div>
+        </div>
+
+        {/* PDF Frame */}
+        <div style={{ flex: 1, background: "#333", position: "relative" }}>
+          <iframe 
+            src="/Samuel-Stanley-Resume.pdf" 
+            style={{ width: "100%", height: "100%", border: "none" }}
+            title="Samuel Stanley Resume"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

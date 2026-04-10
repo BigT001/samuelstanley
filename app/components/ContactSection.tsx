@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { SectionHeading } from "./ui";
+import { SectionHeading, CVModal } from "./ui";
 import confetti from "canvas-confetti";
 
 type Field = { label: string; id: string; name: string; type: string; placeholder: string; rows?: number };
@@ -30,6 +28,7 @@ const socials = [
   { label: "Email",     href: "mailto:stanley.samuel.stanley@gmail.com", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>,  color: "#ff4d4d" },
   { label: "LinkedIn",  href: "https://www.linkedin.com/in/samuel-stanley-345174234/", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>, color: "#0077b5" },
   { label: "Instagram", href: "https://www.instagram.com/samuel.g.stanley?igsh=NnIwMXcwb2pqY3I3&utm_source=qr",   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>,  color: "#E4405F" },
+  { label: "Resume",    href: "/Samuel-Stanley-Resume.pdf", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>, color: "#00e5cc" },
 ];
 
 export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
@@ -98,7 +97,7 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
           <div
             style={{
               padding: "1rem 2rem",
-              background: "rgba(10, 15, 26, 0.95)",
+              background: "rgba(10,15,26,0.95)",
               border: "1px solid #00e5cc",
               borderRadius: "16px",
               boxShadow: "0 10px 40px rgba(0, 229, 204, 0.25)",
@@ -208,6 +207,7 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
 }
 
 export function ContactSection() {
+  const [isCVOpen, setIsCVOpen] = useState(false);
 
   return (
     <section
@@ -215,13 +215,13 @@ export function ContactSection() {
       className="reveal reveal-up w-full max-w-6xl mx-auto px-4 md:px-8"
       style={{ paddingBottom: "4rem", position: "relative" }}
     >
-
+      {/* CV Modal */}
+      <CVModal isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
 
       <div 
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem", alignItems: "center" }}
         className="contact-grid"
       >
-
         {/* Info & Socials — Centered Vertically on the Left */}
         <div className="reveal reveal-up reveal-delay-1">
           <div style={{ marginBottom: "1rem" }}>
@@ -240,7 +240,7 @@ export function ContactSection() {
           {/* Desktop socials only */}
           <div className="hidden md:flex reveal reveal-up reveal-delay-2" style={{ flexDirection: "row", gap: "0.85rem", flexWrap: "wrap" }}>
             {socials.map((s) => (
-              <SocialItem key={s.label} s={s} />
+              <SocialItem key={s.label} s={s} onOpenCV={() => setIsCVOpen(true)} />
             ))}
           </div>
         </div>
@@ -253,18 +253,26 @@ export function ContactSection() {
       {/* Mobile socials only — at the very bottom */}
       <div className="md:hidden flex justify-center mt-6 reveal reveal-up reveal-delay-4" style={{ gap: "1rem", flexWrap: "wrap" }}>
         {socials.map((s) => (
-          <SocialItem key={s.label} s={s} />
+          <SocialItem key={s.label} s={s} onOpenCV={() => setIsCVOpen(true)} />
         ))}
       </div>
     </section>
   );
 }
 
-function SocialItem({ s }: { s: typeof socials[0] }) {
+function SocialItem({ s, onOpenCV }: { s: typeof socials[0], onOpenCV: () => void }) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (s.label === "Resume") {
+      e.preventDefault();
+      onOpenCV();
+    }
+  };
+
   return (
     <a
       href={s.href}
-      target={s.label !== "Email" ? "_blank" : undefined}
+      onClick={handleClick}
+      target={s.label !== "Email" && s.label !== "Resume" ? "_blank" : undefined}
       rel="noopener noreferrer"
       title={s.label}
       className="social-link-icon"
