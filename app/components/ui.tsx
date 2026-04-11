@@ -76,7 +76,7 @@ export function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
   return (
     <div 
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-2 md:p-4"
       role="dialog"
       aria-modal="true"
     >
@@ -88,37 +88,36 @@ export function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
       
       {/* Modal Content */}
       <div 
-        className="relative w-full max-w-xl glass-card animate-fade-in-up"
+        className="relative w-full max-w-xl animate-fade-in-up bg-[var(--surface)] border border-[var(--border)] rounded-[24px] backdrop-blur-xl"
         style={{ 
           maxHeight: "90vh", 
           overflowY: "auto", 
-          padding: "2.5rem",
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
         }}
       >
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors text-xl p-2"
-        >
-          ✕
-        </button>
-
-        <div className="mb-8">
-          <SectionHeading>Schedule Interview</SectionHeading>
-          <p className="text-secondary text-sm leading-relaxed mt-2">
-            Fill out the form below to book a time or discuss your project. I usually respond within 24 hours.
-          </p>
+        <div className="p-6 md:p-10">
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors text-xl p-2"
+          >
+            ✕
+          </button>
+  
+          <div className="mb-8">
+            <SectionHeading>Schedule Interview</SectionHeading>
+            <p className="text-secondary text-sm leading-relaxed mt-2">
+              Fill out the form below to book a time or discuss your project. I usually respond within 24 hours.
+            </p>
+          </div>
+  
+          <ContactForm onHideSuccess={onClose} />
         </div>
-
-        <ContactForm onHideSuccess={onClose} />
       </div>
     </div>
   );
 }
 
-// ─── CV Viewer Modal ───────────────────────────────────────────────────────
+// ─── CV Download Confirmation Modal ───────────────────────────────────────
 export function CVModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
@@ -130,7 +129,7 @@ export function CVModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
 
   return (
     <div 
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 md:p-6"
       role="dialog"
       aria-modal="true"
     >
@@ -142,51 +141,44 @@ export function CVModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
       
       {/* Modal Content */}
       <div 
-        className="relative w-full max-w-5xl glass-card animate-fade-in-up"
+        className="relative w-full max-w-md animate-fade-in-up bg-[var(--surface)] border border-[var(--border)] rounded-[28px] backdrop-blur-3xl overflow-hidden"
         style={{ 
-          height: "90vh", 
-          display: "flex",
-          flexDirection: "column",
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-          overflow: "hidden",
-          borderRadius: "24px"
+          boxShadow: "0 40px 100px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 77, 77, 0.05)",
         }}
       >
-        {/* Header */}
-        <div style={{ padding: "1.25rem 2rem", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--surface)" }}>
-          <div className="flex items-center gap-3">
-             <SectionHeading>Resume / CV</SectionHeading>
+        <div className="p-8 md:p-10 text-center">
+          {/* Icon */}
+          <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
           </div>
-          <div className="flex items-center gap-4">
-             <a 
-               href="/Samuel-Stanley-Resume.pdf" 
-               download="Samuel_Stanley_CV.pdf"
-               className="px-6 py-2.5 rounded-full font-bold text-xs transition-all duration-200 flex items-center gap-2 group"
-               style={{ 
-                 background: "var(--coral)", 
-                 color: "white",
-               }}
-             >
-               Download PDF
-             </a>
-             <button 
-               onClick={onClose}
-               className="text-secondary hover:text-primary transition-colors text-xl p-2"
-             >
-               ✕
-             </button>
-          </div>
-        </div>
 
-        {/* PDF Frame */}
-        <div style={{ flex: 1, background: "#333", position: "relative" }}>
-          <iframe 
-            src="/Samuel-Stanley-Resume.pdf" 
-            style={{ width: "100%", height: "100%", border: "none" }}
-            title="Samuel Stanley Resume"
-          />
+          <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] mb-3">
+            Download Resume?
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-8 px-4">
+            The PDF version of my Professional CV will be downloaded to your device.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button 
+              onClick={onClose}
+              className="flex-1 px-6 py-3.5 rounded-2xl font-bold text-sm text-secondary hover:text-primary bg-white/5 border border-white/10 transition-all active:scale-95"
+            >
+              Cancel
+            </button>
+            <a 
+              href="/Samuel-Stanley-Resume.pdf" 
+              download="Samuel_Stanley_CV.pdf"
+              onClick={onClose}
+              className="flex-1 px-6 py-3.5 rounded-2xl font-bold text-sm text-white bg-[var(--coral)] transition-all hover:brightness-110 active:scale-95 shadow-lg shadow-coral/20 flex items-center justify-center gap-2"
+            >
+              Confirm
+            </a>
+          </div>
         </div>
       </div>
     </div>
