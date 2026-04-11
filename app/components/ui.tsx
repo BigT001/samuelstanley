@@ -171,9 +171,12 @@ export function CVModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               Cancel
             </button>
             <a 
-              href="/Samuel-Stanley-Resume.pdf" 
+              href="/resume.pdf" 
               download="Samuel_Stanley_CV.pdf"
-              onClick={onClose}
+              onClick={() => {
+                // Ensure modal closes after download initiates
+                setTimeout(onClose, 200);
+              }}
               className="flex-1 px-6 py-3.5 rounded-2xl font-bold text-sm text-white bg-[var(--coral)] transition-all hover:brightness-110 active:scale-95 shadow-lg shadow-coral/20 flex items-center justify-center gap-2"
             >
               Confirm
