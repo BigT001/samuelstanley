@@ -257,10 +257,11 @@ ${data.content}
 
 CRITICAL INSTRUCTIONS FOR TONE AND STYLE:
 1. **Developer Perspective**: Write as a person who builds things. Talk about the "how", the "tech stack", the "user experience", or the "execution". Avoid high-level corporate jargon like "strategic innovation", "geopolitical corridors", or "C-suite imperatives".
-2. **First-Person & Relatable**: Use "I", "me", "my". Be authentic, slightly informal, and opinionated. Share your thoughts as if you're talking to a fellow developer over a drink in Lagos.
+2. **Dynamic Human Voice**: Be authentic, slightly informal, and opinionated. Sometimes you're excited, sometimes skeptical, sometimes just tired from a long day of debugging. Avoid sounding like a template. Use varied sentence structures. 
 3. **Avoid the "Geopolitics" Trap**: Do NOT turn this into a political or geopolitical analysis. If the source material is political, pivot immediately to how it affects developers, small business owners, or the local tech market.
-4. **Concrete & Grounded**: Use specific Nigerian references where they fit naturally (e.g., mention specific neighborhoods, the reality of "Lagos traffic", the struggle with "NEPA", or the vibe of the local tech hubs).
-5. **No AI Buzzwords**: Avoid: "In conclusion", "delve", "multifaceted", "testament", "nuanced", "strategic", "paradigm shift". Just talk like a human.
+4. **Concrete & Hyper-Local**: Use specific Nigerian references that feel lived-in. Stay away from the "generic tech" clichés like "Yaba" or "Silicon Lagoon". Instead, pivot to something more specific and varied: the tech scene in Akure, the hustle in Onitsha, the "Sapa" struggle, the "No gree for anybody" mindset, the specific vibe of a gbagada workstation, the cold mornings in Jos, or the chaotic energy of a bus park in Owerri. Be a resident of the whole country, not just one neighborhood.
+5. **No AI Buzzwords**: Avoid: "In conclusion", "delve", "multifaceted", "testament", "nuanced", "strategic", "paradigm shift", "vital role". Just talk like a human.
+6. **Randomized Opening**: Do NOT always start your thoughts with "I was just reading...". Start with the problem, a feeling, a memory, or a direct reaction.
 
 FORMATTING:
 - Use natural headings that reflect your personal opinion (e.g., "The Problem with X", "Why I'm Excited About Y").
@@ -278,7 +279,7 @@ FORMAT: Start with exactly this YAML frontmatter:
 ---
 title: "[Catchy, human title - avoid corporate speak]"
 date: "${today}"
-excerpt: "[A 1-2 sentence hook starting with 'I was just reading...' or 'I've been thinking about...']"
+excerpt: "[A 1-2 sentence hook. Vary your style. Avoid always starting with the same phrase. Be punchy.]"
 category: "${category}"
 tags: ${tags}
 image: "${data.image || 'https://images.unsplash.com/photo-1550005810-ca9161a0215a?q=80&w=1200&auto=format&fit=crop'}"
@@ -286,7 +287,8 @@ readTime: "[X min read]"
 sourceUrl: "${data.url}"
 ---
 
-Write the blog post body below. No code blocks for the whole file.
+Write the blog post body below. No code blocks for the whole file. Use "I", "me", and "my" to maintain the personal blog feel.
+
 `;
 }
 
