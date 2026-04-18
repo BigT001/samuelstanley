@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from "react";
 
-import { Starfield }           from "./components/Starfield";
-import { HeroSection }         from "./components/HeroSection";
-import { PhilosophySection }   from "./components/PhilosophySection";
-import { QuickStartSection }   from "./components/QuickStartSection";
-import { ServicesSection, TechStackSection } from "./components/ServicesSection";
-import { ProjectsSection }     from "./components/ProjectsSection";
-import { ContactSection }      from "./components/ContactSection";
-import { FooterSection }       from "./components/FooterSection";
+import { Starfield } from "./components/Starfield";
+import { HeroSection } from "./components/HeroSection";
+import { PhilosophySection } from "./components/PhilosophySection";
+import { QuickStartSection } from "./components/QuickStartSection";
+import {
+  ServicesSection,
+  TechStackSection,
+} from "./components/ServicesSection";
+import { ProjectsSection } from "./components/ProjectsSection";
+import { ContactSection } from "./components/ContactSection";
+import { FooterSection } from "./components/FooterSection";
 
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
@@ -36,7 +39,7 @@ export default function Home() {
           }
         });
       },
-      { threshold: 0.10, rootMargin: "0px 0px -30px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" },
     );
 
     els.forEach((el) => observer.observe(el));
@@ -85,11 +88,11 @@ export default function Home() {
       {/* ── Page Content ── */}
       <main className="relative z-10 flex flex-col items-center w-full">
         <HeroSection />
-        <PhilosophySection />
-        <QuickStartSection />
         <ServicesSection />
         <TechStackSection />
         <ProjectsSection />
+        <QuickStartSection />
+        <PhilosophySection />
         <ContactSection />
         <FooterSection />
       </main>

@@ -114,6 +114,12 @@ export const features = [
 
 // ─── Tech Stack ────────────────────────────────────────────────────────────
 export const techStack = [
+  { name: "React Native", emoji: "📱" },
+  { name: "Expo", emoji: "🚀" },
+  { name: "Flutter", emoji: "💙" },
+  { name: "iOS", emoji: "🍎" },
+  { name: "Android", emoji: "🤖" },
+  { name: "Firebase", emoji: "🔥" },
   { name: "React", emoji: "⚛️" },
   { name: "Next.js", emoji: "▲" },
   { name: "TypeScript", emoji: "TS" },

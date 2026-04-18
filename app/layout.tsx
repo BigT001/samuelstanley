@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   title: "Samuel Stanley | Full Stack Developer — Next.js, Node.js, React",
   description:
-    "Samuel Stanley is a world-class Full Stack Developer specialising in Next.js, NestJS, Node.js, PostgreSQL, and scalable SaaS architecture. Available globally for freelance projects, remote roles, and hybrid engagements.",
+    "Samuel Stanley helps founders build and launch MVPs in 30 days. Specialized in Next.js, Node.js, and production-ready SaaS architecture. From idea to deployment, I handle it all.",
   keywords: [
     "Samuel Stanley",
     "Full Stack Developer",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Samuel Stanley | Full Stack Developer — Next.js, Node.js, React",
-    description: "World-class full-stack engineer. Building scalable SaaS, e-commerce platforms, and production-grade APIs. Available for remote & freelance work globally.",
+    description: "Launch your MVP in 30 days. Specialist in building scalable SaaS, production-grade APIs, and stunning interfaces for founders.",
     type: "website",
     locale: "en_NG",
     url: "https://samuelstanley.com", // Assuming domain
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Samuel Stanley | Full Stack Developer",
-    description: "Building scalable SaaS, stunning interfaces, and production-grade APIs. Available globally for freelance and remote roles.",
+    description: "I help founders build and launch MVPs in 30 days. From idea to deployed product — backend, frontend, and infrastructure handled.",
     creator: "@samuelstanley", // Assuming handle
   },
   robots: {
@@ -101,7 +101,7 @@ export default function RootLayout({
       "addressLocality": "Lagos",
       "addressCountry": "Nigeria"
     },
-    "description": "Samuel Stanley is a professional Full Stack Developer specialising in Next.js, NestJS, Node.js, and SaaS architecture. Available globally for remote, freelance, and hybrid engineering roles.",
+    "description": "Samuel Stanley helps founders build and launch MVPs in 30 days. Specialist in Next.js, NestJS, Node.js, and SaaS architecture. Available globally for remote projects.",
     "sameAs": [
       "https://www.linkedin.com/in/samuel-stanley-345174234/",
       "https://www.instagram.com/samuel.g.stanley"
