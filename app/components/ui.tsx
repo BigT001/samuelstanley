@@ -3,53 +3,20 @@ import { ContactForm } from "./ContactSection";
 import { useEffect } from "react";
 
 // ─── Profile Photo ─────────────────────────────────────────────────────────
-export function ProfilePhoto() {
+export function ProfilePhoto({ className = "" }: { className?: string }) {
   return (
     <div
-      style={{ position: "relative", width: "clamp(120px, 20vw, 150px)", height: "clamp(120px, 20vw, 150px)" }}
-      className="mascot-container"
+      style={{ position: "relative", width: "100%", height: "100%" }}
+      className={`relative overflow-hidden ${className}`}
     >
-      {/* Gradient glow ring - Thinner */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "-2px",
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #ff4d4d 0%, #00e5cc 100%)",
-          zIndex: 0,
-          opacity: 0.9,
-        }}
+      <Image
+        src="/sampic.jpeg"
+        alt="Samuel Stanley — Full Stack Developer"
+        fill
+        sizes="(max-width: 768px) 150px, 400px"
+        style={{ objectFit: "cover", objectPosition: "center top" }}
+        priority
       />
-      {/* Theme-aware separator - Thinner */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "2px",
-          borderRadius: "50%",
-          background: "var(--bg)",
-          zIndex: 1,
-          transition: "background-color 0.3s ease"
-        }}
-      />
-      {/* Photo */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "4px",
-          borderRadius: "50%",
-          overflow: "hidden",
-          zIndex: 2,
-        }}
-      >
-        <Image
-          src="/sampic.jpeg"
-          alt="Samuel Stanley — Full Stack Developer"
-          fill
-          sizes="150px"
-          style={{ objectFit: "cover", objectPosition: "center top" }}
-          priority
-        />
-      </div>
     </div>
   );
 }

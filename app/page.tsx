@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Starfield } from "./components/Starfield";
+
 import { HeroSection } from "./components/HeroSection";
 import { PhilosophySection } from "./components/PhilosophySection";
 import { QuickStartSection } from "./components/QuickStartSection";
@@ -49,7 +49,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen transition-colors duration-300">
       {/* Starfield background */}
-      <Starfield />
+
 
       {/* Floating Navigation */}
       <nav className="fixed top-0 left-0 w-full z-[1000] px-6 py-5 pointer-events-none">
