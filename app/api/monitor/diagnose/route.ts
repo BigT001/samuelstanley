@@ -77,6 +77,8 @@ Provide your analysis in JSON format with exactly the following keys. Return ONL
     let text = "";
     let lastError: any = null;
 
+    const errors: string[] = [];
+
     for (const modelName of fallbackModels) {
       try {
         console.log(`[PROmonitor SRE AI] Requesting diagnosis with model: ${modelName}`);
@@ -90,12 +92,16 @@ Provide your analysis in JSON format with exactly the following keys. Return ONL
         }
       } catch (err: any) {
         console.warn(`[PROmonitor SRE AI] Model ${modelName} failed:`, err.message || err);
+        errors.push(`${modelName} (${err.status || err.code || 'error'}): ${err.message || err}`);
         lastError = err;
       }
     }
 
     if (!text) {
-      throw new Error(`All Gemini models failed to process request. Last error: ${lastError?.message || lastError}`);
+      return NextResponse.json({
+        success: false,
+        error: `All Gemini models failed. Details: ${errors.join(' | ')}`
+      }, { status: 500 });
     }
     
     // Strip markdown wrappers if the AI returned them despite the prompt instructions
