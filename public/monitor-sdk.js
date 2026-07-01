@@ -25,16 +25,21 @@
     let browser = 'Unknown Browser';
     let os = 'Unknown OS';
 
-    if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
-    else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
-    else if (ua.indexOf('Safari') > -1) browser = 'Safari';
-    else if (ua.indexOf('MSIE') > -1 || !!document.documentMode) browser = 'IE';
+    // OS detection
+    if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Mac/i.test(ua)) os = 'macOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+    else if (/CrOS/i.test(ua)) os = 'ChromeOS';
 
-    if (ua.indexOf('Win') > -1) os = 'Windows';
-    else if (ua.indexOf('Mac') > -1) os = 'macOS';
-    else if (ua.indexOf('X11') > -1) os = 'UNIX';
-    else if (ua.indexOf('Linux') > -1) os = 'Linux';
-    else if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) os = 'Mobile';
+    // Browser detection
+    if (/Chrome/i.test(ua) && !/Edge/i.test(ua) && !/OPR/i.test(ua)) browser = 'Chrome';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+    else if (/Firefox/i.test(ua)) browser = 'Firefox';
+    else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
+    else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
+    else if (/MSIE|Trident/i.test(ua)) browser = 'Internet Explorer';
 
     return { browser: browser, os: os };
   }

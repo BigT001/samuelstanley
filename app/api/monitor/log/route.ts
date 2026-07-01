@@ -16,6 +16,31 @@ export async function OPTIONS() {
   });
 }
 
+function parseUserAgent(ua: string) {
+  let browser = 'Unknown Browser';
+  let os = 'Unknown OS';
+
+  if (!ua) return { browser, os };
+
+  // OS detection
+  if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Android/i.test(ua)) os = 'Android';
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+  else if (/Mac/i.test(ua)) os = 'macOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+  else if (/CrOS/i.test(ua)) os = 'ChromeOS';
+
+  // Browser detection
+  if (/Chrome/i.test(ua) && !/Edge/i.test(ua) && !/OPR/i.test(ua)) browser = 'Chrome';
+  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox';
+  else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
+  else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
+  else if (/MSIE|Trident/i.test(ua)) browser = 'Internet Explorer';
+
+  return { browser, os };
+}
+
 /**
  * POST /api/monitor/log
  * Public log ingestion endpoint for client sites.
@@ -66,18 +91,42 @@ export async function POST(request: Request) {
 
     // Resolve client IP and Geolocation headers from request
     const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || '127.0.0.1';
-    const country = request.headers.get('x-vercel-ip-country') || null;
-    const city = request.headers.get('x-vercel-ip-city') || null;
-    const region = request.headers.get('x-vercel-ip-country-region') || null;
+    
+    // Parse browser and OS on server side if missing
+    const userAgent = request.headers.get('user-agent') || metadata.userAgent || '';
+    const parsedAgent = parseUserAgent(userAgent);
+    if (!metadata.os) metadata.os = parsedAgent.os;
+    if (!metadata.browser) metadata.browser = parsedAgent.browser;
 
     // Build/enrich location metadata
-    if (!metadata.location) {
+    if (!metadata.location || metadata.location.city === 'Unknown' || metadata.location.country === 'Unknown') {
+      let resolvedCountry = request.headers.get('x-vercel-ip-country') || null;
+      let resolvedCity = request.headers.get('x-vercel-ip-city') || null;
+      let resolvedRegion = request.headers.get('x-vercel-ip-country-region') || null;
+      let resolvedOrg = 'Server Geolocation';
+
+      // Fallback: If Vercel headers did not resolve detailed city/region, query ip-api.com server-side
+      if ((!resolvedCity || resolvedCity === 'Unknown') && clientIp !== '127.0.0.1' && clientIp !== '::1') {
+        try {
+          const geoRes = await fetch(`http://ip-api.com/json/${clientIp}`);
+          const geoData = await geoRes.json();
+          if (geoData && geoData.status === 'success') {
+            resolvedCity = geoData.city;
+            resolvedRegion = geoData.regionName;
+            resolvedCountry = geoData.country;
+            resolvedOrg = geoData.isp;
+          }
+        } catch (e) {
+          console.warn("Server-side IP lookup warning:", e);
+        }
+      }
+
       metadata.location = {
         ip: clientIp,
-        city: city || 'Unknown',
-        region: region || 'Unknown',
-        country: country || 'Unknown',
-        org: 'Server Geolocation'
+        city: resolvedCity || metadata.location?.city || 'Unknown',
+        region: resolvedRegion || metadata.location?.region || 'Unknown',
+        country: resolvedCountry || metadata.location?.country || 'Unknown',
+        org: resolvedOrg
       };
     } else {
       if (!metadata.location.ip || metadata.location.ip === 'Unknown') {
