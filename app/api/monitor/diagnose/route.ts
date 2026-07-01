@@ -45,9 +45,7 @@ export async function POST(request: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Use gemini-1.5-flash for fast, structured generation
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
+    
     const prompt = `
 You are PROmonitor SRE AI, an expert Software Reliability Engineer.
 Analyze the following error log reported by the client website "${log.client.name}" (URL: ${log.client.url}) and provide a clear diagnosis and fix.
@@ -67,9 +65,38 @@ Provide your analysis in JSON format with exactly the following keys. Return ONL
 }
 `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text().trim();
+    const fallbackModels = [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-pro',
+      'gemini-2.5-pro',
+      'gemini-1.5-flash',
+      'gemini-pro'
+    ];
+
+    let text = "";
+    let lastError: any = null;
+
+    for (const modelName of fallbackModels) {
+      try {
+        console.log(`[PROmonitor SRE AI] Requesting diagnosis with model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const resText = response.text().trim();
+        if (resText) {
+          text = resText;
+          break; // Success!
+        }
+      } catch (err: any) {
+        console.warn(`[PROmonitor SRE AI] Model ${modelName} failed:`, err.message || err);
+        lastError = err;
+      }
+    }
+
+    if (!text) {
+      throw new Error(`All Gemini models failed to process request. Last error: ${lastError?.message || lastError}`);
+    }
     
     // Strip markdown wrappers if the AI returned them despite the prompt instructions
     let jsonText = text;
