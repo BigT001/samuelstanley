@@ -64,6 +64,7 @@
 
   // ─── Log Reporter Utility ──────────────────────────────────────────────────
   function reportLog(level, message, stack, extraMeta = {}) {
+    const isError = level === 'error' || level === 'fatal';
     const payload = {
       level: level,
       message: message,
@@ -79,6 +80,7 @@
         viewportSize: `${window.innerWidth}x${window.innerHeight}`,
         referrer: document.referrer || 'direct',
         location: locationData,
+        replayEvents: isError ? (window.rrwebEvents || null) : null,
         ...extraMeta
       }
     };
@@ -128,9 +130,11 @@
   // Initial page view load
   if (document.readyState === 'complete') {
     trackPageView(false);
+    loadReplay();
   } else {
     window.addEventListener('load', function() {
       trackPageView(false);
+      loadReplay();
     });
   }
 
@@ -266,6 +270,70 @@
     error: function(msg, err, meta) { reportLog('error', msg, err ? err.stack : null, meta); },
     fatal: function(msg, err, meta) { reportLog('fatal', msg, err ? err.stack : null, meta); }
   };
+
+  // ─── rrweb Dynamic Replay Recorder Loader ────────────────────────────────
+  function loadReplay() {
+    if (window.rrweb) return;
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/rrweb@latest/dist/record/rrweb-record.min.js';
+    script.async = true;
+    script.onload = function() {
+      if (typeof rrweb !== 'undefined') {
+        window.rrwebEvents = [];
+        rrweb.record({
+          emit(event) {
+            window.rrwebEvents.push(event);
+            if (window.rrwebEvents.length > 50) {
+              window.rrwebEvents.shift();
+            }
+          }
+        });
+      }
+    };
+    document.head.appendChild(script);
+  }
+
+  // ─── Core Web Vitals Observability ─────────────────────────────────────────
+  try {
+    // 1. Largest Contentful Paint (LCP)
+    const lcpObserver = new PerformanceObserver(function(entryList) {
+      const entries = entryList.getEntries();
+      const lastEntry = entries[entries.length - 1];
+      reportMetric('LCP', lastEntry.startTime);
+    });
+    lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+
+    // 2. First Input Delay (FID)
+    const fidObserver = new PerformanceObserver(function(entryList) {
+      const entries = entryList.getEntries();
+      const firstEntry = entries[0];
+      const delay = firstEntry.processingStart - firstEntry.startTime;
+      reportMetric('FID', delay);
+    });
+    fidObserver.observe({ type: 'first-input', buffered: true });
+
+    // 3. Cumulative Layout Shift (CLS)
+    let clsValue = 0;
+    const clsObserver = new PerformanceObserver(function(entryList) {
+      for (const entry of entryList.getEntries()) {
+        if (!entry.hadRecentInput) {
+          clsValue += entry.value;
+        }
+      }
+      reportMetric('CLS', clsValue);
+    });
+    clsObserver.observe({ type: 'layout-shift', buffered: true });
+  } catch (e) {
+    // Browser doesn't support PerformanceObserver or specific metrics
+  }
+
+  function reportMetric(name, value) {
+    reportLog('info', 'Performance Metric — ' + name + ': ' + value.toFixed(3), null, {
+      type: 'vitals',
+      metricName: name,
+      metricValue: value
+    });
+  }
 
   console.log('🛡️ PROmonitor Client Monitor SDK Initialized.');
 })();

@@ -61,7 +61,12 @@ Provide your analysis in JSON format with exactly the following keys. Return ONL
 {
   "summary": "A 1-2 sentence plain-English explanation of what this error is.",
   "cause": "A brief explanation of why this error happened and where in the code it originates from.",
-  "fix": "A step-by-step instruction on how to resolve the error, including a code block snippet if appropriate."
+  "fix": "A step-by-step instruction on how to resolve the error, including a code block snippet if appropriate.",
+  "autofix": {
+    "filePath": "Relative path of the file to modify, e.g., 'src/components/Header.tsx' or 'app/page.tsx'. Use null if unknown or if the fix requires multi-file/complex restructuring.",
+    "targetCode": "The exact contiguous block of code from the file that needs to be replaced. Must match exactly, including leading spaces/indentation. Use null if not applicable.",
+    "replacementCode": "The corrected code to substitute in place of targetCode. Use null if not applicable."
+  }
 }
 `;
 
