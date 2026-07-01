@@ -214,10 +214,10 @@ export default function OSPage() {
         </div>
       ) : (
         /* DASHBOARD WORKSPACE */
-        <div className="relative z-10 min-h-screen flex flex-col md:flex-row">
+        <div className="relative z-10 min-h-screen md:h-screen md:overflow-hidden flex flex-col md:flex-row">
           
           {/* Left Navigation Sidebar */}
-          <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[var(--border)] backdrop-blur-xl bg-[rgba(10,15,26,0.8)] flex flex-col justify-between">
+          <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-[var(--border)] backdrop-blur-xl bg-[rgba(10,15,26,0.8)] flex flex-col justify-between md:h-full md:overflow-y-auto shrink-0">
             <div>
               {/* Header Logo */}
               <div className="h-16 px-6 border-b border-[var(--border)] flex items-center gap-2.5 justify-between">
@@ -257,19 +257,9 @@ export default function OSPage() {
           </aside>
 
           {/* Main Dashboard Panel */}
-          <main className="flex-1 flex flex-col min-w-0">
-            {/* Top Workspace Header */}
-            <header className="h-16 border-b border-[var(--border)] backdrop-blur-md bg-[rgba(10,15,26,0.5)] px-6 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase tracking-widest text-[var(--text-secondary)]">PROmonitor Workstation</h2>
-              <div className="flex items-center gap-4">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full border border-green-500/20 bg-green-500/5 text-green-400">
-                  Secure Server Connected
-                </span>
-              </div>
-            </header>
-
+          <main className="flex-1 flex flex-col min-w-0 md:h-full overflow-hidden">
             {/* Main scrollable body */}
-            <div className="flex-1 overflow-auto p-6 md:p-8 space-y-8 select-text">
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 select-text">
               {activeTab === "overview" && (
                 <div className="space-y-8 animate-in fade-in duration-300">
                   {/* Analytic Stats Cards */}
