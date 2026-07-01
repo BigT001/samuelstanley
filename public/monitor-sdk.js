@@ -19,6 +19,44 @@
   }
   const logEndpoint = `${serverOrigin}/api/monitor/log`;
 
+  // ─── Browser & OS Detection Helper ────────────────────────────────────────
+  function getBrowserOS() {
+    const ua = navigator.userAgent;
+    let browser = 'Unknown Browser';
+    let os = 'Unknown OS';
+
+    if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+    else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+    else if (ua.indexOf('MSIE') > -1 || !!document.documentMode) browser = 'IE';
+
+    if (ua.indexOf('Win') > -1) os = 'Windows';
+    else if (ua.indexOf('Mac') > -1) os = 'macOS';
+    else if (ua.indexOf('X11') > -1) os = 'UNIX';
+    else if (ua.indexOf('Linux') > -1) os = 'Linux';
+    else if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) os = 'Mobile';
+
+    return { browser: browser, os: os };
+  }
+  const clientInfo = getBrowserOS();
+
+  // ─── Geo-Location Async Fetcher ───────────────────────────────────────────
+  let locationData = null;
+  fetch('https://ipapi.co/json/')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      locationData = {
+        ip: data.ip || 'Unknown',
+        city: data.city || 'Unknown',
+        region: data.region || 'Unknown',
+        country: data.country_name || 'Unknown',
+        org: data.org || 'Unknown'
+      };
+    })
+    .catch(function() {
+      // Fallback: will be augmented by Vercel IP location headers on backend
+    });
+
   // ─── Log Reporter Utility ──────────────────────────────────────────────────
   function reportLog(level, message, stack, extraMeta = {}) {
     const payload = {
@@ -29,10 +67,13 @@
         url: window.location.href,
         pathname: window.location.pathname,
         userAgent: navigator.userAgent,
+        browser: clientInfo.browser,
+        os: clientInfo.os,
         language: navigator.language,
         screenSize: `${window.screen.width}x${window.screen.height}`,
         viewportSize: `${window.innerWidth}x${window.innerHeight}`,
         referrer: document.referrer || 'direct',
+        location: locationData,
         ...extraMeta
       }
     };
@@ -47,12 +88,31 @@
       mode: 'cors',
       keepalive: true // Guarantees log is sent even on page close/navigate
     }).catch(function() {
-      // Fail silently to avoid polluting console on connection loss
+      // Fail silently
     });
   }
 
-  // ─── Track Page Views & SPA Navigation ────────────────────────────────────
+  // ─── Page Stay Duration (Dwell Time) & View Tracking ──────────────────────
+  let pageEnterTime = Date.now();
+  let currentPath = window.location.pathname;
+
+  function trackPageExit() {
+    const timeSpent = Math.round((Date.now() - pageEnterTime) / 1000); // in seconds
+    if (timeSpent > 0) {
+      reportLog('info', `User stayed ${timeSpent}s on ${currentPath}`, null, {
+        type: 'dwell_time',
+        durationSeconds: timeSpent,
+        path: currentPath
+      });
+    }
+  }
+
   function trackPageView(isSPA = false) {
+    if (isSPA) {
+      trackPageExit();
+      pageEnterTime = Date.now();
+      currentPath = window.location.pathname;
+    }
     const label = isSPA ? 'Page View (SPA): ' : 'Page View: ';
     reportLog('info', label + window.location.pathname, null, {
       type: 'pageview',
@@ -69,7 +129,7 @@
     });
   }
 
-  // SPA navigation hook via History API monkey-patching
+  // Handle SPA transitions via History API monkey-patching
   try {
     const originalPushState = window.history.pushState;
     window.history.pushState = function(...args) {
@@ -87,8 +147,17 @@
       setTimeout(function() { trackPageView(true); }, 100);
     });
   } catch (e) {
-    // Fail silently if History API is not writable
+    // Fail silently
   }
+
+  // Handle tab closures, browser navigations, or app suspensions
+  window.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+      trackPageExit();
+    } else {
+      pageEnterTime = Date.now(); // reset enter time on returning
+    }
+  });
 
   // ─── Intercept Click Actions (Breadcrumbs) ──────────────────────────────────
   window.addEventListener('click', function(event) {
@@ -105,16 +174,20 @@
         target.onclick;
 
       if (isClickable) {
-        const text = target.innerText ? target.innerText.trim().substring(0, 50) : '';
+        const text = target.innerText ? target.innerText.trim().substring(0, 80) : '';
         const id = target.id ? '#' + target.id : '';
         const className = target.className && typeof target.className === 'string'
           ? '.' + target.className.split(' ')[0] 
           : '';
+        const nameAttr = target.getAttribute('name') || null;
+        const hrefAttr = target.getAttribute('href') || null;
         
         reportLog('info', `Clicked ${tagName.toUpperCase()}${id}${className} "${text}"`, null, {
           type: 'interaction',
           element: tagName,
           elementId: target.id || null,
+          elementName: nameAttr,
+          elementHref: hrefAttr,
           textContent: text || null
         });
         break;
@@ -132,6 +205,7 @@
     const stack = event.error ? event.error.stack : null;
 
     reportLog('error', message + filename, stack, {
+      type: 'error',
       line: event.lineno,
       column: event.colno,
       file: event.filename
@@ -156,7 +230,9 @@
       }
     }
 
-    reportLog('error', 'UnhandledPromiseRejection: ' + message, stack);
+    reportLog('error', 'UnhandledPromiseRejection: ' + message, stack, {
+      type: 'unhandled_rejection'
+    });
   });
 
   // ─── Intercept Developer Console Warnings & Errors ────────────────────────
@@ -166,7 +242,7 @@
       originalWarn.apply(console, args);
       const msg = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
       if (msg.includes('PROmonitor')) return;
-      reportLog('warn', 'Console Warning: ' + msg);
+      reportLog('warn', 'Console Warning: ' + msg, null, { type: 'console_warn' });
     };
 
     const originalError = console.error;
@@ -174,7 +250,7 @@
       originalError.apply(console, args);
       const msg = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
       if (msg.includes('PROmonitor')) return;
-      reportLog('error', 'Console Error: ' + msg);
+      reportLog('error', 'Console Error: ' + msg, null, { type: 'console_error' });
     };
   } catch (e) {}
 

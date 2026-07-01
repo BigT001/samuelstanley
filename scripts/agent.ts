@@ -372,8 +372,8 @@ async function generateArticle(data: ScrapedData, category: string): Promise<str
     'gemini-flash-latest',       // Priority 1
     'gemini-2.5-flash',         // Priority 2
     'gemini-flash-lite-latest',  // Priority 3
-    'gemini-1.5-flash',         // Standard fallback
-    'gemini-1.5-flash-latest',
+    'gemini-2.5-flash',         // Standard fallback
+    'gemini-2.5-flash-latest',
     'gemini-2.0-flash-exp',
     'gemini-1.5-pro',
     'gemini-pro'

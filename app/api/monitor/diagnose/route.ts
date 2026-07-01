@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     // Use gemini-1.5-flash for fast, structured generation
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 You are PROmonitor SRE AI, an expert Software Reliability Engineer.

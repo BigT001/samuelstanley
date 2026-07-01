@@ -58,14 +58,35 @@ export async function POST(request: Request) {
 
     // ── Parse request payload ────────────────────────────────────────────────
     const body = await request.json().catch(() => ({}));
-    const { level = 'info', message, stack, metadata } = body;
+    const { level = 'info', message, stack, metadata = {} } = body;
 
     if (!message) {
       return NextResponse.json({ success: false, error: 'Log message is required' }, { status: 400, headers: corsHeaders });
     }
 
+    // Resolve client IP and Geolocation headers from request
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || '127.0.0.1';
+    const country = request.headers.get('x-vercel-ip-country') || null;
+    const city = request.headers.get('x-vercel-ip-city') || null;
+    const region = request.headers.get('x-vercel-ip-country-region') || null;
+
+    // Build/enrich location metadata
+    if (!metadata.location) {
+      metadata.location = {
+        ip: clientIp,
+        city: city || 'Unknown',
+        region: region || 'Unknown',
+        country: country || 'Unknown',
+        org: 'Server Geolocation'
+      };
+    } else {
+      if (!metadata.location.ip || metadata.location.ip === 'Unknown') {
+        metadata.location.ip = clientIp;
+      }
+    }
+
     // ── Write log to database ────────────────────────────────────────────────
-    const metaStr = metadata ? JSON.stringify(metadata) : null;
+    const metaStr = JSON.stringify(metadata);
     const newLog = await db.clientLog.create({
       data: {
         clientId: client.id,

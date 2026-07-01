@@ -39,6 +39,7 @@ export default function OSPage() {
   const [loading, setLoading] = useState(true);
   const [pinging, setPinging] = useState(false);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [targetLogClientId, setTargetLogClientId] = useState<string>("");
 
   // Check auth session
   useEffect(() => {
@@ -229,7 +230,10 @@ export default function OSPage() {
               {/* Navigation Menu */}
               <nav className="p-4 space-y-1">
                 <SidebarButton icon={<Monitor className="w-4 h-4" />} label="Overview" active={activeTab === "overview"} onClick={() => setActiveTab("overview")} />
-                <SidebarButton icon={<Terminal className="w-4 h-4" />} label="Terminal Logs" active={activeTab === "logs"} onClick={() => setActiveTab("logs")} />
+                <SidebarButton icon={<Terminal className="w-4 h-4" />} label="Terminal Logs" active={activeTab === "logs"} onClick={() => {
+                  setTargetLogClientId("");
+                  setActiveTab("logs");
+                }} />
                 <SidebarButton icon={<Users className="w-4 h-4" />} label="Client Registry" active={activeTab === "clients"} onClick={() => setActiveTab("clients")} />
                 <SidebarButton icon={<Settings className="w-4 h-4" />} label="Alert Webhooks" active={activeTab === "alerts"} onClick={() => setActiveTab("alerts")} />
                 <div className="h-[1px] bg-[var(--border)] my-4 mx-2" />
@@ -348,7 +352,10 @@ export default function OSPage() {
                                   </td>
                                   <td className="py-4 text-right">
                                     <button 
-                                      onClick={() => setActiveTab("logs")}
+                                      onClick={() => {
+                                        setTargetLogClientId(site.id);
+                                        setActiveTab("logs");
+                                      }}
                                       className="px-3 py-1.5 border border-[var(--border)] rounded-lg hover:border-[var(--text-secondary)] hover:text-white transition-colors"
                                     >
                                       View logs
@@ -367,7 +374,7 @@ export default function OSPage() {
 
               {activeTab === "logs" && (
                 <div className="rounded-2xl border border-[var(--border)] p-6 backdrop-blur-md bg-[rgba(10,15,26,0.5)] space-y-6 animate-in fade-in duration-300">
-                  <LogTerminal secret={secret} clientsList={clients} />
+                  <LogTerminal secret={secret} clientsList={clients} initialClientId={targetLogClientId} />
                 </div>
               )}
 
@@ -443,14 +450,15 @@ const getSSLStatus = (expiryStr?: string) => {
 /* ─────────────────────────────────────────────────────────────────────────────
    SUB-APP 2: EVENT LOG TERMINAL
    ───────────────────────────────────────────────────────────────────────────── */
-function LogTerminal({ secret, clientsList }: { secret: string; clientsList: any[] }) {
-  const [selectedClientId, setSelectedClientId] = useState("");
+function LogTerminal({ secret, clientsList, initialClientId }: { secret: string; clientsList: any[]; initialClientId?: string }) {
+  const [selectedClientId, setSelectedClientId] = useState(initialClientId || "");
   const [logs, setLogs] = useState<any[]>([]);
   const [level, setLevel] = useState("all");
   const [searchVal, setSearchVal] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [expandedMetaId, setExpandedMetaId] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(true);
 
   // AI Diagnostics state
@@ -486,6 +494,12 @@ function LogTerminal({ secret, clientsList }: { secret: string; clientsList: any
       setSelectedClientId(clientsList[0].id);
     }
   }, [clientsList]);
+
+  useEffect(() => {
+    if (initialClientId) {
+      setSelectedClientId(initialClientId);
+    }
+  }, [initialClientId]);
 
   const loadLogs = async (showSpinner = true) => {
     if (!selectedClientId) return;
@@ -609,6 +623,14 @@ function LogTerminal({ secret, clientsList }: { secret: string; clientsList: any
             const isWarn = log.level === "warn";
             const levelColor = isErr ? "text-red-400" : isWarn ? "text-amber-400" : "text-green-400";
             
+            let parsedMeta: any = null;
+            if (log.metadata) {
+              try {
+                parsedMeta = typeof log.metadata === "string" ? JSON.parse(log.metadata) : log.metadata;
+              } catch (e) {}
+            }
+            const hasMeta = parsedMeta && Object.keys(parsedMeta).length > 0;
+
             return (
               <div key={log.id} className="border-b border-white/2 pb-2">
                 <div className="flex flex-wrap items-start gap-2">
@@ -629,6 +651,14 @@ function LogTerminal({ secret, clientsList }: { secret: string; clientsList: any
                       {expandedLogId === log.id ? "Hide Trace" : "Trace"}
                     </button>
                   )}
+                  {hasMeta && (
+                    <button 
+                      onClick={() => setExpandedMetaId(expandedMetaId === log.id ? null : log.id)}
+                      className="px-2 py-0.5 border border-[var(--border)] rounded hover:bg-white/5 text-[9px] tracking-wider uppercase font-bold text-cyan-400"
+                    >
+                      {expandedMetaId === log.id ? "Hide Details" : "Details"}
+                    </button>
+                  )}
                   {isErr && (
                     <button 
                       onClick={() => triggerDiagnosis(log.id)}
@@ -645,6 +675,70 @@ function LogTerminal({ secret, clientsList }: { secret: string; clientsList: any
                   <pre className="mt-2 p-3 bg-red-950/15 border border-red-500/10 rounded-lg text-[10px] text-red-300 overflow-x-auto whitespace-pre select-text font-mono">
                     {log.stack}
                   </pre>
+                )}
+
+                {/* Expanded metadata details */}
+                {expandedMetaId === log.id && parsedMeta && (
+                  <div className="mt-2 p-4 border border-[var(--border)] bg-black/45 rounded-xl space-y-3 text-xs leading-relaxed animate-in slide-in-from-top-1 duration-200 select-text">
+                    <div className="text-[10px] uppercase font-black tracking-wider text-[var(--text-secondary)]">
+                      📋 Telemetry Metadata Context
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Section 1: Session & Path */}
+                      <div className="space-y-1">
+                        <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">Page Information</h4>
+                        <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
+                          <div className="truncate"><span className="text-gray-500">URL:</span> <a href={parsedMeta.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-cyan-500">{parsedMeta.url || "Unknown"}</a></div>
+                          <div><span className="text-gray-500">Path:</span> {parsedMeta.pathname || "Unknown"}</div>
+                          <div className="truncate"><span className="text-gray-500">Referrer:</span> {parsedMeta.referrer || "Direct"}</div>
+                        </div>
+                      </div>
+
+                      {/* Section 2: Browser & System */}
+                      <div className="space-y-1">
+                        <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">Browser & OS</h4>
+                        <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
+                          <div><span className="text-gray-500">System:</span> {parsedMeta.os || "Unknown"} ({parsedMeta.browser || "Unknown"})</div>
+                          <div><span className="text-gray-500">Language:</span> {parsedMeta.language || "Unknown"}</div>
+                          <div><span className="text-gray-500">Display:</span> {parsedMeta.screenSize || "Unknown"} ({parsedMeta.viewportSize || "Unknown"} viewport)</div>
+                        </div>
+                      </div>
+
+                      {/* Section 3: Geolocation */}
+                      {parsedMeta.location && (
+                        <div className="space-y-1">
+                          <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">User Location</h4>
+                          <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
+                            <div><span className="text-gray-500">IP address:</span> {parsedMeta.location.ip || "Unknown"}</div>
+                            <div><span className="text-gray-500">Geo Info:</span> {parsedMeta.location.city || "Unknown"}, {parsedMeta.location.region || "Unknown"}, {parsedMeta.location.country || "Unknown"}</div>
+                            <div className="truncate"><span className="text-gray-500">ISP/ASN:</span> {parsedMeta.location.org || "Unknown"}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section 4: Type-Specific Details */}
+                    {parsedMeta.type === 'interaction' && (
+                      <div className="border-t border-white/5 pt-2 mt-2">
+                        <h4 className="text-[10px] font-bold uppercase text-amber-400 tracking-wider mb-1">Click Interaction telemetry</h4>
+                        <div className="text-gray-300 font-mono text-[10px] grid grid-cols-1 md:grid-cols-2 gap-2 bg-white/5 p-2.5 rounded-lg">
+                          <div><span className="text-gray-500">Element:</span> &lt;{parsedMeta.element}{parsedMeta.elementId ? ` id="${parsedMeta.elementId}"` : ''}{parsedMeta.elementName ? ` name="${parsedMeta.elementName}"` : ''}&gt;</div>
+                          {parsedMeta.elementHref && <div className="truncate"><span className="text-gray-500">Href Url:</span> <span className="text-amber-500">{parsedMeta.elementHref}</span></div>}
+                          <div className="col-span-1 md:col-span-2"><span className="text-gray-500">Text Content:</span> <span className="text-white font-sans">"{parsedMeta.textContent || ""}"</span></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {parsedMeta.type === 'dwell_time' && (
+                      <div className="border-t border-white/5 pt-2 mt-2">
+                        <h4 className="text-[10px] font-bold uppercase text-green-400 tracking-wider mb-1">Dwell Time Tracking</h4>
+                        <div className="text-gray-300 font-mono text-[10px] bg-white/5 p-2.5 rounded-lg">
+                          User stayed on route <code className="text-green-300 font-bold">{parsedMeta.path}</code> for <strong className="text-white text-xs px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/20">{parsedMeta.durationSeconds} seconds</strong> before navigating or leaving.
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* AI Diagnostics details card */}
@@ -687,6 +781,7 @@ function ClientRegistry({ secret, clientsList, refreshList }: { secret: string; 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [createdClient, setCreatedClient] = useState<any | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -706,6 +801,7 @@ function ClientRegistry({ secret, clientsList, refreshList }: { secret: string; 
         setCreatedClient(data.client);
         setName("");
         setUrl("");
+        setIsAddModalOpen(false);
         refreshList();
       } else {
         alert(data.error || "Failed to add site.");
@@ -745,126 +841,145 @@ function ClientRegistry({ secret, clientsList, refreshList }: { secret: string; 
 
   return (
     <div className="space-y-8 select-text">
-      <div>
-        <h3 className="text-lg font-bold">Client Site Registry</h3>
-        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Register client web applications, configure custom URLs, and obtain Javascript SDK tracking scripts.</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-bold">Client Site Registry</h3>
+          <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Register client web applications, configure custom URLs, and obtain Javascript SDK tracking scripts.</p>
+        </div>
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="px-5 py-2.5 bg-[var(--coral)] hover:bg-[var(--coral-light)] text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-red-500/20 active:scale-95"
+        >
+          + Add New Node
+        </button>
       </div>
 
-      {/* Creation popup details card */}
+      {/* Details / Credentials Popup */}
       {createdClient && (
-        <div className="p-5 border border-green-500/20 bg-green-500/5 rounded-2xl space-y-4 animate-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-1.5">
-              <CheckCircle className="w-4 h-4" /> Client Registered Successfully!
-            </h4>
-            <button onClick={() => setCreatedClient(null)} className="text-gray-400 hover:text-white text-xs">✕ Dismiss</button>
-          </div>
-          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-            Copy the API key or embed script snippet below to configure error monitoring on your client website.
-          </p>
-          <div className="space-y-2">
-            <label className="block text-[9px] uppercase tracking-wider text-green-400 font-bold">API Key</label>
-            <div className="flex gap-2">
-              <input type="text" readOnly value={createdClient.apiKey} className="font-mono text-xs border border-green-500/20 bg-[#020406] text-white px-3 py-2 rounded-xl flex-1 focus:outline-none" />
-              <button 
-                onClick={() => copyToClipboard(createdClient.apiKey)}
-                className="px-3 border border-green-500/20 rounded-xl hover:bg-green-500/10 flex items-center justify-center text-xs font-bold text-white"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg p-6 border border-cyan-500/20 bg-[#0a0f1a] rounded-2xl space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 relative">
+            <button onClick={() => setCreatedClient(null)} className="absolute top-6 right-6 text-gray-400 hover:text-white text-xs font-bold transition-colors">✕ Close</button>
+            <div className="flex flex-col gap-1 pr-10">
+              <h4 className="text-sm font-black uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                <Settings className="w-5 h-5" /> SDK Configuration Details
+              </h4>
+              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                Copy the API key or embed script snippet below to configure error monitoring on this client website.
+              </p>
             </div>
-          </div>
-          <div className="space-y-2">
-            <label className="block text-[9px] uppercase tracking-wider text-green-400 font-bold">Embedded SDK Tag</label>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                readOnly 
-                value={`<script src="${window.location.origin}/monitor-sdk.js" data-key="${createdClient.apiKey}"></script>`} 
-                className="font-mono text-[10px] border border-green-500/20 bg-[#020406] text-white px-3 py-2 rounded-xl flex-1 focus:outline-none" 
-              />
-              <button 
-                onClick={() => copyToClipboard(`<script src="${window.location.origin}/monitor-sdk.js" data-key="${createdClient.apiKey}"></script>`)}
-                className="px-3 border border-green-500/20 rounded-xl hover:bg-green-500/10 flex items-center justify-center text-xs font-bold text-white"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              </button>
+            
+            <div className="space-y-2">
+              <label className="block text-[10px] uppercase tracking-wider text-cyan-400 font-bold">API Key</label>
+              <div className="flex gap-2">
+                <input type="text" readOnly value={createdClient.apiKey} className="font-mono text-[11px] border border-cyan-500/20 bg-[#020406] text-white px-3 py-2.5 rounded-xl flex-1 focus:outline-none selection:bg-cyan-500/30" />
+                <button 
+                  onClick={() => copyToClipboard(createdClient.apiKey)}
+                  className="px-4 border border-cyan-500/20 rounded-xl hover:bg-cyan-500/10 flex items-center justify-center text-xs font-bold text-white transition-all"
+                >
+                  {copied ? <Check className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-[10px] uppercase tracking-wider text-cyan-400 font-bold">Embedded SDK Tag</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  readOnly 
+                  value={`<script src="${window.location.origin}/monitor-sdk.js" data-key="${createdClient.apiKey}"></script>`} 
+                  className="font-mono text-[10px] border border-cyan-500/20 bg-[#020406] text-white px-3 py-2.5 rounded-xl flex-1 focus:outline-none selection:bg-cyan-500/30" 
+                />
+                <button 
+                  onClick={() => copyToClipboard(`<script src="${window.location.origin}/monitor-sdk.js" data-key="${createdClient.apiKey}"></script>`)}
+                  className="px-4 border border-cyan-500/20 rounded-xl hover:bg-cyan-500/10 flex items-center justify-center text-xs font-bold text-white transition-all"
+                >
+                  {copied ? <Check className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Creation Form (Left column) */}
-        <div className="lg:col-span-1">
-          <form onSubmit={handleAdd} className="p-5 border border-[var(--border)] rounded-2xl bg-white/2 space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider">Register Web Node</h4>
-            <div className="space-y-3 flex flex-col">
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Client Name</label>
-                <input 
-                  type="text" 
-                  placeholder="E.g., NextGen Fashion..." 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  required
-                  className="border border-[var(--border)] bg-[rgba(5,8,16,0.6)] px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-[var(--coral)] text-white" 
-                />
+      {/* Add New Node Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md p-7 border border-[var(--border)] bg-[rgba(10,15,26,0.95)] rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 relative">
+            <button onClick={() => setIsAddModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-white text-xs font-bold transition-colors">✕ Close</button>
+            <form onSubmit={handleAdd} className="space-y-6">
+              <div>
+                <h4 className="text-base font-black tracking-tight text-white">Register Web Node</h4>
+                <p className="text-xs text-[var(--text-secondary)] mt-1">Add a new client application to start tracking.</p>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Website URL</label>
-                <input 
-                  type="url" 
-                  placeholder="https://client-site.com" 
-                  value={url} 
-                  onChange={(e) => setUrl(e.target.value)} 
-                  required
-                  className="border border-[var(--border)] bg-[rgba(5,8,16,0.6)] px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-[var(--coral)] text-white" 
-                />
-              </div>
-            </div>
-            <button 
-              type="submit" 
-              className="w-full py-2.5 bg-[var(--coral)] hover:bg-[var(--coral-light)] text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95"
-            >
-              Add Client Node
-            </button>
-          </form>
-        </div>
-
-        {/* Nodes List (Right column) */}
-        <div className="lg:col-span-2 space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider border-b border-[var(--border)] pb-2">Configured Nodes</h4>
-          {clientsList.length === 0 ? (
-            <div className="py-10 text-center text-xs text-[var(--text-secondary)] italic">No clients configured. Register one using the form.</div>
-          ) : (
-            <div className="space-y-2">
-              {clientsList.map((client) => (
-                <div key={client.id} className="flex items-center justify-between p-4 border border-[var(--border)] rounded-2xl bg-white/2 hover:bg-white/5 transition-all">
-                  <div>
-                    <span className="font-bold text-xs text-white">{client.name}</span>
-                    <div className="text-[10px] text-[var(--text-secondary)] font-mono mt-0.5">{client.url}</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => copyToClipboard(client.apiKey)}
-                      className="px-3 py-1.5 border border-[var(--border)] rounded-lg hover:border-[var(--text-secondary)] hover:text-white transition-all text-[10px] font-bold text-cyan-400"
-                    >
-                      Copy Key
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(client.id)}
-                      disabled={deletingId === client.id}
-                      className="px-3 py-1.5 border border-red-500/20 rounded-lg hover:bg-red-500/10 text-[10px] font-bold text-red-400 disabled:opacity-50 transition-all"
-                    >
-                      {deletingId === client.id ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
+              <div className="space-y-4 flex flex-col">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Client Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="E.g., NextGen Fashion..." 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    required
+                    className="border border-[var(--border)] bg-[#050810] px-4 py-3.5 rounded-xl text-xs focus:outline-none focus:border-[var(--coral)] text-white transition-colors" 
+                  />
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Website URL</label>
+                  <input 
+                    type="url" 
+                    placeholder="https://client-site.com" 
+                    value={url} 
+                    onChange={(e) => setUrl(e.target.value)} 
+                    required
+                    className="border border-[var(--border)] bg-[#050810] px-4 py-3.5 rounded-xl text-xs focus:outline-none focus:border-[var(--coral)] text-white transition-colors" 
+                  />
+                </div>
+              </div>
+              <button 
+                type="submit" 
+                className="w-full py-3.5 mt-2 bg-[var(--coral)] hover:bg-[var(--coral-light)] text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95"
+              >
+                Add Client Node
+              </button>
+            </form>
+          </div>
         </div>
+      )}
+
+      {/* Nodes List */}
+      <div>
+        {clientsList.length === 0 ? (
+          <div className="py-20 text-center text-xs text-[var(--text-secondary)] italic border border-dashed border-[var(--border)] rounded-2xl">No clients configured. Click Add New Node to begin.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+            {clientsList.map((client) => (
+              <div key={client.id} className="flex flex-col p-6 border border-[var(--border)] rounded-3xl bg-white/5 hover:bg-white/10 transition-all group shadow-sm">
+                <div className="mb-8">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-bold text-sm text-white truncate pr-2">{client.name}</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] shrink-0 mt-0.5" />
+                  </div>
+                  <div className="text-xs text-[var(--text-secondary)] font-mono truncate">{client.url}</div>
+                </div>
+                <div className="flex items-center gap-3 mt-auto">
+                  <button 
+                    onClick={() => setCreatedClient(client)}
+                    className="flex-1 py-2.5 border border-cyan-500/30 bg-cyan-950/20 rounded-xl hover:bg-cyan-500/20 transition-all text-[10px] font-bold text-cyan-400 uppercase tracking-wider"
+                  >
+                    SDK Config
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(client.id)}
+                    disabled={deletingId === client.id}
+                    className="px-5 py-2.5 border border-red-500/20 bg-red-950/20 rounded-xl hover:bg-red-500/20 text-[10px] font-bold text-red-400 disabled:opacity-50 transition-all uppercase tracking-wider"
+                  >
+                    {deletingId === client.id ? "..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -167,6 +167,7 @@ export async function GET(request: Request) {
         responseTime: true,
         sslExpiry: true,
         webhookUrl: true,
+        apiKey: true,
       },
       orderBy: { name: 'asc' }
     });
