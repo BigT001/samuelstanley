@@ -146,6 +146,14 @@ export default function RootLayout({
             })(window, document, "clarity", "script", "w5nkbmqo09");
           `}
         </Script>
+        {process.env.PROMONITOR_CLIENT_KEY && (
+          <Script 
+            id="promonitor-monitor-sdk" 
+            src="/monitor-sdk.js" 
+            data-key={process.env.PROMONITOR_CLIENT_KEY}
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );

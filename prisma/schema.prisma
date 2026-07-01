@@ -1,0 +1,35 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ClientSite {
+  id           String      @id @default(uuid())
+  name         String
+  url          String
+  apiKey       String      @unique
+  active       Boolean     @default(true)
+  status       String      @default("unknown")
+  lastPing     DateTime?
+  responseTime Int?
+  sslExpiry    DateTime?
+  webhookUrl   String?
+  logs         ClientLog[]
+  createdAt    DateTime    @default(now())
+}
+
+model ClientLog {
+  id        String     @id @default(uuid())
+  clientId  String
+  client    ClientSite @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  level     String     // info, warn, error, fatal
+  message   String
+  stack     String?
+  metadata  String?    // JSON details
+  timestamp DateTime   @default(now())
+}

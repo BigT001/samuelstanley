@@ -111,12 +111,13 @@ export default function AgentPage() {
         </Link>
 
         {!isAuthorized ? (
-          /* UNIFIED CITADEL LOCK SCREEN */
+          /* UNIFIED PROmonitor LOCK SCREEN */
           <div className="rounded-3xl border border-[var(--border)] p-10 text-center shadow-2xl" style={{ background: "var(--surface)", backdropFilter: "blur(40px)" }}>
             <div className="w-20 h-20 rounded-full mx-auto mb-8 flex items-center justify-center text-4xl shadow-inner" style={{ background: "rgba(255,100,100,0.05)", border: "1px solid rgba(255,255,255,0.05)" }}>
               🔒
             </div>
-            <h1 className="text-3xl font-extrabold text-[var(--text-primary)] mb-3 tracking-tighter">Stanley’s Citadel</h1>
+            <h1 className="text-3xl font-extrabold text-[var(--text-primary)] mb-3 tracking-tighter">Stanley’s PROmonitor</h1>
+            <p className="text-xs text-[var(--text-secondary)] mb-8 uppercase tracking-widest font-black">AI Orchestration Engine</p>
             <p className="text-sm text-[var(--text-secondary)] mb-10 max-w-xs mx-auto leading-relaxed">System is encrypted. Provide the administrative secret to initialize the dashboard.</p>
 
             <form onSubmit={handleVerify} className="space-y-4 max-w-sm mx-auto">
