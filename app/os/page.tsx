@@ -729,13 +729,20 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
       const meta = typeof l.metadata === 'string' ? JSON.parse(l.metadata) : l.metadata;
       if (meta && meta.visitorId) {
         const visId = meta.visitorId;
-        const loc = meta.location 
-          ? `${meta.location.city || 'Unknown'}, ${meta.location.country || 'Unknown'}` 
-          : 'Unknown Geolocation';
+        
+        let loc = 'Unknown Geolocation';
+        if (meta.location) {
+          const country = meta.location.country || 'Unknown';
+          const city = meta.location.city || 'Unknown';
+          const lga = meta.location.lga && meta.location.lga !== 'Unknown' ? ` (${meta.location.lga})` : '';
+          loc = `${city}${lga}, ${country}`;
+        }
+        
         const current = visitorMap.get(visId) || { location: loc, count: 0, lastActive: new Date(l.timestamp) };
         current.count++;
         if (new Date(l.timestamp) > current.lastActive) {
           current.lastActive = new Date(l.timestamp);
+          current.location = loc;
         }
         visitorMap.set(visId, current);
       }
@@ -1068,9 +1075,21 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
                               {parsedMeta.location && (
                                 <div className="space-y-1">
                                   <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">User Location</h4>
-                                  <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
+                                  <div className="text-gray-300 font-mono text-[10px] space-y-0.5 animate-in fade-in duration-200">
                                     <div><span className="text-gray-500">IP address:</span> {parsedMeta.location.ip || "Unknown"}</div>
                                     <div><span className="text-gray-500">Geo Info:</span> {parsedMeta.location.city || "Unknown"}, {parsedMeta.location.region || "Unknown"}, {parsedMeta.location.country || "Unknown"}</div>
+                                    {parsedMeta.location.lga && parsedMeta.location.lga !== 'Unknown' && (
+                                      <div><span className="text-gray-500">LGA (Nigeria):</span> <span className="text-cyan-400 font-bold">{parsedMeta.location.lga}</span></div>
+                                    )}
+                                    {parsedMeta.location.district && parsedMeta.location.district !== 'Unknown' && (
+                                      <div><span className="text-gray-500">District/Locality:</span> <span className="text-amber-400 font-semibold">{parsedMeta.location.district}</span></div>
+                                    )}
+                                    {parsedMeta.location.precision && (
+                                      <div><span className="text-gray-500">Source:</span> <span className="text-[9px] px-1 bg-white/5 border border-white/10 rounded">{parsedMeta.location.precision}</span></div>
+                                    )}
+                                    {parsedMeta.location.latitude && (
+                                      <div><span className="text-gray-500">GPS coords:</span> {parsedMeta.location.latitude}, {parsedMeta.location.longitude}</div>
+                                    )}
                                     <div className="truncate"><span className="text-gray-500">ISP/ASN:</span> {parsedMeta.location.org || "Unknown"}</div>
                                   </div>
                                 </div>

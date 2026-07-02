@@ -77,17 +77,95 @@
   const clientInfo = getBrowserOS();
 
   // ─── Geo-Location Async Fetcher ───────────────────────────────────────────
-  let locationData = null;
+  let locationData = {
+    ip: 'Unknown',
+    city: 'Unknown',
+    region: 'Unknown',
+    regionCode: 'Unknown',
+    country: 'Unknown',
+    org: 'Unknown',
+    lga: 'Unknown',
+    district: 'Unknown',
+    latitude: null,
+    longitude: null,
+    precision: 'IP-based'
+  };
+
+  function reverseGeocode(lat, lon, callback) {
+    fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=en')
+      .then(function(res) { return res.json(); })
+      .then(function(geo) {
+        let lgaName = 'Unknown';
+        let districtName = geo.locality || 'Unknown';
+        
+        if (geo.localityInfo && geo.localityInfo.administrative) {
+          geo.localityInfo.administrative.forEach(function(item) {
+            const desc = (item.description || '').toLowerCase();
+            const name = (item.name || '').toLowerCase();
+            if (desc.includes('local government') || desc.includes('lga') || name.includes('local government')) {
+              lgaName = item.name;
+            }
+          });
+        }
+        
+        callback({
+          city: geo.city || geo.locality || 'Unknown',
+          region: geo.principalSubdivision || 'Unknown',
+          country: geo.countryName || 'Unknown',
+          lga: lgaName,
+          district: districtName
+        });
+      })
+      .catch(function() {
+        callback(null);
+      });
+  }
+
   fetch('https://ipapi.co/json/')
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      locationData = {
-        ip: data.ip || 'Unknown',
-        city: data.city || 'Unknown',
-        region: data.region || 'Unknown',
-        country: data.country_name || 'Unknown',
-        org: data.org || 'Unknown'
-      };
+      locationData.ip = data.ip || 'Unknown';
+      locationData.city = data.city || 'Unknown';
+      locationData.region = data.region || 'Unknown';
+      locationData.regionCode = data.region_code || 'Unknown';
+      locationData.country = data.country_name || 'Unknown';
+      locationData.org = data.org || 'Unknown';
+      locationData.latitude = data.latitude || null;
+      locationData.longitude = data.longitude || null;
+
+      if (data.latitude && data.longitude) {
+        reverseGeocode(data.latitude, data.longitude, function(geo) {
+          if (geo) {
+            locationData.city = geo.city;
+            locationData.region = geo.region;
+            locationData.country = geo.country;
+            locationData.lga = geo.lga;
+            locationData.district = geo.district;
+          }
+        });
+      }
+
+      // Query browser GPS for pinpoint accuracy if permission is granted
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          locationData.precision = 'GPS-based';
+          locationData.latitude = lat;
+          locationData.longitude = lon;
+          reverseGeocode(lat, lon, function(geo) {
+            if (geo) {
+              locationData.city = geo.city;
+              locationData.region = geo.region;
+              locationData.country = geo.country;
+              locationData.lga = geo.lga;
+              locationData.district = geo.district;
+            }
+          });
+        }, function() {
+          // Blocked or failed, fallback to IP coordinates
+        }, { enableHighAccuracy: true, timeout: 5000 });
+      }
     })
     .catch(function() {
       // Fallback: will be augmented by Vercel IP location headers on backend
