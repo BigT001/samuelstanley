@@ -144,28 +144,6 @@
           }
         });
       }
-
-      // Query browser GPS for pinpoint accuracy if permission is granted
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
-          locationData.precision = 'GPS-based';
-          locationData.latitude = lat;
-          locationData.longitude = lon;
-          reverseGeocode(lat, lon, function(geo) {
-            if (geo) {
-              locationData.city = geo.city;
-              locationData.region = geo.region;
-              locationData.country = geo.country;
-              locationData.lga = geo.lga;
-              locationData.district = geo.district;
-            }
-          });
-        }, function() {
-          // Blocked or failed, fallback to IP coordinates
-        }, { enableHighAccuracy: true, timeout: 5000 });
-      }
     })
     .catch(function() {
       // Fallback: will be augmented by Vercel IP location headers on backend
