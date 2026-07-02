@@ -1,7 +1,15 @@
 (function() {
   // ─── Resolve SDK Configuration ─────────────────────────────────────────────
-  const currentScript = document.currentScript;
-  if (!currentScript) return;
+  let currentScript = document.currentScript;
+  if (!currentScript) {
+    currentScript = document.querySelector('script[src*="monitor-sdk.js"]') || 
+                    document.getElementById('promonitor-telemetry-sdk') ||
+                    document.getElementById('promonitor-monitor-sdk');
+  }
+  if (!currentScript) {
+    console.error('PROmonitor: Could not resolve telemetry script element.');
+    return;
+  }
 
   const apiKey = currentScript.getAttribute('data-key');
   if (!apiKey) {
