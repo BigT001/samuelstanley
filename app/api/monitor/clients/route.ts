@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { id, name, url, active, webhookUrl } = body;
+    const { id, name, url, active, webhookUrl, notificationEmail } = body;
 
     if (!id && (!name || !url)) {
       return NextResponse.json({ success: false, error: 'Name and URL are required for creation' }, { status: 400 });
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
           url,
           active: active !== undefined ? active : undefined,
           webhookUrl: webhookUrl !== undefined ? webhookUrl : undefined,
+          notificationEmail: notificationEmail !== undefined ? notificationEmail : undefined,
         }
       });
       return NextResponse.json({ success: true, client: updated });
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
           apiKey,
           active: true,
           status: 'unknown',
+          notificationEmail: notificationEmail || undefined,
         }
       });
       return NextResponse.json({ success: true, client: newClient });

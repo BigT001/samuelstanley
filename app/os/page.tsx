@@ -1236,6 +1236,7 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
 function ClientRegistry({ secret, clientsList, refreshList }: { secret: string; clientsList: any[]; refreshList: () => void }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [notificationEmail, setNotificationEmail] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [createdClient, setCreatedClient] = useState<any | null>(null);
   const [copied, setCopied] = useState(false);
@@ -1252,13 +1253,18 @@ function ClientRegistry({ secret, clientsList, refreshList }: { secret: string; 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${secret}`
         },
-        body: JSON.stringify({ name: name.trim(), url: url.trim() })
+        body: JSON.stringify({ 
+          name: name.trim(), 
+          url: url.trim(), 
+          notificationEmail: notificationEmail.trim() || undefined 
+        })
       });
       const data = await res.json();
       if (data.success) {
         setCreatedClient(data.client);
         setName("");
         setUrl("");
+        setNotificationEmail("");
         setIsAddModalOpen(false);
         refreshList();
       } else {
@@ -1392,6 +1398,16 @@ function ClientRegistry({ secret, clientsList, refreshList }: { secret: string; 
                     className="border border-[var(--border)] bg-[#050810] px-4 py-3.5 rounded-xl text-xs focus:outline-none focus:border-[var(--coral)] text-white transition-colors" 
                   />
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Alert Recipient Email (Optional)</label>
+                  <input 
+                    type="email" 
+                    placeholder="alerts@example.com" 
+                    value={notificationEmail} 
+                    onChange={(e) => setNotificationEmail(e.target.value)} 
+                    className="border border-[var(--border)] bg-[#050810] px-4 py-3.5 rounded-xl text-xs focus:outline-none focus:border-[var(--coral)] text-white transition-colors" 
+                  />
+                </div>
               </div>
               <button 
                 type="submit" 
@@ -1449,12 +1465,14 @@ function ClientRegistry({ secret, clientsList, refreshList }: { secret: string; 
 function AlertHub({ secret, clientsList, refreshList }: { secret: string; clientsList: any[]; refreshList: () => void }) {
   const [selectedId, setSelectedId] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [notificationEmail, setNotificationEmail] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (clientsList.length > 0 && !selectedId) {
       setSelectedId(clientsList[0].id);
       setWebhookUrl(clientsList[0].webhookUrl || "");
+      setNotificationEmail(clientsList[0].notificationEmail || "");
     }
   }, [clientsList]);
 
@@ -1462,6 +1480,7 @@ function AlertHub({ secret, clientsList, refreshList }: { secret: string; client
     setSelectedId(id);
     const client = clientsList.find(c => c.id === id);
     setWebhookUrl(client ? client.webhookUrl || "" : "");
+    setNotificationEmail(client ? client.notificationEmail || "" : "");
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -1476,11 +1495,15 @@ function AlertHub({ secret, clientsList, refreshList }: { secret: string; client
           "Content-Type": "application/json",
           "Authorization": `Bearer ${secret}`
         },
-        body: JSON.stringify({ id: selectedId, webhookUrl: webhookUrl.trim() })
+        body: JSON.stringify({ 
+          id: selectedId, 
+          webhookUrl: webhookUrl.trim(),
+          notificationEmail: notificationEmail.trim()
+        })
       });
       const data = await res.json();
       if (data.success) {
-        alert("Webhook settings saved successfully.");
+        alert("Alert settings saved successfully.");
         refreshList();
       } else {
         alert(data.error || "Save failed.");
@@ -1495,23 +1518,26 @@ function AlertHub({ secret, clientsList, refreshList }: { secret: string; client
   return (
     <div className="space-y-6 select-text text-xs">
       <div>
-        <h3 className="text-lg font-bold">Webhook Channel Settings</h3>
-        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Route critical client status changes and fatal exceptions directly to Discord or Slack.</p>
+        <h3 className="text-lg font-bold">Alert Channel Settings</h3>
+        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Route critical client status changes and log exceptions directly to Discord/Slack webhooks or Email addresses.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 p-5 border border-[var(--border)] bg-white/2 rounded-2xl space-y-3 h-fit">
           <h4 className="font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-            <AlertTriangle className="w-4 h-4" /> Webhook Rules
+            <AlertTriangle className="w-4 h-4" /> Alert Channels & Rules
           </h4>
           <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-            - **Uptime Scanning:** Triggered when status flips from ONLINE to OFFLINE, or recovers.
+            - **Uptime Scanning:** Triggered when status flips from ONLINE to OFFLINE, or recovers. Sent to both configured Webhook and Email channels.
           </p>
           <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-            - **Error Logging:** Real-time push triggers for all exceptions logged with severity **Error** or **Fatal** level.
+            - **Error Logging:** Real-time push triggers for all exceptions logged with severity **Error** or **Fatal** level (Webhooks & Email).
           </p>
           <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-            - **Format detection:** Discord and Slack payload structures are automatically detected from the webhook URL.
+            - **Warning Alerts:** Log entries with **Warning** severity are dispatched exclusively to your configured **Email** channels.
+          </p>
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+            - **Format detection:** Discord and Slack payload structures are automatically parsed from the webhook URL. Email alerts are dispatched via Resend.
           </p>
         </div>
 
@@ -1536,7 +1562,7 @@ function AlertHub({ secret, clientsList, refreshList }: { secret: string; client
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Discord or Slack Webhook URL</label>
+                <label className="block text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Discord or Slack Webhook URL (Error & Fatal)</label>
                 <input 
                   type="url"
                   placeholder="https://discord.com/api/webhooks/... or https://hooks.slack.com/services/..."
@@ -1546,12 +1572,23 @@ function AlertHub({ secret, clientsList, refreshList }: { secret: string; client
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="block text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Resend Email Recipient Address (Warning, Error, Fatal)</label>
+                <input 
+                  type="email"
+                  placeholder="alerts@yourdomain.com"
+                  value={notificationEmail}
+                  onChange={(e) => setNotificationEmail(e.target.value)}
+                  className="w-full border border-[var(--border)] bg-[rgba(5,8,16,0.6)] px-4 py-2.5 rounded-xl focus:outline-none focus:border-[var(--coral)] text-white font-mono"
+                />
+              </div>
+
               <button 
                 type="submit" 
                 disabled={saving}
                 className="px-4 py-2.5 bg-[var(--coral)] hover:bg-[var(--coral-light)] disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-md active:scale-95"
               >
-                {saving ? "Saving settings..." : "Save Webhook settings"}
+                {saving ? "Saving settings..." : "Save alert settings"}
               </button>
             </form>
           )}

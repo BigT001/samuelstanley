@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendWebhookAlert } from '@/lib/alerts';
+import { sendWebhookAlert, sendEmailAlert } from '@/lib/alerts';
 import https from 'https';
 import { URL } from 'url';
 
@@ -56,7 +56,7 @@ function getSSLExpiry(urlString: string): Promise<Date | null> {
 /**
  * Helper to ping a single website and fetch stats
  */
-async function pingWebsite(client: { id: string; name: string; url: string; status: string; webhookUrl: string | null }) {
+async function pingWebsite(client: { id: string; name: string; url: string; status: string; webhookUrl: string | null; notificationEmail: string | null }) {
   const startTime = Date.now();
   let status: 'up' | 'down' = 'down';
   let responseTime = 0;
@@ -122,6 +122,15 @@ async function pingWebsite(client: { id: string; name: string; url: string; stat
         `🔴 Alert: Website is OFFLINE! Health check failed. Uptime monitor is unable to reach the page.`,
       );
     }
+    if (client.notificationEmail) {
+      sendEmailAlert(
+        client.notificationEmail,
+        client.name,
+        client.url,
+        'fatal',
+        `🔴 Alert: Website is OFFLINE! Health check failed. Uptime monitor is unable to reach the page.`,
+      );
+    }
   } else if (status === 'up' && client.status === 'down') {
     // Site recovered!
     await db.clientLog.create({
@@ -135,6 +144,15 @@ async function pingWebsite(client: { id: string; name: string; url: string; stat
     if (client.webhookUrl) {
       sendWebhookAlert(
         client.webhookUrl,
+        client.name,
+        client.url,
+        'info',
+        `🟢 Recovery: Website is back ONLINE! Health check succeeded in ${responseTime}ms.`,
+      );
+    }
+    if (client.notificationEmail) {
+      sendEmailAlert(
+        client.notificationEmail,
         client.name,
         client.url,
         'info',

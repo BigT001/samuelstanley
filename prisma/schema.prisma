@@ -9,18 +9,19 @@ generator client {
 }
 
 model ClientSite {
-  id           String      @id @default(uuid())
-  name         String
-  url          String
-  apiKey       String      @unique
-  active       Boolean     @default(true)
-  status       String      @default("unknown")
-  lastPing     DateTime?
-  responseTime Int?
-  sslExpiry    DateTime?
-  webhookUrl   String?
-  logs         ClientLog[]
-  createdAt    DateTime    @default(now())
+  id                String      @id @default(uuid())
+  name              String
+  url               String
+  apiKey            String      @unique
+  active            Boolean     @default(true)
+  status            String      @default("unknown")
+  lastPing          DateTime?
+  responseTime      Int?
+  sslExpiry         DateTime?
+  webhookUrl        String?
+  notificationEmail String?
+  logs              ClientLog[]
+  createdAt         DateTime    @default(now())
 }
 
 model ClientLog {

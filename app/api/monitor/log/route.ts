@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendWebhookAlert } from '@/lib/alerts';
+import { sendWebhookAlert, sendEmailAlert } from '@/lib/alerts';
 
 /**
  * CORS options response handler
@@ -147,16 +147,29 @@ export async function POST(request: Request) {
     });
 
     // ── Handle error alerts ──────────────────────────────────────────────────
-    if ((level === 'error' || level === 'fatal') && client.webhookUrl) {
-      // Async trigger webhook alert (do not block client request response)
-      sendWebhookAlert(
-        client.webhookUrl,
-        client.name,
-        client.url,
-        level,
-        message,
-        stack || undefined
-      );
+    if (level === 'error' || level === 'fatal' || level === 'warn') {
+      if (client.webhookUrl && (level === 'error' || level === 'fatal')) {
+        // Async trigger webhook alert (do not block client request response)
+        sendWebhookAlert(
+          client.webhookUrl,
+          client.name,
+          client.url,
+          level,
+          message,
+          stack || undefined
+        );
+      }
+      if (client.notificationEmail) {
+        // Async trigger email alert (do not block client request response)
+        sendEmailAlert(
+          client.notificationEmail,
+          client.name,
+          client.url,
+          level,
+          message,
+          stack || undefined
+        );
+      }
     }
 
     return NextResponse.json({ success: true, logId: newLog.id }, { status: 200, headers: corsHeaders });
