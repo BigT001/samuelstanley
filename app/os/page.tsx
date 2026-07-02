@@ -459,6 +459,10 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
   const [endDate, setEndDate] = useState("");
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
 
+  // Collapsible UI panels toggle states
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showVitals, setShowVitals] = useState(false);
+
   // Clear query overrides when client target shifts
   useEffect(() => {
     setLimit(100);
@@ -748,20 +752,43 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-bold">System Log Terminal</h3>
-        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Search or stream incoming warnings, debug details, and uncaught browser errors.</p>
+    <div className="space-y-4">
+      {/* Title bar with Collapsible controllers */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+        <div>
+          <h3 className="text-sm font-black uppercase tracking-wider text-cyan-400">🖥️ System Log Terminal</h3>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">Live error diagnostic streams & user session monitors.</p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1.5 ${showDatePicker || startDate || endDate ? "text-amber-400 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10" : "text-gray-400 border-[var(--border)] hover:bg-white/5"}`}
+          >
+            📅 Archive Dates {startDate || endDate ? "(Active)" : ""}
+          </button>
+          
+          {vitalsLogs.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowVitals(!showVitals)}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1.5 ${showVitals ? "text-cyan-400 border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10" : "text-gray-400 border-[var(--border)] hover:bg-white/5"}`}
+            >
+              📈 Web Vitals
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Control panel bar */}
-      <div className="flex flex-wrap items-center gap-3 border-b border-[var(--border)] pb-4">
+      <div className="flex flex-wrap items-center gap-3 bg-black/10 p-3 rounded-xl border border-[var(--border)]">
         <div className="flex flex-col gap-1">
           <label className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Client Target</label>
           <select 
             value={selectedClientId}
             onChange={(e) => setSelectedClientId(e.target.value)}
-            className="border border-[var(--border)] bg-[rgba(5,8,16,0.6)] px-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:border-[var(--coral)] text-white"
+            className="border border-[var(--border)] bg-[#020406] px-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:border-[var(--coral)] text-white"
           >
             {clientsList.map(c => <option key={c.id} value={c.id} className="bg-[#050810]">{c.name}</option>)}
             {clientsList.length === 0 && <option value="">No clients registered</option>}
@@ -773,7 +800,7 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
           <select 
             value={level}
             onChange={(e) => setLevel(e.target.value)}
-            className="border border-[var(--border)] bg-[rgba(5,8,16,0.6)] px-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:border-[var(--coral)] text-white font-sans"
+            className="border border-[var(--border)] bg-[#020406] px-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:border-[var(--coral)] text-white font-sans"
           >
             <option value="all" className="bg-[#050810]">ALL LEVELS</option>
             <option value="info" className="bg-[#050810]">INFO</option>
@@ -803,7 +830,7 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
               placeholder="Search keyword..."
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
-              className="border border-[var(--border)] bg-[rgba(5,8,16,0.6)] px-3 py-1.5 rounded-lg text-xs flex-1 focus:outline-none focus:border-[var(--coral)] text-white"
+              className="border border-[var(--border)] bg-[#020406] px-3 py-1.5 rounded-lg text-xs flex-1 focus:outline-none focus:border-[var(--coral)] text-white"
             />
             <button type="submit" className="px-4 py-1.5 bg-white/5 border border-[var(--border)] hover:bg-white/10 rounded-lg text-xs font-bold text-white transition-all">
               Filter
@@ -812,47 +839,50 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
         </form>
       </div>
 
-      {/* Date & Visitor Filters row */}
-      <div className="flex flex-wrap items-center gap-4 bg-[#0a0f1a]/40 p-3.5 rounded-xl border border-[var(--border)] text-xs">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Date Range Archive:</span>
-          <input 
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="border border-[var(--border)] bg-[#020406] px-2 py-1 rounded text-xs text-white focus:outline-none focus:border-cyan-500/50"
-          />
-          <span className="text-gray-500">to</span>
-          <input 
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="border border-[var(--border)] bg-[#020406] px-2 py-1 rounded text-xs text-white focus:outline-none focus:border-cyan-500/50"
-          />
-          {(startDate || endDate) && (
-            <button 
-              onClick={() => { setStartDate(""); setEndDate(""); }}
-              className="text-[9px] uppercase tracking-wider text-[var(--coral)] hover:underline font-bold"
-            >
-              Clear dates
-            </button>
-          )}
-        </div>
-        
-        {selectedVisitorId && (
-          <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-white/5 pt-2 sm:pt-0 sm:pl-4">
-            <span className="text-[9px] uppercase tracking-wider text-amber-400 font-bold">Filtering User Journey:</span>
-            <span className="font-mono text-[10px] bg-amber-950/40 border border-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1.5 select-none">
-              {selectedVisitorId}
-              <button onClick={() => setSelectedVisitorId(null)} className="text-[9px] font-black text-amber-500 hover:text-white transition-colors">✕</button>
-            </span>
+      {/* Date Filters panel (Collapsible) */}
+      {showDatePicker && (
+        <div className="flex flex-wrap items-center gap-4 bg-[#0a0f1a]/45 p-3.5 rounded-xl border border-amber-500/20 text-xs animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[9px] uppercase tracking-wider text-amber-400 font-bold">Date Range Archive Query:</span>
+            <input 
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border border-[var(--border)] bg-[#020406] px-2 py-1 rounded text-xs text-white focus:outline-none focus:border-cyan-500/50"
+            />
+            <span className="text-gray-500">to</span>
+            <input 
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border border-[var(--border)] bg-[#020406] px-2 py-1 rounded text-xs text-white focus:outline-none focus:border-cyan-500/50"
+            />
+            {(startDate || endDate) && (
+              <button 
+                onClick={() => { setStartDate(""); setEndDate(""); }}
+                className="text-[9px] uppercase tracking-wider text-[var(--coral)] hover:underline font-bold"
+              >
+                Clear dates
+              </button>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Core Web Vitals Scorecard */}
-      {vitalsLogs.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-[var(--border)] bg-black/30 rounded-2xl animate-in fade-in duration-300">
+      {/* Active Selected Visitor notification line (Always visible if active) */}
+      {selectedVisitorId && (
+        <div className="flex items-center gap-2 bg-amber-950/20 border border-amber-500/10 p-2.5 rounded-xl text-xs">
+          <span className="text-[9px] uppercase tracking-wider text-amber-400 font-bold">Filtering User Journey:</span>
+          <span className="font-mono text-[10px] bg-amber-950/60 border border-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1.5 select-none">
+            {selectedVisitorId}
+            <button onClick={() => setSelectedVisitorId(null)} className="text-[9px] font-black text-amber-500 hover:text-white transition-colors">✕</button>
+          </span>
+        </div>
+      )}
+
+      {/* Core Web Vitals Scorecard (Collapsible) */}
+      {showVitals && vitalsLogs.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-[var(--border)] bg-black/30 rounded-2xl animate-in slide-in-from-top-2 duration-300">
           <div className="flex flex-col">
             <span className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Largest Contentful Paint (LCP)</span>
             <div className="flex items-center gap-2 mt-1">
