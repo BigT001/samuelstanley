@@ -159,8 +159,9 @@ export async function POST(request: Request) {
           stack || undefined
         );
       }
+      
+      // Legacy fallback email alert
       if (client.notificationEmail) {
-        // Async trigger email alert (do not block client request response)
         sendEmailAlert(
           client.notificationEmail,
           client.name,
@@ -170,6 +171,30 @@ export async function POST(request: Request) {
           stack || undefined
         );
       }
+
+      // Query and trigger global permitted email alert channels
+      db.alertEmail.findMany({
+        where: {
+          sites: {
+            has: client.id
+          }
+        }
+      }).then(emails => {
+        emails.forEach(ae => {
+          if (ae.email !== client.notificationEmail) {
+            sendEmailAlert(
+              ae.email,
+              client.name,
+              client.url,
+              level,
+              message,
+              stack || undefined
+            );
+          }
+        });
+      }).catch(err => {
+        console.error('Failed to query global alert emails:', err);
+      });
     }
 
     return NextResponse.json({ success: true, logId: newLog.id }, { status: 200, headers: corsHeaders });

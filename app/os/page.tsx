@@ -21,10 +21,12 @@ import {
   Activity,
   ShieldCheck,
   Flame,
-  Globe
+  Globe,
+  SlidersHorizontal,
+  Mail
 } from "lucide-react";
 
-type TabId = "overview" | "logs" | "clients" | "alerts" | "agent";
+type TabId = "overview" | "logs" | "clients" | "alerts" | "agent" | "settings";
 
 export default function OSPage() {
   const [secret, setSecret] = useState("");
@@ -236,6 +238,7 @@ export default function OSPage() {
                 }} />
                 <SidebarButton icon={<Users className="w-4 h-4" />} label="Client Registry" active={activeTab === "clients"} onClick={() => setActiveTab("clients")} />
                 <SidebarButton icon={<Settings className="w-4 h-4" />} label="Alert Webhooks" active={activeTab === "alerts"} onClick={() => setActiveTab("alerts")} />
+                <SidebarButton icon={<SlidersHorizontal className="w-4 h-4" />} label="Dashboard Settings" active={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
                 <div className="h-[1px] bg-[var(--border)] my-4 mx-2" />
                 <SidebarButton icon={<Sparkles className="w-4 h-4 text-amber-400" />} label="AI Content Engine" active={activeTab === "agent"} onClick={() => setActiveTab("agent")} />
               </nav>
@@ -377,6 +380,12 @@ export default function OSPage() {
               {activeTab === "alerts" && (
                 <div className="rounded-2xl border border-[var(--border)] p-6 backdrop-blur-md bg-[rgba(10,15,26,0.5)] space-y-6 animate-in fade-in duration-300">
                   <AlertHub secret={secret} clientsList={clients} refreshList={fetchDashboardData} />
+                </div>
+              )}
+
+              {activeTab === "settings" && (
+                <div className="rounded-2xl border border-[var(--border)] p-6 backdrop-blur-md bg-[rgba(10,15,26,0.5)] space-y-6 animate-in fade-in duration-300">
+                  <DashboardSettings secret={secret} clientsList={clients} />
                 </div>
               )}
 
@@ -1743,6 +1752,216 @@ function AIBlogAgent({ secret }: { secret: string }) {
               No active agent runs executed. Submit a task using the run console.
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SUB-APP 6: DASHBOARD SETTINGS (GLOBAL ALERT EMAILS)
+   ───────────────────────────────────────────────────────────────────────────── */
+function DashboardSettings({ secret, clientsList }: { secret: string; clientsList: any[] }) {
+  const [emailInput, setEmailInput] = useState("");
+  const [alertEmails, setAlertEmails] = useState<any[]>([]);
+  const [loadingEmails, setLoadingEmails] = useState(false);
+  const [addingEmail, setAddingEmail] = useState(false);
+
+  const fetchAlertEmails = async () => {
+    setLoadingEmails(true);
+    try {
+      const res = await fetch("/api/monitor/emails", {
+        headers: { "Authorization": `Bearer ${secret}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAlertEmails(data.emails || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingEmails(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlertEmails();
+  }, [secret]);
+
+  const handleAddEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput.trim()) return;
+    setAddingEmail(true);
+
+    try {
+      const res = await fetch("/api/monitor/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${secret}`
+        },
+        body: JSON.stringify({ email: emailInput.trim().toLowerCase() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEmailInput("");
+        fetchAlertEmails();
+      } else {
+        alert(data.error || "Failed to add email address.");
+      }
+    } catch (err) {
+      alert("Submission error");
+    } finally {
+      setAddingEmail(false);
+    }
+  };
+
+  const handleDeleteEmail = async (id: string) => {
+    if (!confirm("Remove this email alert recipient?")) return;
+    try {
+      const res = await fetch("/api/monitor/emails", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${secret}`
+        },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchAlertEmails();
+      }
+    } catch (err) {
+      alert("Delete failed");
+    }
+  };
+
+  const handleToggleSite = async (emailId: string, siteId: string, currentSites: string[]) => {
+    let newSites = [...currentSites];
+    if (newSites.includes(siteId)) {
+      newSites = newSites.filter(id => id !== siteId);
+    } else {
+      newSites.push(siteId);
+    }
+
+    try {
+      const res = await fetch("/api/monitor/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${secret}`
+        },
+        body: JSON.stringify({ id: emailId, sites: newSites })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Update local state directly for responsive toggle feel
+        setAlertEmails(prev => prev.map(ae => ae.id === emailId ? { ...ae, sites: newSites } : ae));
+      }
+    } catch (err) {
+      alert("Failed to update link permissions");
+    }
+  };
+
+  return (
+    <div className="space-y-6 select-text text-xs">
+      <div>
+        <h3 className="text-lg font-bold">Global Alert Channels Settings</h3>
+        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Manage global alert email addresses and toggle which monitored client websites can dispatch notifications to them.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 p-5 border border-[var(--border)] bg-white/2 rounded-2xl space-y-3 h-fit">
+          <h4 className="font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+            <Mail className="w-4 h-4" /> Global Routing Rules
+          </h4>
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+            - **Global Recipients**: Add global developer or team email addresses.
+          </p>
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+            - **Permission Control**: Toggle checkbox settings next to each email to grant/revoke alert dispatching privileges for individual client sites.
+          </p>
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+            - **Instant Fallback**: If a linked site logs a `warn`, `error`, or `fatal` exception or goes `down`, notifications are automatically routed to all permitted recipient emails.
+          </p>
+        </div>
+
+        <div className="lg:col-span-2 space-y-6">
+          {/* Add Email Form */}
+          <form onSubmit={handleAddEmail} className="flex gap-3 border border-[var(--border)] p-4 rounded-2xl bg-white/2">
+            <input 
+              type="email"
+              required
+              placeholder="Enter developer email address (e.g. dev@company.com)..."
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              className="flex-1 border border-[var(--border)] bg-[rgba(5,8,16,0.6)] px-4 py-2.5 rounded-xl focus:outline-none focus:border-[var(--coral)] text-white font-mono"
+            />
+            <button 
+              type="submit"
+              disabled={addingEmail}
+              className="px-5 py-2.5 bg-[var(--coral)] hover:bg-[var(--coral-light)] disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 shrink-0"
+            >
+              {addingEmail ? "Adding..." : "+ Add Email"}
+            </button>
+          </form>
+
+          {/* Emails Lists */}
+          <div className="space-y-4">
+            {loadingEmails ? (
+              <div className="py-10 text-center text-xs text-[var(--text-secondary)] italic">Loading settings...</div>
+            ) : alertEmails.length === 0 ? (
+              <div className="py-10 text-center text-xs text-[var(--text-secondary)] italic border border-dashed border-[var(--border)] rounded-2xl">
+                No alert emails registered. Add one above to begin routing.
+              </div>
+            ) : (
+              alertEmails.map(ae => (
+                <div key={ae.id} className="border border-[var(--border)] p-5 rounded-2xl bg-white/2 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                  <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                    <span className="font-mono text-cyan-400 font-bold text-sm">{ae.email}</span>
+                    <button 
+                      onClick={() => handleDeleteEmail(ae.id)}
+                      className="px-3 py-1.5 bg-red-950/30 hover:bg-red-500 border border-red-500/20 text-red-400 hover:text-white rounded-lg text-[10px] font-bold transition-all shrink-0 active:scale-95"
+                    >
+                      Delete Address
+                    </button>
+                  </div>
+
+                  <div>
+                    <h5 className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mb-3">Linked Sites & Alert Permissions</h5>
+                    
+                    {clientsList.length === 0 ? (
+                      <p className="text-[10px] text-gray-500 italic">No client websites registered to link.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {clientsList.map(c => {
+                          const isLinked = (ae.sites || []).includes(c.id);
+                          return (
+                            <div 
+                              key={c.id} 
+                              onClick={() => handleToggleSite(ae.id, c.id, ae.sites || [])}
+                              className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none ${isLinked ? "border-cyan-500/30 bg-cyan-950/10 text-cyan-200" : "border-white/5 bg-black/20 text-gray-400 hover:border-white/10"}`}
+                            >
+                              <div className="truncate pr-2">
+                                <div className="font-bold text-[11px] text-white truncate">{c.name}</div>
+                                <div className="text-[9px] text-gray-500 truncate font-mono">{c.url}</div>
+                              </div>
+                              <input 
+                                type="checkbox"
+                                checked={isLinked}
+                                readOnly
+                                className="w-4 h-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 accent-cyan-500"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

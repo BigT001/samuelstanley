@@ -131,6 +131,29 @@ async function pingWebsite(client: { id: string; name: string; url: string; stat
         `🔴 Alert: Website is OFFLINE! Health check failed. Uptime monitor is unable to reach the page.`,
       );
     }
+    
+    // Query and trigger global permitted email alert channels
+    db.alertEmail.findMany({
+      where: {
+        sites: {
+          has: client.id
+        }
+      }
+    }).then(emails => {
+      emails.forEach(ae => {
+        if (ae.email !== client.notificationEmail) {
+          sendEmailAlert(
+            ae.email,
+            client.name,
+            client.url,
+            'fatal',
+            `🔴 Alert: Website is OFFLINE! Health check failed. Uptime monitor is unable to reach the page.`,
+          );
+        }
+      });
+    }).catch(err => {
+      console.error('Failed to query global alert emails for status DOWN:', err);
+    });
   } else if (status === 'up' && client.status === 'down') {
     // Site recovered!
     await db.clientLog.create({
@@ -159,6 +182,29 @@ async function pingWebsite(client: { id: string; name: string; url: string; stat
         `🟢 Recovery: Website is back ONLINE! Health check succeeded in ${responseTime}ms.`,
       );
     }
+    
+    // Query and trigger global permitted email alert channels
+    db.alertEmail.findMany({
+      where: {
+        sites: {
+          has: client.id
+        }
+      }
+    }).then(emails => {
+      emails.forEach(ae => {
+        if (ae.email !== client.notificationEmail) {
+          sendEmailAlert(
+            ae.email,
+            client.name,
+            client.url,
+            'info',
+            `🟢 Recovery: Website is back ONLINE! Health check succeeded in ${responseTime}ms.`,
+          );
+        }
+      });
+    }).catch(err => {
+      console.error('Failed to query global alert emails for status UP:', err);
+    });
   }
 
   return updatedClient;

@@ -34,3 +34,10 @@ model ClientLog {
   metadata  String?    // JSON details
   timestamp DateTime   @default(now())
 }
+
+model AlertEmail {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  sites     String[] // ClientSite IDs linked to this email
+  createdAt DateTime @default(now())
+}
