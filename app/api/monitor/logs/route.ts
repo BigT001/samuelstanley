@@ -29,7 +29,10 @@ export async function GET(request: Request) {
     const clientId = searchParams.get('clientId');
     const level = searchParams.get('level');
     const search = searchParams.get('search');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
+    const visitorId = searchParams.get('visitorId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 1000);
 
     if (!clientId) {
       return NextResponse.json({ success: false, error: 'Client ID is required' }, { status: 400 });
@@ -46,6 +49,22 @@ export async function GET(request: Request) {
         contains: search,
         mode: 'insensitive', // Case-insensitive search
       };
+    }
+
+    if (visitorId) {
+      whereClause.metadata = {
+        contains: `"visitorId":"${visitorId}"`,
+      };
+    }
+
+    if (startDate || endDate) {
+      whereClause.timestamp = {};
+      if (startDate) {
+        whereClause.timestamp.gte = new Date(startDate + 'T00:00:00.000Z');
+      }
+      if (endDate) {
+        whereClause.timestamp.lte = new Date(endDate + 'T23:59:59.999Z');
+      }
     }
 
     const logs = await db.clientLog.findMany({

@@ -19,6 +19,29 @@
   }
   const logEndpoint = `${serverOrigin}/api/monitor/log`;
 
+  // ─── Visitor & Session Identifier Persistence ──────────────────────────────
+  let visitorId = null;
+  try {
+    visitorId = localStorage.getItem('promonitor_visitor_id');
+    if (!visitorId) {
+      visitorId = 'vis_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('promonitor_visitor_id', visitorId);
+    }
+  } catch (e) {
+    visitorId = 'vis_anon';
+  }
+
+  let sessionId = null;
+  try {
+    sessionId = sessionStorage.getItem('promonitor_session_id');
+    if (!sessionId) {
+      sessionId = 'sess_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      sessionStorage.setItem('promonitor_session_id', sessionId);
+    }
+  } catch (e) {
+    sessionId = 'sess_anon';
+  }
+
   // ─── Browser & OS Detection Helper ────────────────────────────────────────
   function getBrowserOS() {
     const ua = navigator.userAgent;
@@ -70,6 +93,8 @@
       message: message,
       stack: stack || null,
       metadata: {
+        visitorId: visitorId,
+        sessionId: sessionId,
         url: window.location.href,
         pathname: window.location.pathname,
         userAgent: navigator.userAgent,

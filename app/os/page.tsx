@@ -453,6 +453,20 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
   const playerRef = useRef<HTMLDivElement>(null);
   const [isLive, setIsLive] = useState(true);
 
+  // Visitor Journey & Date Archive filters
+  const [limit, setLimit] = useState(100);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
+
+  // Clear query overrides when client target shifts
+  useEffect(() => {
+    setLimit(100);
+    setSelectedVisitorId(null);
+    setStartDate("");
+    setEndDate("");
+  }, [selectedClientId]);
+
   // AI Diagnostics state
   const [diagnosingIds, setDiagnosingIds] = useState<Record<string, boolean>>({});
   const [diagnoses, setDiagnoses] = useState<Record<string, { 
@@ -564,7 +578,10 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
       url.searchParams.append("clientId", selectedClientId);
       if (level !== "all") url.searchParams.append("level", level);
       if (searchQuery.trim()) url.searchParams.append("search", searchQuery.trim());
-      url.searchParams.append("limit", "80");
+      url.searchParams.append("limit", limit.toString());
+      if (selectedVisitorId) url.searchParams.append("visitorId", selectedVisitorId);
+      if (startDate) url.searchParams.append("startDate", startDate);
+      if (endDate) url.searchParams.append("endDate", endDate);
 
       const res = await fetch(url.toString(), {
         headers: { "Authorization": `Bearer ${secret}` }
@@ -667,7 +684,7 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
 
   useEffect(() => {
     loadLogs(true);
-  }, [selectedClientId, level, searchQuery]);
+  }, [selectedClientId, level, searchQuery, limit, selectedVisitorId, startDate, endDate]);
 
   useEffect(() => {
     if (!isLive || !selectedClientId) return;
@@ -677,12 +694,58 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [selectedClientId, level, searchQuery, isLive]);
+  }, [selectedClientId, level, searchQuery, isLive, limit, selectedVisitorId, startDate, endDate]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchQuery(searchVal);
   };
+
+  // Group logs by date
+  const groupedLogs: Record<string, any[]> = {};
+  logs.forEach(log => {
+    const dateStr = new Date(log.timestamp).toLocaleDateString(undefined, { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    if (!groupedLogs[dateStr]) {
+      groupedLogs[dateStr] = [];
+    }
+    groupedLogs[dateStr].push(log);
+  });
+
+  // Extract visitor journeys from logs list
+  const visitorList: { visitorId: string; location: string; count: number; lastActive: string }[] = [];
+  const visitorMap = new Map<string, { location: string; count: number; lastActive: Date }>();
+
+  logs.forEach(l => {
+    try {
+      const meta = typeof l.metadata === 'string' ? JSON.parse(l.metadata) : l.metadata;
+      if (meta && meta.visitorId) {
+        const visId = meta.visitorId;
+        const loc = meta.location 
+          ? `${meta.location.city || 'Unknown'}, ${meta.location.country || 'Unknown'}` 
+          : 'Unknown Geolocation';
+        const current = visitorMap.get(visId) || { location: loc, count: 0, lastActive: new Date(l.timestamp) };
+        current.count++;
+        if (new Date(l.timestamp) > current.lastActive) {
+          current.lastActive = new Date(l.timestamp);
+        }
+        visitorMap.set(visId, current);
+      }
+    } catch(e) {}
+  });
+
+  visitorMap.forEach((val, key) => {
+    visitorList.push({
+      visitorId: key,
+      location: val.location,
+      count: val.count,
+      lastActive: val.lastActive.toLocaleTimeString()
+    });
+  });
 
   return (
     <div className="space-y-6">
@@ -749,6 +812,44 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
         </form>
       </div>
 
+      {/* Date & Visitor Filters row */}
+      <div className="flex flex-wrap items-center gap-4 bg-[#0a0f1a]/40 p-3.5 rounded-xl border border-[var(--border)] text-xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Date Range Archive:</span>
+          <input 
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="border border-[var(--border)] bg-[#020406] px-2 py-1 rounded text-xs text-white focus:outline-none focus:border-cyan-500/50"
+          />
+          <span className="text-gray-500">to</span>
+          <input 
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="border border-[var(--border)] bg-[#020406] px-2 py-1 rounded text-xs text-white focus:outline-none focus:border-cyan-500/50"
+          />
+          {(startDate || endDate) && (
+            <button 
+              onClick={() => { setStartDate(""); setEndDate(""); }}
+              className="text-[9px] uppercase tracking-wider text-[var(--coral)] hover:underline font-bold"
+            >
+              Clear dates
+            </button>
+          )}
+        </div>
+        
+        {selectedVisitorId && (
+          <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-white/5 pt-2 sm:pt-0 sm:pl-4">
+            <span className="text-[9px] uppercase tracking-wider text-amber-400 font-bold">Filtering User Journey:</span>
+            <span className="font-mono text-[10px] bg-amber-950/40 border border-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1.5 select-none">
+              {selectedVisitorId}
+              <button onClick={() => setSelectedVisitorId(null)} className="text-[9px] font-black text-amber-500 hover:text-white transition-colors">✕</button>
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Core Web Vitals Scorecard */}
       {vitalsLogs.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-[var(--border)] bg-black/30 rounded-2xl animate-in fade-in duration-300">
@@ -788,210 +889,266 @@ function LogTerminal({ secret, clientsList, initialClientId }: { secret: string;
         </div>
       )}
 
-      {/* Terminal log output screen */}
-      <div 
-        className="rounded-2xl border border-[var(--border)] p-4 font-mono text-xs overflow-y-auto space-y-2 select-text"
-        style={{ background: "#020406", minHeight: "350px", maxHeight: "550px" }}
-      >
-        {loading ? (
-          <div className="py-20 text-center animate-pulse text-[var(--text-secondary)]">Retrieving log buffers from Supabase cluster...</div>
-        ) : logs.length === 0 ? (
-          <div className="py-20 text-center text-[var(--text-secondary)] italic">Buffer is empty. No logs recorded.</div>
-        ) : (
-          logs.map((log) => {
-            const isErr = log.level === "error" || log.level === "fatal";
-            const isWarn = log.level === "warn";
-            const levelColor = isErr ? "text-red-400" : isWarn ? "text-amber-400" : "text-green-400";
-            
-            let parsedMeta: any = null;
-            if (log.metadata) {
-              try {
-                parsedMeta = typeof log.metadata === "string" ? JSON.parse(log.metadata) : log.metadata;
-              } catch (e) {}
-            }
-            const hasMeta = parsedMeta && Object.keys(parsedMeta).length > 0;
-
-            return (
-              <div key={log.id} className="border-b border-white/2 pb-2">
-                <div className="flex flex-wrap items-start gap-2">
-                  <span className="text-[10px] text-gray-500 font-mono">
-                    [{new Date(log.timestamp).toLocaleTimeString()}]
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Column 1: Visitor Journeys sidebar */}
+        <div className="lg:col-span-1 rounded-2xl border border-[var(--border)] p-4 bg-[#0a0f1a]/40 space-y-4 flex flex-col max-h-[550px]">
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-wider text-cyan-400">👥 Visitor Journeys</h4>
+            <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">Explore action patterns & usage frequencies of individual clients.</p>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+            {visitorList.map((vis) => (
+              <button
+                key={vis.visitorId}
+                onClick={() => setSelectedVisitorId(vis.visitorId === selectedVisitorId ? null : vis.visitorId)}
+                className={`w-full text-left p-2.5 rounded-xl border transition-all space-y-1 block ${vis.visitorId === selectedVisitorId ? "border-amber-500 bg-amber-500/5 text-amber-200" : "border-white/5 bg-black/20 hover:bg-white/5 text-gray-300"}`}
+              >
+                <div className="flex items-center justify-between text-[10px] font-bold truncate">
+                  <span className="font-mono">{vis.visitorId.substring(0, 15)}...</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold ${vis.visitorId === selectedVisitorId ? "bg-amber-500/20 text-amber-400" : "bg-cyan-500/10 text-cyan-400"}`}>
+                    {vis.count} actions
                   </span>
-                  <span className={`text-[10px] font-bold ${levelColor} uppercase tracking-wider`}>
-                    [{log.level}]
-                  </span>
-                  <span className="text-gray-300 break-all select-text flex-1">
-                    {log.message}
-                  </span>
-                  {log.stack && (
-                    <button 
-                      onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
-                      className="px-2 py-0.5 border border-[var(--border)] rounded hover:bg-white/5 text-[9px] tracking-wider uppercase font-bold"
-                    >
-                      {expandedLogId === log.id ? "Hide Trace" : "Trace"}
-                    </button>
-                  )}
-                  {hasMeta && (
-                    <button 
-                      onClick={() => setExpandedMetaId(expandedMetaId === log.id ? null : log.id)}
-                      className="px-2 py-0.5 border border-[var(--border)] rounded hover:bg-white/5 text-[9px] tracking-wider uppercase font-bold text-cyan-400"
-                    >
-                      {expandedMetaId === log.id ? "Hide Details" : "Details"}
-                    </button>
-                  )}
-                  {parsedMeta && parsedMeta.replayEvents && (
-                    <button 
-                      onClick={() => setActiveReplayEvents(parsedMeta.replayEvents)}
-                      className="px-2 py-0.5 border border-amber-500/30 rounded hover:bg-amber-500/10 text-[9px] tracking-wider uppercase font-bold text-amber-400 flex items-center gap-1"
-                    >
-                      🎥 Play Replay
-                    </button>
-                  )}
-                  {isErr && (
-                    <button 
-                      onClick={() => triggerDiagnosis(log.id)}
-                      disabled={diagnosingIds[log.id]}
-                      className="px-2 py-0.5 border border-cyan-500/30 hover:bg-cyan-500/10 rounded text-[9px] tracking-wider uppercase font-bold text-cyan-400 disabled:opacity-50 transition-all"
-                    >
-                      {diagnosingIds[log.id] ? "Analyzing..." : "🤖 PROmonitor AI"}
-                    </button>
-                  )}
                 </div>
+                <div className="text-[9px] text-gray-500 truncate flex items-center justify-between">
+                  <span>📍 {vis.location}</span>
+                  <span>🕒 {vis.lastActive}</span>
+                </div>
+              </button>
+            ))}
+            {visitorList.length === 0 && (
+              <div className="text-center text-[10px] text-gray-500 py-10 italic">No users tracked in log buffer.</div>
+            )}
+          </div>
+        </div>
 
-                {/* Expanded Stack trace details */}
-                {expandedLogId === log.id && log.stack && (
-                  <pre className="mt-2 p-3 bg-red-950/15 border border-red-500/10 rounded-lg text-[10px] text-red-300 overflow-x-auto whitespace-pre select-text font-mono">
-                    {log.stack}
-                  </pre>
-                )}
-
-                {/* Expanded metadata details */}
-                {expandedMetaId === log.id && parsedMeta && (
-                  <div className="mt-2 p-4 border border-[var(--border)] bg-black/45 rounded-xl space-y-3 text-xs leading-relaxed animate-in slide-in-from-top-1 duration-200 select-text">
-                    <div className="text-[10px] uppercase font-black tracking-wider text-[var(--text-secondary)]">
-                      📋 Telemetry Metadata Context
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {/* Section 1: Session & Path */}
-                      <div className="space-y-1">
-                        <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">Page Information</h4>
-                        <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
-                          <div className="truncate"><span className="text-gray-500">URL:</span> <a href={parsedMeta.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-cyan-500">{parsedMeta.url || "Unknown"}</a></div>
-                          <div><span className="text-gray-500">Path:</span> {parsedMeta.pathname || "Unknown"}</div>
-                          <div className="truncate"><span className="text-gray-500">Referrer:</span> {parsedMeta.referrer || "Direct"}</div>
-                        </div>
-                      </div>
-
-                      {/* Section 2: Browser & System */}
-                      <div className="space-y-1">
-                        <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">Browser & OS</h4>
-                        <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
-                          <div><span className="text-gray-500">System:</span> {parsedMeta.os || "Unknown"} ({parsedMeta.browser || "Unknown"})</div>
-                          <div><span className="text-gray-500">Language:</span> {parsedMeta.language || "Unknown"}</div>
-                          <div><span className="text-gray-500">Display:</span> {parsedMeta.screenSize || "Unknown"} ({parsedMeta.viewportSize || "Unknown"} viewport)</div>
-                        </div>
-                      </div>
-
-                      {/* Section 3: Geolocation */}
-                      {parsedMeta.location && (
-                        <div className="space-y-1">
-                          <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">User Location</h4>
-                          <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
-                            <div><span className="text-gray-500">IP address:</span> {parsedMeta.location.ip || "Unknown"}</div>
-                            <div><span className="text-gray-500">Geo Info:</span> {parsedMeta.location.city || "Unknown"}, {parsedMeta.location.region || "Unknown"}, {parsedMeta.location.country || "Unknown"}</div>
-                            <div className="truncate"><span className="text-gray-500">ISP/ASN:</span> {parsedMeta.location.org || "Unknown"}</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Section 4: Type-Specific Details */}
-                    {parsedMeta.type === 'interaction' && (
-                      <div className="border-t border-white/5 pt-2 mt-2">
-                        <h4 className="text-[10px] font-bold uppercase text-amber-400 tracking-wider mb-1">Click Interaction telemetry</h4>
-                        <div className="text-gray-300 font-mono text-[10px] grid grid-cols-1 md:grid-cols-2 gap-2 bg-white/5 p-2.5 rounded-lg">
-                          <div><span className="text-gray-500">Element:</span> &lt;{parsedMeta.element}{parsedMeta.elementId ? ` id="${parsedMeta.elementId}"` : ''}{parsedMeta.elementName ? ` name="${parsedMeta.elementName}"` : ''}&gt;</div>
-                          {parsedMeta.elementHref && <div className="truncate"><span className="text-gray-500">Href Url:</span> <span className="text-amber-500">{parsedMeta.elementHref}</span></div>}
-                          <div className="col-span-1 md:col-span-2"><span className="text-gray-500">Text Content:</span> <span className="text-white font-sans">"{parsedMeta.textContent || ""}"</span></div>
-                        </div>
-                      </div>
-                    )}
-
-                    {parsedMeta.type === 'dwell_time' && (
-                      <div className="border-t border-white/5 pt-2 mt-2">
-                        <h4 className="text-[10px] font-bold uppercase text-green-400 tracking-wider mb-1">Dwell Time Tracking</h4>
-                        <div className="text-gray-300 font-mono text-[10px] bg-white/5 p-2.5 rounded-lg">
-                          User stayed on route <code className="text-green-300 font-bold">{parsedMeta.path}</code> for <strong className="text-white text-xs px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/20">{parsedMeta.durationSeconds} seconds</strong> before navigating or leaving.
-                        </div>
-                      </div>
-                    )}
+        {/* Column 2: Terminal Logs screen */}
+        <div className="lg:col-span-3 flex flex-col space-y-4">
+          <div 
+            className="rounded-2xl border border-[var(--border)] p-4 font-mono text-xs overflow-y-auto space-y-4 select-text flex-1 animate-in fade-in duration-200"
+            style={{ background: "#020406", minHeight: "350px", maxHeight: "550px" }}
+          >
+            {loading ? (
+              <div className="py-20 text-center animate-pulse text-[var(--text-secondary)]">Retrieving log buffers from Supabase cluster...</div>
+            ) : logs.length === 0 ? (
+              <div className="py-20 text-center text-[var(--text-secondary)] italic">Buffer is empty. No logs recorded.</div>
+            ) : (
+              Object.keys(groupedLogs).map((dateGroup) => (
+                <div key={dateGroup} className="space-y-2">
+                  <div className="text-[9px] text-cyan-400/60 font-black uppercase tracking-widest border-b border-cyan-500/10 pb-1 mb-2 mt-2 flex items-center gap-1.5 select-none">
+                    📅 {dateGroup}
                   </div>
-                )}
+                  
+                  {groupedLogs[dateGroup].map((log) => {
+                    const isErr = log.level === "error" || log.level === "fatal";
+                    const isWarn = log.level === "warn";
+                    const levelColor = isErr ? "text-red-400" : isWarn ? "text-amber-400" : "text-green-400";
+                    
+                    let parsedMeta: any = null;
+                    if (log.metadata) {
+                      try {
+                        parsedMeta = typeof log.metadata === "string" ? JSON.parse(log.metadata) : log.metadata;
+                      } catch (e) {}
+                    }
+                    const hasMeta = parsedMeta && Object.keys(parsedMeta).length > 0;
 
-                {/* AI Diagnostics details card */}
-                {diagnoses[log.id] && (
-                  <div className="mt-3 p-4 border border-cyan-500/20 bg-cyan-950/10 rounded-xl space-y-2 text-xs leading-relaxed animate-in slide-in-from-top-2 duration-200">
-                    <div className="text-[10px] uppercase font-black tracking-wider text-cyan-400">
-                      🤖 PROmonitor SRE AI Report
-                    </div>
-                    <div>
-                      <strong className="text-cyan-300 font-bold block mb-0.5">Summary:</strong>
-                      <span className="text-gray-300">{diagnoses[log.id].summary}</span>
-                    </div>
-                    <div>
-                      <strong className="text-cyan-300 font-bold block mb-0.5">Root Cause:</strong>
-                      <span className="text-gray-300">{diagnoses[log.id].cause}</span>
-                    </div>
-                    <div>
-                      <strong className="text-cyan-300 font-bold block mb-1">Recommended Fix:</strong>
-                      <pre className="p-3 bg-[#020406] border border-cyan-500/10 rounded-lg text-[10px] text-cyan-200 overflow-x-auto whitespace-pre font-mono leading-normal select-text">
-                        {diagnoses[log.id].fix}
-                      </pre>
-                    </div>
-
-                    {diagnoses[log.id].autofix && diagnoses[log.id].autofix?.filePath && (
-                      <div className="mt-3 p-3 border border-dashed border-cyan-500/30 rounded-xl bg-cyan-950/5 space-y-2">
-                        <div className="text-[10px] uppercase font-bold text-cyan-300">
-                          🛠️ Autonomous Pull Request Autofix
-                        </div>
-                        <p className="text-[10px] text-gray-400">
-                          AI proposes editing: <span className="font-mono text-cyan-200">{diagnoses[log.id].autofix?.filePath}</span>
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <div className="flex-1 space-y-1">
-                            <label className="text-[8px] text-gray-500 font-bold block">GITHUB REPOSITORY (OWNER/REPO)</label>
-                            <input 
-                              type="text" 
-                              value={autofixRepos[log.id] !== undefined ? autofixRepos[log.id] : getDefaultRepo(log)}
-                              onChange={(e) => setAutofixRepos(prev => ({ ...prev, [log.id]: e.target.value }))}
-                              className="w-full text-[10px] font-mono border border-cyan-500/20 bg-[#020406] px-2 py-1 rounded text-cyan-200 focus:outline-none focus:border-cyan-400"
-                              placeholder="e.g. owner/repo"
-                            />
-                          </div>
-                          <div className="flex items-end">
-                            <button
-                              onClick={() => triggerAutofix(log)}
-                              disabled={autofixLoadingIds[log.id]}
-                              className="w-full sm:w-auto px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black text-[10px] font-black uppercase tracking-wider rounded transition-all disabled:opacity-50 min-w-[120px] font-bold"
+                    return (
+                      <div key={log.id} className="border-b border-white/2 pb-2">
+                        <div className="flex flex-wrap items-start gap-2">
+                          <span className="text-[10px] text-gray-500 font-mono">
+                            [{new Date(log.timestamp).toLocaleTimeString()}]
+                          </span>
+                          <span className={`text-[10px] font-bold ${levelColor} uppercase tracking-wider`}>
+                            [{log.level}]
+                          </span>
+                          <span className="text-gray-300 break-all select-text flex-1">
+                            {log.message}
+                          </span>
+                          {log.stack && (
+                            <button 
+                              onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
+                              className="px-2 py-0.5 border border-[var(--border)] rounded hover:bg-white/5 text-[9px] tracking-wider uppercase font-bold"
                             >
-                              {autofixLoadingIds[log.id] ? "Opening PR..." : "🚀 Push Autofix"}
+                              {expandedLogId === log.id ? "Hide Trace" : "Trace"}
                             </button>
-                          </div>
+                          )}
+                          {hasMeta && (
+                            <button 
+                              onClick={() => setExpandedMetaId(expandedMetaId === log.id ? null : log.id)}
+                              className="px-2 py-0.5 border border-[var(--border)] rounded hover:bg-white/5 text-[9px] tracking-wider uppercase font-bold text-cyan-400"
+                            >
+                              {expandedMetaId === log.id ? "Hide Details" : "Details"}
+                            </button>
+                          )}
+                          {parsedMeta && parsedMeta.replayEvents && (
+                            <button 
+                              onClick={() => setActiveReplayEvents(parsedMeta.replayEvents)}
+                              className="px-2 py-0.5 border border-amber-500/30 rounded hover:bg-amber-500/10 text-[9px] tracking-wider uppercase font-bold text-amber-400 flex items-center gap-1"
+                            >
+                              🎥 Play Replay
+                            </button>
+                          )}
+                          {isErr && (
+                            <button 
+                              onClick={() => triggerDiagnosis(log.id)}
+                              disabled={diagnosingIds[log.id]}
+                              className="px-2 py-0.5 border border-cyan-500/30 hover:bg-cyan-500/10 rounded text-[9px] tracking-wider uppercase font-bold text-cyan-400 disabled:opacity-50 transition-all"
+                            >
+                              {diagnosingIds[log.id] ? "Analyzing..." : "🤖 PROmonitor AI"}
+                            </button>
+                          )}
                         </div>
-                        {autofixPrUrls[log.id] && (
-                          <div className="mt-2 text-[10px] text-green-400 font-bold">
-                            ✅ Pull Request created successfully! <a href={autofixPrUrls[log.id]} target="_blank" rel="noopener noreferrer" className="underline text-green-300 hover:text-green-200 ml-1">View PR on GitHub ↗</a>
+
+                        {/* Expanded Stack trace details */}
+                        {expandedLogId === log.id && log.stack && (
+                          <pre className="mt-2 p-3 bg-red-950/15 border border-red-500/10 rounded-lg text-[10px] text-red-300 overflow-x-auto whitespace-pre select-text font-mono">
+                            {log.stack}
+                          </pre>
+                        )}
+
+                        {/* Expanded metadata details */}
+                        {expandedMetaId === log.id && parsedMeta && (
+                          <div className="mt-2 p-4 border border-[var(--border)] bg-black/45 rounded-xl space-y-3 text-xs leading-relaxed animate-in slide-in-from-top-1 duration-200 select-text">
+                            <div className="text-[10px] uppercase font-black tracking-wider text-[var(--text-secondary)]">
+                              📋 Telemetry Metadata Context
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {/* Section 1: Session & Path */}
+                              <div className="space-y-1">
+                                <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">Page Information</h4>
+                                <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
+                                  <div className="truncate"><span className="text-gray-500">URL:</span> <a href={parsedMeta.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-cyan-500">{parsedMeta.url || "Unknown"}</a></div>
+                                  <div><span className="text-gray-500">Path:</span> {parsedMeta.pathname || "Unknown"}</div>
+                                  <div className="truncate"><span className="text-gray-500">Referrer:</span> {parsedMeta.referrer || "Direct"}</div>
+                                </div>
+                              </div>
+
+                              {/* Section 2: Browser & System */}
+                              <div className="space-y-1">
+                                <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">Browser & OS</h4>
+                                <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
+                                  <div><span className="text-gray-500">System:</span> {parsedMeta.os || "Unknown"} ({parsedMeta.browser || "Unknown"})</div>
+                                  <div><span className="text-gray-500">Language:</span> {parsedMeta.language || "Unknown"}</div>
+                                  <div><span className="text-gray-500">Display:</span> {parsedMeta.screenSize || "Unknown"} ({parsedMeta.viewportSize || "Unknown"} viewport)</div>
+                                </div>
+                              </div>
+
+                              {/* Section 3: Geolocation */}
+                              {parsedMeta.location && (
+                                <div className="space-y-1">
+                                  <h4 className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">User Location</h4>
+                                  <div className="text-gray-300 font-mono text-[10px] space-y-0.5">
+                                    <div><span className="text-gray-500">IP address:</span> {parsedMeta.location.ip || "Unknown"}</div>
+                                    <div><span className="text-gray-500">Geo Info:</span> {parsedMeta.location.city || "Unknown"}, {parsedMeta.location.region || "Unknown"}, {parsedMeta.location.country || "Unknown"}</div>
+                                    <div className="truncate"><span className="text-gray-500">ISP/ASN:</span> {parsedMeta.location.org || "Unknown"}</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Section 4: Type-Specific Details */}
+                            {parsedMeta.type === 'interaction' && (
+                              <div className="border-t border-white/5 pt-2 mt-2">
+                                <h4 className="text-[10px] font-bold uppercase text-amber-400 tracking-wider mb-1">Click Interaction telemetry</h4>
+                                <div className="text-gray-300 font-mono text-[10px] grid grid-cols-1 md:grid-cols-2 gap-2 bg-white/5 p-2.5 rounded-lg">
+                                  <div><span className="text-gray-500">Element:</span> &lt;{parsedMeta.element}{parsedMeta.elementId ? ` id="${parsedMeta.elementId}"` : ''}{parsedMeta.elementName ? ` name="${parsedMeta.elementName}"` : ''}&gt;</div>
+                                  {parsedMeta.elementHref && <div className="truncate"><span className="text-gray-500">Href Url:</span> <span className="text-amber-500">{parsedMeta.elementHref}</span></div>}
+                                  <div className="col-span-1 md:col-span-2"><span className="text-gray-500">Text Content:</span> <span className="text-white font-sans">"{parsedMeta.textContent || ""}"</span></div>
+                                </div>
+                              </div>
+                            )}
+
+                            {parsedMeta.type === 'dwell_time' && (
+                              <div className="border-t border-white/5 pt-2 mt-2">
+                                <h4 className="text-[10px] font-bold uppercase text-green-400 tracking-wider mb-1">Dwell Time Tracking</h4>
+                                <div className="text-gray-300 font-mono text-[10px] bg-white/5 p-2.5 rounded-lg">
+                                  User stayed on route <code className="text-green-300 font-bold">{parsedMeta.path}</code> for <strong className="text-white text-xs px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/20">{parsedMeta.durationSeconds} seconds</strong> before navigating or leaving.
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* AI Diagnostics details card */}
+                        {diagnoses[log.id] && (
+                          <div className="mt-3 p-4 border border-cyan-500/20 bg-cyan-950/10 rounded-xl space-y-2 text-xs leading-relaxed animate-in slide-in-from-top-2 duration-200">
+                            <div className="text-[10px] uppercase font-black tracking-wider text-cyan-400">
+                              🤖 PROmonitor SRE AI Report
+                            </div>
+                            <div>
+                              <strong className="text-cyan-300 font-bold block mb-0.5">Summary:</strong>
+                              <span className="text-gray-300">{diagnoses[log.id].summary}</span>
+                            </div>
+                            <div>
+                              <strong className="text-cyan-300 font-bold block mb-0.5">Root Cause:</strong>
+                              <span className="text-gray-300">{diagnoses[log.id].cause}</span>
+                            </div>
+                            <div>
+                              <strong className="text-cyan-300 font-bold block mb-1">Recommended Fix:</strong>
+                              <pre className="p-3 bg-[#020406] border border-cyan-500/10 rounded-lg text-[10px] text-cyan-200 overflow-x-auto whitespace-pre font-mono leading-normal select-text">
+                                {diagnoses[log.id].fix}
+                              </pre>
+                            </div>
+
+                            {diagnoses[log.id].autofix && diagnoses[log.id].autofix?.filePath && (
+                              <div className="mt-3 p-3 border border-dashed border-cyan-500/30 rounded-xl bg-cyan-950/5 space-y-2">
+                                <div className="text-[10px] uppercase font-bold text-cyan-300">
+                                  🛠️ Autonomous Pull Request Autofix
+                                </div>
+                                <p className="text-[10px] text-gray-400">
+                                  AI proposes editing: <span className="font-mono text-cyan-200">{diagnoses[log.id].autofix?.filePath}</span>
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <div className="flex-1 space-y-1">
+                                    <label className="text-[8px] text-gray-500 font-bold block">GITHUB REPOSITORY (OWNER/REPO)</label>
+                                    <input 
+                                      type="text" 
+                                      value={autofixRepos[log.id] !== undefined ? autofixRepos[log.id] : getDefaultRepo(log)}
+                                      onChange={(e) => setAutofixRepos(prev => ({ ...prev, [log.id]: e.target.value }))}
+                                      className="w-full text-[10px] font-mono border border-cyan-500/20 bg-[#020406] px-2 py-1 rounded text-cyan-200 focus:outline-none focus:border-cyan-400"
+                                      placeholder="e.g. owner/repo"
+                                    />
+                                  </div>
+                                  <div className="flex items-end">
+                                    <button
+                                      onClick={() => triggerAutofix(log)}
+                                      disabled={autofixLoadingIds[log.id]}
+                                      className="w-full sm:w-auto px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black text-[10px] font-black uppercase tracking-wider rounded transition-all disabled:opacity-50 min-w-[120px] font-bold"
+                                    >
+                                      {autofixLoadingIds[log.id] ? "Opening PR..." : "🚀 Push Autofix"}
+                                    </button>
+                                  </div>
+                                </div>
+                                {autofixPrUrls[log.id] && (
+                                  <div className="mt-2 text-[10px] text-green-400 font-bold">
+                                    ✅ Pull Request created successfully! <a href={autofixPrUrls[log.id]} target="_blank" rel="noopener noreferrer" className="underline text-green-300 hover:text-green-200 ml-1">View PR on GitHub ↗</a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
+                    );
+                  })}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Load More Button */}
+          {logs.length >= limit && (
+            <div className="text-center pt-2 pb-4">
+              <button
+                onClick={() => setLimit(prev => prev + 100)}
+                className="px-6 py-2 border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/40 text-cyan-400 font-bold uppercase tracking-wider rounded-xl text-[10px] transition-all"
+              >
+                Load Older Logs (Showing {limit} Max)
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* rrweb Session Replayer Modal */}
