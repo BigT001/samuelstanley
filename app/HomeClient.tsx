@@ -120,8 +120,8 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       setLikedStates(JSON.parse(savedLikedStates));
     }
 
-    // Fetch live metrics from Database
-    fetch("/api/metrics")
+    // Fetch live metrics from Database (with cache buster)
+    fetch("/api/metrics?t=" + Date.now())
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.metrics) {
@@ -441,32 +441,6 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <span>Connect</span>
             </button>
           </nav>
-
-          {/* Story Highlights categories filters */}
-          <div>
-            <h4 className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mb-3 px-3">Story Highlights</h4>
-            <div className="space-y-1.5">
-              {categories.map(cat => {
-                const isSelected = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => { 
-                      setSelectedCategory(isSelected ? null : cat); 
-                      if (activeTab !== "projects" && activeTab !== "feeds") {
-                        changeTab("projects");
-                      }
-                      setSidebarOpen(false); 
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-medium transition-all border ${isSelected ? "border-[var(--coral)] bg-[var(--coral)]/5 text-[var(--coral)]" : "border-transparent text-[var(--text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"}`}
-                  >
-                    <span>#{cat.toLowerCase()}</span>
-                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[var(--coral)]" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Footer info */}
