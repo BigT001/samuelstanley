@@ -53,6 +53,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>("projects");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   
   // Likes and bookmarks states
   const [likes, setLikes] = useState<Record<string, number>>({});
@@ -66,8 +67,17 @@ export default function Home() {
   const [storyProgress, setStoryProgress] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Initialize randomized likes counts
+  // Initialize and load persistent tab
   useEffect(() => {
+    setMounted(true);
+    
+    // Load persistent tab
+    const saved = localStorage.getItem("homepage_active_tab") as TabId;
+    if (saved && ["projects", "feeds", "philosophy", "connect"].includes(saved)) {
+      setActiveTab(saved);
+    }
+
+    // Initialize randomized likes counts
     const initialLikes: Record<string, number> = {};
     projects.forEach(p => {
       initialLikes[p.slug] = Math.floor(Math.random() * 280) + 140;
@@ -77,6 +87,11 @@ export default function Home() {
     });
     setLikes(initialLikes);
   }, []);
+
+  const changeTab = (tab: TabId) => {
+    setActiveTab(tab);
+    localStorage.setItem("homepage_active_tab", tab);
+  };
 
   // Story slideshow timer
   useEffect(() => {
@@ -232,28 +247,28 @@ export default function Home() {
           {/* Sidebar Nav Actions */}
           <nav className="space-y-1">
             <button 
-              onClick={() => { setActiveTab("projects"); setSelectedCategory(null); setSidebarOpen(false); }}
+              onClick={() => { changeTab("projects"); setSelectedCategory(null); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "projects" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
               <Grid className="w-4 h-4" />
               <span>Projects</span>
             </button>
             <button 
-              onClick={() => { setActiveTab("feeds"); setSelectedCategory(null); setSidebarOpen(false); }}
+              onClick={() => { changeTab("feeds"); setSelectedCategory(null); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "feeds" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
               <MessageSquare className="w-4 h-4" />
               <span>Feeds</span>
             </button>
             <button 
-              onClick={() => { setActiveTab("philosophy"); setSidebarOpen(false); }}
+              onClick={() => { changeTab("philosophy"); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "philosophy" ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
               <BookOpen className="w-4 h-4" />
               <span>Philosophy</span>
             </button>
             <button 
-              onClick={() => { setActiveTab("connect"); setSidebarOpen(false); }}
+              onClick={() => { changeTab("connect"); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "connect" ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
               <HeartHandshake className="w-4 h-4 text-cyan-400" />
@@ -273,7 +288,7 @@ export default function Home() {
                     onClick={() => { 
                       setSelectedCategory(isSelected ? null : cat); 
                       if (activeTab !== "projects" && activeTab !== "feeds") {
-                        setActiveTab("projects");
+                        changeTab("projects");
                       }
                       setSidebarOpen(false); 
                     }}
