@@ -50,3 +50,23 @@ model PostMetric {
   updatedAt DateTime @updatedAt
 }
 
+model GithubProject {
+  id           String   @id @default(cuid())
+  repoName     String   @unique     // e.g. "samuelstanley"
+  fullName     String               // e.g. "BigT001/samuelstanley"
+  visible      Boolean  @default(false) // Toggle: show on public portfolio
+  displayTitle String?              // Override repo name for display
+  displayDesc  String?              // Override repo description
+  displayTags  String[] @default([]) // Custom tech tags
+  statusLabel  String?              // "LIVE", "ACTIVE", "COMPLETED", "ONGOING"
+  pinnedOrder  Int?                 // Optional manual sort order (lower = higher)
+  stars        Int      @default(0)
+  forks        Int      @default(0)
+  language     String?
+  repoUrl      String?
+  homepage     String?
+  isPrivate    Boolean  @default(false)
+  lastPushedAt DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

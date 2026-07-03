@@ -57,12 +57,32 @@ type Comment = {
   timestamp: string;
 };
 
+// Convert a GithubProject DB record to the project card shape used by the UI
+function githubToProject(g: any) {
+  return {
+    title: g.displayTitle || g.repoName.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+    slug: g.repoName,
+    tag: g.statusLabel ? `${g.statusLabel}` : (g.language || "GitHub Repo"),
+    desc: g.displayDesc || `${g.fullName} — ${g.stars} ⭐ · ${g.forks} 🍴`,
+    tech: g.displayTags?.length ? g.displayTags : (g.language ? [g.language] : []),
+    color: "#6b8cff",
+    link: g.homepage || g.repoUrl || "#",
+    repo: g.repoUrl || "#",
+    status: g.statusLabel || "Live",
+    stars: g.stars,
+    forks: g.forks,
+    lastPushedAt: g.lastPushedAt,
+    isGithub: true,
+  };
+}
+
 export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const [activeTab, setActiveTab] = useState<TabId>("projects");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [githubProjects, setGithubProjects] = useState<any[]>([]);
   
   // Database metrics states
   const [likes, setLikes] = useState<Record<string, number>>({});
@@ -101,6 +121,16 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
     if (savedSecret) {
       setIsAdmin(true);
     }
+
+    // Fetch live GitHub projects from database
+    fetch("/api/github/projects")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.projects?.length > 0) {
+          setGithubProjects(data.projects.map(githubToProject));
+        }
+      })
+      .catch(() => {}); // Silent fallback to static data.ts
 
     // Load persistent tab
     const savedTab = localStorage.getItem("homepage_active_tab") as TabId;
@@ -303,15 +333,18 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
     }
   };
 
+  // Use live GitHub projects if loaded, otherwise fall back to static data.ts
+  const activeProjects = githubProjects.length > 0 ? githubProjects : projects;
+
   // Filter projects
-  const filteredProjects = projects.filter(p => {
+  const filteredProjects = activeProjects.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           p.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.tech.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                          p.tech.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
                           p.tag.toLowerCase().includes(searchQuery.toLowerCase());
                           
     const matchesCategory = !selectedCategory || 
-                            p.tech.some(t => t.toLowerCase() === selectedCategory.toLowerCase()) ||
+                            p.tech.some((t: string) => t.toLowerCase() === selectedCategory.toLowerCase()) ||
                             p.tag.toLowerCase().includes(selectedCategory.toLowerCase());
                             
     return matchesSearch && matchesCategory;
@@ -625,7 +658,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             </div>
 
                             <div className="relative z-10 pt-3 flex flex-wrap gap-1">
-                              {p.tech.map(t => (
+                              {p.tech.map((t: string) => (
                                 <span 
                                   key={t}
                                   onClick={() => setSelectedCategory(t)}

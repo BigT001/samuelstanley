@@ -23,10 +23,17 @@ import {
   Flame,
   Globe,
   SlidersHorizontal,
-  Mail
+  Mail,
+  GitBranch,
+  Eye,
+  EyeOff,
+  Star,
+  GitFork,
+  RefreshCcw,
+  ExternalLink
 } from "lucide-react";
 
-type TabId = "overview" | "logs" | "clients" | "alerts" | "agent" | "settings";
+type TabId = "overview" | "logs" | "clients" | "alerts" | "agent" | "settings" | "github";
 
 export default function OSPage() {
   const [secret, setSecret] = useState("");
@@ -239,6 +246,7 @@ export default function OSPage() {
                 <SidebarButton icon={<Users className="w-4 h-4" />} label="Client Registry" active={activeTab === "clients"} onClick={() => setActiveTab("clients")} />
                 <SidebarButton icon={<Settings className="w-4 h-4" />} label="Alert Webhooks" active={activeTab === "alerts"} onClick={() => setActiveTab("alerts")} />
                 <SidebarButton icon={<SlidersHorizontal className="w-4 h-4" />} label="Dashboard Settings" active={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
+                <SidebarButton icon={<GitBranch className="w-4 h-4 text-purple-400" />} label="GitHub Projects" active={activeTab === "github"} onClick={() => setActiveTab("github")} />
                 <div className="h-[1px] bg-[var(--border)] my-4 mx-2" />
                 <SidebarButton icon={<Sparkles className="w-4 h-4 text-amber-400" />} label="AI Content Engine" active={activeTab === "agent"} onClick={() => setActiveTab("agent")} />
               </nav>
@@ -392,6 +400,12 @@ export default function OSPage() {
               {activeTab === "agent" && (
                 <div className="rounded-2xl border border-[var(--border)] p-6 backdrop-blur-md bg-[rgba(10,15,26,0.5)] space-y-6 animate-in fade-in duration-300">
                   <AIBlogAgent secret={secret} />
+                </div>
+              )}
+
+              {activeTab === "github" && (
+                <div className="rounded-2xl border border-[var(--border)] p-6 backdrop-blur-md bg-[rgba(10,15,26,0.5)] space-y-6 animate-in fade-in duration-300">
+                  <GitHubProjectsPanel secret={secret} />
                 </div>
               )}
             </div>
@@ -1963,6 +1977,307 @@ function DashboardSettings({ secret, clientsList }: { secret: string; clientsLis
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── GitHub Projects Admin Panel ───────────────────────────────────────────────
+function GitHubProjectsPanel({ secret }: { secret: string }) {
+  const [repos, setRepos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
+  const [editingRepo, setEditingRepo] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
+
+  const loadRepos = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/github/toggle", {
+        headers: { "x-admin-secret": secret },
+      });
+      const data = await res.json();
+      if (data.success) setRepos(data.projects);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const syncFromGitHub = async () => {
+    setSyncing(true);
+    setSyncMsg("");
+    try {
+      const res = await fetch("/api/github/sync", {
+        headers: { "x-admin-secret": secret },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSyncMsg(`✅ Synced ${data.synced} repositories from GitHub`);
+        await loadRepos();
+      } else {
+        setSyncMsg(`❌ Sync failed: ${data.error}`);
+      }
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const toggleVisibility = async (repoName: string, currentVisible: boolean) => {
+    setRepos(prev => prev.map(r => r.repoName === repoName ? { ...r, visible: !currentVisible } : r));
+    await fetch("/api/github/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+      body: JSON.stringify({ repoName, visible: !currentVisible }),
+    });
+  };
+
+  const saveEdit = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/github/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-secret": secret },
+        body: JSON.stringify({
+          repoName: editingRepo,
+          displayTitle: editForm.displayTitle,
+          displayDesc: editForm.displayDesc,
+          displayTags: editForm.displayTags?.split(",").map((t: string) => t.trim()).filter(Boolean) || [],
+          statusLabel: editForm.statusLabel,
+          pinnedOrder: editForm.pinnedOrder ? parseInt(editForm.pinnedOrder) : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRepos(prev => prev.map(r => r.repoName === editingRepo ? data.project : r));
+        setEditingRepo(null);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => { loadRepos(); }, []);
+
+  const visibleCount = repos.filter(r => r.visible).length;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-black flex items-center gap-2">
+            <GitBranch className="w-5 h-5 text-purple-400" />
+            GitHub Projects
+          </h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+            {visibleCount} of {repos.length} repos visible on your portfolio
+          </p>
+        </div>
+        <button
+          onClick={syncFromGitHub}
+          disabled={syncing}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 transition-all disabled:opacity-50"
+        >
+          <RefreshCcw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+          {syncing ? "Syncing..." : "Sync from GitHub"}
+        </button>
+      </div>
+
+      {syncMsg && (
+        <div className="p-3 rounded-xl bg-white/5 border border-[var(--border)] text-xs font-mono text-green-400">{syncMsg}</div>
+      )}
+
+      {loading ? (
+        <div className="py-20 text-center text-xs text-[var(--text-secondary)] animate-pulse">Loading repositories...</div>
+      ) : repos.length === 0 ? (
+        <div className="py-20 text-center">
+          <GitBranch className="w-10 h-10 mx-auto mb-3 text-[var(--text-secondary)] opacity-40" />
+          <p className="text-sm font-bold text-[var(--text-secondary)]">No repositories synced yet</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">Click "Sync from GitHub" to fetch your repos</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {repos.map(repo => (
+            <div
+              key={repo.repoName}
+              className={`border rounded-2xl p-4 transition-all ${
+                repo.visible
+                  ? "border-purple-500/40 bg-purple-500/5"
+                  : "border-[var(--border)] bg-white/2"
+              }`}
+            >
+              {editingRepo === repo.repoName ? (
+                /* Edit Form */
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-black text-purple-300">Editing: {repo.repoName}</span>
+                    <button onClick={() => setEditingRepo(null)} className="text-[10px] text-[var(--text-secondary)] hover:text-white">Cancel</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 block">Display Title</label>
+                      <input
+                        className="w-full bg-white/5 border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs"
+                        placeholder={repo.repoName}
+                        value={editForm.displayTitle || ""}
+                        onChange={e => setEditForm((f: any) => ({ ...f, displayTitle: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 block">Status Badge</label>
+                      <select
+                        className="w-full bg-[#0a0f1a] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs"
+                        value={editForm.statusLabel || ""}
+                        onChange={e => setEditForm((f: any) => ({ ...f, statusLabel: e.target.value }))}
+                      >
+                        <option value="">— None —</option>
+                        <option value="LIVE">LIVE</option>
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="ONGOING">ONGOING</option>
+                        <option value="OPEN SOURCE">OPEN SOURCE</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 block">Description Override</label>
+                    <textarea
+                      className="w-full bg-white/5 border border-[var(--border)] rounded-lg px-3 py-2 text-xs resize-none"
+                      rows={2}
+                      placeholder={repo.fullName}
+                      value={editForm.displayDesc || ""}
+                      onChange={e => setEditForm((f: any) => ({ ...f, displayDesc: e.target.value }))}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 block">Tech Tags (comma-separated)</label>
+                      <input
+                        className="w-full bg-white/5 border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs"
+                        placeholder="Next.js, PostgreSQL, Prisma"
+                        value={editForm.displayTags || ""}
+                        onChange={e => setEditForm((f: any) => ({ ...f, displayTags: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 block">Pin Order (lower = higher)</label>
+                      <input
+                        type="number"
+                        className="w-full bg-white/5 border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs"
+                        placeholder="1"
+                        value={editForm.pinnedOrder || ""}
+                        onChange={e => setEditForm((f: any) => ({ ...f, pinnedOrder: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={saveEdit}
+                    disabled={saving}
+                    className="w-full py-2 rounded-xl text-xs font-black bg-purple-500 text-white hover:bg-purple-600 transition-all disabled:opacity-50"
+                  >
+                    {saving ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              ) : (
+                /* Repo Row */
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-sm truncate">
+                        {repo.displayTitle || repo.repoName}
+                      </span>
+                      {repo.statusLabel && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          {repo.statusLabel}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 mb-2">
+                      {repo.displayDesc || repo.fullName}
+                    </p>
+                    <div className="flex items-center gap-3 text-[10px] text-[var(--text-secondary)]">
+                      {repo.language && <span className="font-mono">{repo.language}</span>}
+                      <span className="flex items-center gap-0.5"><Star className="w-3 h-3" />{repo.stars}</span>
+                      <span className="flex items-center gap-0.5"><GitFork className="w-3 h-3" />{repo.forks}</span>
+                      {repo.lastPushedAt && (
+                        <span>Updated {new Date(repo.lastPushedAt).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                    {repo.displayTags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {repo.displayTags.map((tag: string) => (
+                          <span key={tag} className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-white/5 border border-[var(--border)] text-[var(--text-secondary)]">
+                            #{tag.toLowerCase()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    {/* Visibility Toggle */}
+                    <button
+                      onClick={() => toggleVisibility(repo.repoName, repo.visible)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                        repo.visible
+                          ? "border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
+                          : "border-[var(--border)] bg-white/3 text-[var(--text-secondary)] hover:border-purple-500/40 hover:text-purple-300"
+                      }`}
+                    >
+                      {repo.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                      {repo.visible ? "Visible" : "Hidden"}
+                    </button>
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => {
+                        setEditingRepo(repo.repoName);
+                        setEditForm({
+                          displayTitle: repo.displayTitle || "",
+                          displayDesc: repo.displayDesc || "",
+                          displayTags: repo.displayTags?.join(", ") || "",
+                          statusLabel: repo.statusLabel || "",
+                          pinnedOrder: repo.pinnedOrder?.toString() || "",
+                        });
+                      }}
+                      className="text-[10px] text-[var(--text-secondary)] hover:text-white underline underline-offset-2 transition-colors"
+                    >
+                      Edit Details
+                    </button>
+                    {/* Open on GitHub */}
+                    {repo.repoUrl && (
+                      <a
+                        href={repo.repoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-[var(--text-secondary)] hover:text-purple-400 flex items-center gap-0.5 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" /> GitHub
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Webhook Setup Instructions */}
+      <div className="p-4 border border-[var(--border)] rounded-2xl bg-white/2">
+        <h3 className="text-xs font-black mb-3 flex items-center gap-2">
+          <GitBranch className="w-4 h-4" /> Webhook Auto-Sync Setup
+        </h3>
+        <p className="text-[11px] text-[var(--text-secondary)] mb-3">
+          Configure a webhook on GitHub to auto-update your portfolio whenever you push code:
+        </p>
+        <ol className="space-y-1.5 text-[11px] text-[var(--text-secondary)]">
+          <li>1. Go to <strong className="text-white">GitHub → Settings → Webhooks → Add webhook</strong></li>
+          <li>2. Set Payload URL to: <code className="bg-white/5 px-1 rounded font-mono text-purple-300">https://samuelstanley.com/api/github/sync</code></li>
+          <li>3. Content type: <code className="bg-white/5 px-1 rounded font-mono">application/json</code></li>
+          <li>4. Secret: <code className="bg-white/5 px-1 rounded font-mono">samuelstanley_gh_webhook_2026</code></li>
+          <li>5. Select events: <strong className="text-white">Push</strong> + <strong className="text-white">Repository</strong></li>
+        </ol>
       </div>
     </div>
   );
