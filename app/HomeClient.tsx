@@ -49,6 +49,14 @@ const triggerConfetti = () => {
 
 type TabId = "projects" | "feeds" | "philosophy" | "connect";
 
+type Comment = {
+  id: string;
+  name: string;
+  handle: string;
+  text: string;
+  timestamp: string;
+};
+
 export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const [activeTab, setActiveTab] = useState<TabId>("projects");
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,13 +70,28 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const [bookmarkedStates, setBookmarkedStates] = useState<Record<string, boolean>>({});
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
 
+  // Share popover state
+  const [activeShareSlug, setActiveShareSlug] = useState<string | null>(null);
+  const [showShareToast, setShowShareToast] = useState(false);
+
+  // Comments state
+  const [commentsMap, setCommentsMap] = useState<Record<string, Comment[]>>({});
+  const [activeCommentsSlug, setActiveCommentsSlug] = useState<string | null>(null);
+  const [activeCommentsTitle, setActiveCommentsTitle] = useState("");
+  const [commentInput, setCommentInput] = useState("");
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
+
+  // Signup fields inside comments thread
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+
   // Modals state
   const [showHireModal, setShowHireModal] = useState(false);
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null);
   const [storyProgress, setStoryProgress] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Initialize and load persistent tab
+  // Initialize and load persistent data
   useEffect(() => {
     setMounted(true);
     
@@ -82,6 +105,69 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
     const savedTab = localStorage.getItem("homepage_active_tab") as TabId;
     if (savedTab && ["projects", "feeds", "philosophy", "connect"].includes(savedTab)) {
       setActiveTab(savedTab);
+    }
+
+    // Load user for comments
+    const savedUser = localStorage.getItem("comment_user");
+    if (savedUser) {
+      setCurrentUser(JSON.parse(savedUser));
+    }
+
+    // Load comments map
+    const savedComments = localStorage.getItem("post_comments");
+    if (savedComments) {
+      setCommentsMap(JSON.parse(savedComments));
+    } else {
+      const seed: Record<string, Comment[]> = {};
+      const mockNames = ["Adekunle Kolawole", "Mark Jaquith", "Dan Peguine", "Tobi Olawale"];
+      const mockHandles = ["@adekunle_k", "@markjaquith", "@danpeguine", "@tobi_olawale"];
+      const mockTexts = [
+        "This is an absolute masterpiece! Clean architecture.",
+        "Spot on indexing advice, helped optimize our queries.",
+        "The design speed of this portfolio is next level.",
+        "Super clean MVP turnaround. Highly recommended developer!"
+      ];
+      
+      projects.forEach(p => {
+        seed[p.slug] = [
+          {
+            id: "1",
+            name: mockNames[0],
+            handle: mockHandles[0],
+            text: mockTexts[0],
+            timestamp: "2 hours ago"
+          },
+          {
+            id: "2",
+            name: mockNames[1],
+            handle: mockHandles[1],
+            text: mockTexts[1],
+            timestamp: "30 mins ago"
+          }
+        ];
+      });
+
+      initialBlogs.forEach(b => {
+        seed[b.slug] = [
+          {
+            id: "1",
+            name: mockNames[2],
+            handle: mockHandles[2],
+            text: mockTexts[2],
+            timestamp: "1 hour ago"
+          },
+          {
+            id: "2",
+            name: mockNames[3],
+            handle: mockHandles[3],
+            text: mockTexts[3],
+            timestamp: "10 mins ago"
+          }
+        ];
+      });
+
+      setCommentsMap(seed);
+      localStorage.setItem("post_comments", JSON.stringify(seed));
     }
 
     // Initialize randomized likes counts
@@ -146,6 +232,39 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
         }, 1500);
       });
     }
+  };
+
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signupName.trim() || !signupEmail.trim()) return;
+    const user = {
+      name: signupName.trim(),
+      email: signupEmail.trim()
+    };
+    setCurrentUser(user);
+    localStorage.setItem("comment_user", JSON.stringify(user));
+  };
+
+  const handlePostComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentInput.trim() || !activeCommentsSlug || !currentUser) return;
+
+    const newComment: Comment = {
+      id: Date.now().toString(),
+      name: currentUser.name,
+      handle: `@${currentUser.name.toLowerCase().replace(/\s+/g, "")}`,
+      text: commentInput.trim(),
+      timestamp: "Just now"
+    };
+
+    const updatedComments = {
+      ...commentsMap,
+      [activeCommentsSlug]: [...(commentsMap[activeCommentsSlug] || []), newComment]
+    };
+
+    setCommentsMap(updatedComments);
+    localStorage.setItem("post_comments", JSON.stringify(updatedComments));
+    setCommentInput("");
   };
 
   // Filter projects
@@ -433,11 +552,12 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                     const isLiked = likedStates[p.slug];
                     const isBookmarked = bookmarkedStates[p.slug];
                     const isCopied = copiedStates[p.slug];
+                    const pUrl = p.link !== "#" ? p.link : "https://samuelstanley.com";
 
                     return (
                       <article 
                         key={p.slug}
-                        className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] overflow-hidden shadow-sm animate-in fade-in duration-200 flex flex-col justify-between"
+                        className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] overflow-hidden shadow-sm animate-in fade-in duration-200 flex flex-col justify-between relative"
                       >
                         <div>
                           {/* Post Header */}
@@ -494,7 +614,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
                         <div>
                           {/* Engagement Actions Bar */}
-                          <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between bg-black/5 dark:bg-white/1">
+                          <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between bg-black/5 dark:bg-white/1 relative">
                             <div className="flex items-center gap-3">
                               <button 
                                 onClick={() => handleLike(p.slug)}
@@ -504,26 +624,54 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                               </button>
 
                               <button 
-                                onClick={() => setShowHireModal(true)}
+                                onClick={() => {
+                                  setActiveCommentsSlug(p.slug);
+                                  setActiveCommentsTitle(p.title);
+                                }}
                                 className="p-0.5 hover:scale-115 transition-all text-[var(--text-primary)]"
                               >
                                 <MessageCircle className="w-4 h-4" />
                               </button>
 
-                              {p.link !== "#" && (
-                                <a 
-                                  href={p.link} 
-                                  target="_blank" 
-                                  rel="noreferrer"
-                                  className="p-0.5 hover:scale-115 transition-all text-[var(--text-primary)]"
-                                >
-                                  <Send className="w-4 h-4" />
-                                </a>
+                              {/* Share Airplane Button */}
+                              <button 
+                                onClick={() => setActiveShareSlug(activeShareSlug === p.slug ? null : p.slug)}
+                                className="p-0.5 hover:scale-115 transition-all text-[var(--text-primary)] relative"
+                              >
+                                <Send className="w-4 h-4" />
+                              </button>
+
+                              {/* Share Popover */}
+                              {activeShareSlug === p.slug && (
+                                <div className="absolute bottom-10 left-8 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-xl p-2 z-[100] space-y-1 min-w-[150px] animate-in fade-in slide-in-from-bottom-2 duration-150 text-left">
+                                  <button 
+                                    onClick={() => {
+                                      const text = `Check out ${p.title}: ${pUrl}`;
+                                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+                                      setActiveShareSlug(null);
+                                    }}
+                                    className="w-full text-left px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-[10px] font-bold flex items-center gap-2"
+                                  >
+                                    <span>💬 WhatsApp</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(pUrl).then(() => {
+                                        setShowShareToast(true);
+                                        setTimeout(() => setShowShareToast(false), 2000);
+                                      });
+                                      setActiveShareSlug(null);
+                                    }}
+                                    className="w-full text-left px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-[10px] font-bold flex items-center gap-2"
+                                  >
+                                    <span>📋 Copy Link</span>
+                                  </button>
+                                </div>
                               )}
                             </div>
 
                             <button 
-                              onClick={() => handleBookmark(p.slug, p.link !== "#" ? p.link : "https://samuelstanley.com")}
+                              onClick={() => handleBookmark(p.slug, pUrl)}
                               className={`p-0.5 hover:scale-115 transition-all relative ${isBookmarked ? "text-cyan-400 fill-cyan-400" : "text-[var(--text-primary)]"}`}
                             >
                               <Bookmark className="w-4 h-4" />
@@ -540,6 +688,15 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             <div className="font-extrabold flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                               <span>{likes[p.slug] || 0} Likes</span>
+                            </div>
+                            <div 
+                              onClick={() => {
+                                setActiveCommentsSlug(p.slug);
+                                setActiveCommentsTitle(p.title);
+                              }}
+                              className="text-[9px] text-[var(--text-secondary)] font-bold cursor-pointer hover:underline"
+                            >
+                              View all {commentsMap[p.slug]?.length || 0} comments
                             </div>
                             <div className="text-[10px] text-[var(--text-secondary)] truncate">
                               <span className="font-bold text-[var(--text-primary)]">samuelstanley</span> {p.desc}
@@ -591,7 +748,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                     return (
                       <article 
                         key={b.slug}
-                        className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] overflow-hidden shadow-sm animate-in fade-in duration-200 flex flex-col justify-between"
+                        className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] overflow-hidden shadow-sm animate-in fade-in duration-200 flex flex-col justify-between relative"
                       >
                         <div>
                           {/* Post Header */}
@@ -613,16 +770,22 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             <span className="text-[10px] text-[var(--text-secondary)] font-mono">{b.readTime}</span>
                           </div>
 
+                          {/* Cover Image from markdown */}
+                          {b.coverImage && (
+                            <div className="w-full h-40 overflow-hidden bg-black/10 relative">
+                              <img 
+                                src={b.coverImage} 
+                                alt={b.title} 
+                                className="w-full h-full object-cover select-none pointer-events-none hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          )}
+
                           {/* Post Text / Media Content */}
-                          <div className="border-b border-[var(--border)] bg-black/10 dark:bg-white/2 p-5 flex flex-col justify-between min-h-[170px] relative select-none">
-                            <div 
-                              className="absolute inset-0 z-0 opacity-5" 
-                              style={{ background: `radial-gradient(circle at 10% 90%, #9b7dff 0%, transparent 60%)` }}
-                            />
-                            
-                            <div className="relative z-10 space-y-2">
+                          <div className="border-b border-[var(--border)] bg-black/5 dark:bg-white/2 p-5 space-y-3">
+                            <div className="space-y-1">
                               <span className="text-[9px] font-mono text-[var(--text-secondary)]">
-                                {b.date}
+                                {new Date(b.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                               </span>
                               <h3 className="text-base font-black tracking-tight text-[var(--text-primary)] hover:text-[var(--coral)] transition-colors">
                                 <Link href={`/blog/${b.slug}`}>{b.title}</Link>
@@ -632,7 +795,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                               </p>
                             </div>
 
-                            <div className="relative z-10 pt-3 flex flex-wrap gap-1">
+                            <div className="pt-2 flex flex-wrap gap-1">
                               {b.tags.map((t: string) => (
                                 <span 
                                   key={t}
@@ -648,7 +811,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
                         <div>
                           {/* Engagement Actions Bar */}
-                          <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between bg-black/5 dark:bg-white/1">
+                          <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between bg-black/5 dark:bg-white/1 relative">
                             <div className="flex items-center gap-3">
                               <button 
                                 onClick={() => handleLike(b.slug)}
@@ -658,18 +821,50 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                               </button>
 
                               <button 
-                                onClick={() => setShowHireModal(true)}
+                                onClick={() => {
+                                  setActiveCommentsSlug(b.slug);
+                                  setActiveCommentsTitle(b.title);
+                                }}
                                 className="p-0.5 hover:scale-115 transition-all text-[var(--text-primary)]"
                               >
                                 <MessageCircle className="w-4 h-4" />
                               </button>
 
-                              <Link 
-                                href={`/blog/${b.slug}`}
-                                className="p-0.5 hover:scale-115 transition-all text-[var(--text-primary)]"
+                              {/* Share Airplane Button */}
+                              <button 
+                                onClick={() => setActiveShareSlug(activeShareSlug === b.slug ? null : b.slug)}
+                                className="p-0.5 hover:scale-115 transition-all text-[var(--text-primary)] relative"
                               >
                                 <Send className="w-4 h-4" />
-                              </Link>
+                              </button>
+
+                              {/* Share Popover */}
+                              {activeShareSlug === b.slug && (
+                                <div className="absolute bottom-10 left-8 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-xl p-2 z-[100] space-y-1 min-w-[150px] animate-in fade-in slide-in-from-bottom-2 duration-150 text-left">
+                                  <button 
+                                    onClick={() => {
+                                      const text = `Check out "${b.title}": ${blogUrl}`;
+                                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+                                      setActiveShareSlug(null);
+                                    }}
+                                    className="w-full text-left px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-[10px] font-bold flex items-center gap-2"
+                                  >
+                                    <span>💬 WhatsApp</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(blogUrl).then(() => {
+                                        setShowShareToast(true);
+                                        setTimeout(() => setShowShareToast(false), 2000);
+                                      });
+                                      setActiveShareSlug(null);
+                                    }}
+                                    className="w-full text-left px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-[10px] font-bold flex items-center gap-2"
+                                  >
+                                    <span>📋 Copy Link</span>
+                                  </button>
+                                </div>
+                              )}
                             </div>
 
                             <button 
@@ -690,6 +885,15 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             <div className="font-extrabold flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                               <span>{likes[b.slug] || 0} Likes</span>
+                            </div>
+                            <div 
+                              onClick={() => {
+                                setActiveCommentsSlug(b.slug);
+                                setActiveCommentsTitle(b.title);
+                              }}
+                              className="text-[9px] text-[var(--text-secondary)] font-bold cursor-pointer hover:underline"
+                            >
+                              View all {commentsMap[b.slug]?.length || 0} comments
                             </div>
                             <div className="text-[10px] text-[var(--text-secondary)] truncate">
                               <span className="font-bold text-[var(--text-primary)]">samuelstanley</span> {b.excerpt}
@@ -742,6 +946,127 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
         </div>
       </main>
+
+      {/* COMMENTS THREAD SLIDING DRAWER MODAL */}
+      {activeCommentsSlug !== null && (
+        <div className="fixed inset-0 z-[20000] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          {/* Backdrop Close Click */}
+          <div className="absolute inset-0" onClick={() => setActiveCommentsSlug(null)} />
+          
+          {/* Comments Panel */}
+          <div className="relative w-full max-w-md h-full bg-[var(--surface)] border-l border-[var(--border)] shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <div className="p-5 border-b border-[var(--border)] flex items-center justify-between bg-black/5 dark:bg-white/2">
+              <div>
+                <h4 className="font-black text-sm text-[var(--text-primary)]">Comments Thread</h4>
+                <p className="text-[10px] text-[var(--text-secondary)] font-medium truncate max-w-[280px]">
+                  {activeCommentsTitle}
+                </p>
+              </div>
+              <button 
+                onClick={() => setActiveCommentsSlug(null)}
+                className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-[var(--text-primary)] transition-colors"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            {/* Comments List area */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {commentsMap[activeCommentsSlug]?.length === 0 ? (
+                <div className="py-12 text-center text-xs text-[var(--text-secondary)] italic">
+                  No comments yet. Be the first to start the thread!
+                </div>
+              ) : (
+                <div className="space-y-4 border-l-2 border-[var(--border)] pl-4 ml-2">
+                  {commentsMap[activeCommentsSlug]?.map((comm) => (
+                    <div key={comm.id} className="space-y-1 relative">
+                      {/* Thread Node Dot */}
+                      <span className="absolute -left-[22px] top-1.5 w-2.5 h-2.5 rounded-full bg-[var(--coral)] border border-[var(--surface)]" />
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-[11px] text-[var(--text-primary)]">
+                          {comm.name} <span className="font-mono text-[9px] text-[var(--text-secondary)] font-normal ml-1">{comm.handle}</span>
+                        </span>
+                        <span className="text-[8px] text-[var(--text-secondary)] font-mono">{comm.timestamp}</span>
+                      </div>
+                      <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed bg-black/5 dark:bg-white/2 p-2.5 rounded-xl">
+                        {comm.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Input area / Email Sign-up box */}
+            <div className="p-5 border-t border-[var(--border)] bg-black/5 dark:bg-white/2 space-y-3">
+              {!currentUser ? (
+                /* Dynamic Signup to Join Discussion */
+                <form onSubmit={handleSignup} className="space-y-3 p-4 border border-[var(--border)] rounded-2xl bg-[var(--surface)]">
+                  <div className="text-center space-y-1">
+                    <h5 className="font-black text-[11px] text-[var(--text-primary)]">Sign up to join discussion</h5>
+                    <p className="text-[9px] text-[var(--text-secondary)] leading-relaxed">
+                      Enter your details to register your developer name and drop a comment on the thread.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <input 
+                      type="text" 
+                      placeholder="Your Name (e.g. John Doe)..."
+                      required
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      className="w-full border border-[var(--border)] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[var(--coral)] bg-[var(--bg)] text-[var(--text-primary)]"
+                    />
+                    <input 
+                      type="email" 
+                      placeholder="Email Address..."
+                      required
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      className="w-full border border-[var(--border)] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[var(--coral)] bg-[var(--bg)] text-[var(--text-primary)]"
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="w-full py-2 bg-[var(--coral)] hover:bg-[var(--coral)]/90 text-white rounded-xl text-xs font-bold shadow transition-all"
+                  >
+                    Join Discussion
+                  </button>
+                </form>
+              ) : (
+                /* Post Comment form */
+                <form onSubmit={handlePostComment} className="flex gap-2 items-center">
+                  <div className="flex-1 relative">
+                    <input 
+                      type="text"
+                      placeholder={`Comment as @${currentUser.name.toLowerCase().replace(/\s+/g, "")}...`}
+                      required
+                      value={commentInput}
+                      onChange={(e) => setCommentInput(e.target.value)}
+                      className="w-full border border-[var(--border)] rounded-full pl-4 pr-10 py-2.5 text-xs focus:outline-none focus:border-[var(--coral)] bg-[var(--surface)] text-[var(--text-primary)] font-medium"
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="px-4 py-2.5 bg-[var(--coral)] text-white rounded-full text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow"
+                  >
+                    Post
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SHARE ACTION HUD TOAST CONFIRMATION */}
+      {showShareToast && (
+        <div className="fixed bottom-6 right-6 z-[30000] bg-cyan-900 border border-cyan-700/50 text-cyan-200 text-[10px] font-black px-4 py-2 rounded-xl shadow-2xl animate-bounce">
+          ✓ Portfolio Post Link copied to clipboard!
+        </div>
+      )}
 
       {/* INSTAGRAM-STYLE STORIES SLIDESHOW MODAL */}
       {activeStoryIdx !== null && (
