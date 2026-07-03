@@ -2046,6 +2046,7 @@ function GitHubProjectsPanel({ secret }: { secret: string }) {
           displayTags: editForm.displayTags?.split(",").map((t: string) => t.trim()).filter(Boolean) || [],
           statusLabel: editForm.statusLabel,
           pinnedOrder: editForm.pinnedOrder ? parseInt(editForm.pinnedOrder) : null,
+          homepage: editForm.homepage,
         }),
       });
       const data = await res.json();
@@ -2123,6 +2124,15 @@ function GitHubProjectsPanel({ secret }: { secret: string }) {
                         placeholder={repo.repoName}
                         value={editForm.displayTitle || ""}
                         onChange={e => setEditForm((f: any) => ({ ...f, displayTitle: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 block">Live Site URL</label>
+                      <input
+                        className="w-full bg-white/5 border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs"
+                        placeholder="https://mysite.com"
+                        value={editForm.homepage || ""}
+                        onChange={e => setEditForm((f: any) => ({ ...f, homepage: e.target.value }))}
                       />
                     </div>
                     <div>
@@ -2238,6 +2248,7 @@ function GitHubProjectsPanel({ secret }: { secret: string }) {
                           displayTags: repo.displayTags?.join(", ") || "",
                           statusLabel: repo.statusLabel || "",
                           pinnedOrder: repo.pinnedOrder?.toString() || "",
+                          homepage: repo.homepage || "",
                         });
                       }}
                       className="text-[10px] text-[var(--text-secondary)] hover:text-white underline underline-offset-2 transition-colors"

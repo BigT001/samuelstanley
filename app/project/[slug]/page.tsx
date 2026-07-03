@@ -18,14 +18,55 @@ export default function ProjectCaseStudy({
   const [mounted, setMounted] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
 
-  const project = projects.find((p) => p.slug === resolvedParams.slug);
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
+  // Initialize and load metrics from Database + static fallback
   useEffect(() => {
     const savedTheme =
       (localStorage.getItem("theme") as "dark" | "light") || "dark";
     setTheme(savedTheme);
     setMounted(true);
-  }, []);
+
+    const slug = resolvedParams.slug;
+    const staticProject = projects.find((p) => p.slug === slug);
+    if (staticProject) {
+      setProject(staticProject);
+    }
+
+    // Fetch live GitHub projects from database to override or resolve
+    fetch("/api/github/projects")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.projects) {
+          const dbProj = data.projects.find((p: any) => p.repoName === slug);
+          if (dbProj) {
+            const mapped = {
+              title: dbProj.displayTitle || dbProj.repoName.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+              slug: dbProj.repoName,
+              tag: dbProj.statusLabel ? `${dbProj.statusLabel}` : (dbProj.language || "GitHub Repo"),
+              desc: dbProj.displayDesc || `${dbProj.fullName} — ${dbProj.stars} ⭐ · ${dbProj.forks} 🍴`,
+              tech: dbProj.displayTags?.length ? dbProj.displayTags : (dbProj.language ? [dbProj.language] : []),
+              color: "#6b8cff",
+              link: dbProj.homepage || dbProj.repoUrl || "#",
+              repo: dbProj.repoUrl || "#",
+              status: dbProj.statusLabel || "Live",
+              stars: dbProj.stars,
+              forks: dbProj.forks,
+              lastPushedAt: dbProj.lastPushedAt,
+              isGithub: true,
+            };
+            setProject(mapped);
+          } else if (!staticProject) {
+            setLoading(false);
+          }
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
+  }, [resolvedParams.slug]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -84,7 +125,19 @@ export default function ProjectCaseStudy({
     return () => observer.disconnect();
   }, [project]);
 
-  if (!project) notFound();
+  if (loading && !project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] text-[var(--text-secondary)]">
+        <div className="text-xs font-mono tracking-widest uppercase animate-pulse">
+          Loading case study data...
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && !project) {
+    notFound();
+  }
 
   return (
     <div className="relative min-h-screen transition-colors duration-300">
@@ -103,13 +156,20 @@ export default function ProjectCaseStudy({
       {/* Navigation - no border, no header feel */}
       <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 md:px-10 md:py-6 flex justify-between items-center">
         <Link
-          href="/#projects"
+          href="/?tab=projects"
           className="group relative px-6 py-3 rounded-full bg-surface/30 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 hover:text-accent shadow-lg hover:shadow-accent/20 transition-all duration-300 flex items-center gap-3 overflow-hidden"
         >
           <span className="relative z-10 transition-transform duration-300 group-hover:-translate-x-1">←</span> 
           <span className="relative z-10">Back</span>
           <div className="absolute inset-0 bg-accent/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         </Link>
+
+        <button
+          onClick={() => setShowModal(true)}
+          className="px-6 py-3 rounded-full bg-[var(--coral)] hover:bg-[var(--coral)]/90 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(255,77,77,0.3)] transition-all hover:scale-105 active:scale-95"
+        >
+          + Hire Samuel
+        </button>
       </nav>
 
       {/* Theme Pill Switch */}
@@ -187,7 +247,7 @@ export default function ProjectCaseStudy({
                 Tech Stack
               </h3>
               <div className="flex flex-wrap gap-3">
-                {project.tech.map((t) => (
+                {project.tech.map((t: string) => (
                   <span
                     key={t}
                     className="px-4 py-2 bg-background/60 border border-border/40 rounded-xl text-[10px] font-bold uppercase tracking-widest text-primary/80 shadow-md hover:border-accent/40 hover:text-accent transition-colors backdrop-blur-md"
@@ -703,6 +763,12 @@ export default function ProjectCaseStudy({
                   Let's discuss your next project.
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="px-10 py-5 bg-[var(--coral)] text-white font-black uppercase tracking-[0.2em] text-xs rounded-full hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_20px_rgba(255,77,77,0.4)] flex items-center justify-center gap-2"
+                  >
+                    ⚡ Book a Call
+                  </button>
                   <a
                     href="mailto:stanley.samuel.stanley@gmail.com"
                     className="px-10 py-5 bg-primary text-surface font-black uppercase tracking-[0.2em] text-xs rounded-full hover:scale-105 active:scale-95 transition-transform duration-300 shadow-xl flex items-center justify-center gap-2"
@@ -722,12 +788,6 @@ export default function ProjectCaseStudy({
                     </svg>
                     Email Me
                   </a>
-                  <Link
-                    href="/#projects"
-                    className="px-10 py-5 bg-transparent border border-border/40 text-primary font-black uppercase tracking-[0.2em] text-xs rounded-full hover:bg-surface transition-colors duration-300 flex items-center justify-center"
-                  >
-                    View Portfolio
-                  </Link>
                 </div>
               </div>
             </div>

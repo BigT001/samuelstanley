@@ -638,26 +638,65 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             <span className="text-[10px] text-[var(--text-secondary)] font-bold">{p.tag}</span>
                           </div>
 
-                          {/* Post Image / Media Content */}
-                          <div className="border-b border-[var(--border)] bg-black/10 dark:bg-white/2 p-5 flex flex-col justify-between min-h-[170px] relative select-none">
-                            <div 
-                              className="absolute inset-0 z-0 opacity-10" 
-                              style={{ background: `radial-gradient(circle at 75% 25%, ${p.color || "var(--coral)"} 0%, transparent 70%)` }}
-                            />
-                            
-                            <div className="relative z-10 space-y-2">
-                              <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider text-white" style={{ backgroundColor: p.color || "var(--coral)" }}>
+                          {/* Live Site Screenshot – clickable to case study */}
+                          <Link href={`/project/${p.slug}`} className="block group cursor-pointer">
+                            <div className="relative border-b border-[var(--border)] overflow-hidden bg-black/20" style={{ height: "160px" }}>
+                              {p.link && p.link !== "#" ? (
+                                <>
+                                  <img
+                                    src={`https://api.microlink.io/?url=${encodeURIComponent(p.link)}&screenshot=true&meta=false&embed=screenshot.url`}
+                                    alt={`${p.title} preview`}
+                                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      const el = e.currentTarget;
+                                      el.style.display = "none";
+                                      const fb = el.nextElementSibling as HTMLElement;
+                                      if (fb) fb.style.display = "flex";
+                                    }}
+                                  />
+                                  <div
+                                    className="absolute inset-0 hidden flex-col items-center justify-center"
+                                    style={{ background: `radial-gradient(circle at 60% 30%, ${p.color || "var(--coral)"} 0%, #0a0f1a 70%)` }}
+                                  >
+                                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/50">{p.title}</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div
+                                  className="w-full h-full flex flex-col items-center justify-center"
+                                  style={{ background: `radial-gradient(circle at 60% 30%, ${p.color || "var(--coral)"} 0%, #0a0f1a 70%)` }}
+                                >
+                                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/50">{p.title}</span>
+                                </div>
+                              )}
+                              {/* Hover overlay */}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/55 transition-all duration-300 flex items-center justify-center pointer-events-none">
+                                <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 text-white text-[10px] font-black uppercase tracking-widest bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full">
+                                  View Case Study →
+                                </span>
+                              </div>
+                              {/* Status badge */}
+                              <span
+                                className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider text-white shadow-lg"
+                                style={{ backgroundColor: p.color || "var(--coral)" }}
+                              >
                                 {p.status}
                               </span>
-                              <h3 className="text-base font-black tracking-tight text-[var(--text-primary)]">
+                            </div>
+                          </Link>
+
+                          {/* Title + description + tech tags */}
+                          <div className="px-4 pt-3 pb-3">
+                            <Link href={`/project/${p.slug}`} className="group/title">
+                              <h3 className="text-base font-black tracking-tight text-[var(--text-primary)] group-hover/title:text-[var(--coral)] transition-colors line-clamp-1">
                                 {p.title}
                               </h3>
-                              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                                {p.desc}
-                              </p>
-                            </div>
-
-                            <div className="relative z-10 pt-3 flex flex-wrap gap-1">
+                            </Link>
+                            <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed mt-0.5 mb-2 line-clamp-2">
+                              {p.desc}
+                            </p>
+                            <div className="flex flex-wrap gap-1">
                               {p.tech.map((t: string) => (
                                 <span 
                                   key={t}

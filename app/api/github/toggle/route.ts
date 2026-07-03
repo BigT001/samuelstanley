@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { repoName, visible, displayTitle, displayDesc, displayTags, statusLabel, pinnedOrder } = body;
+    const { repoName, visible, displayTitle, displayDesc, displayTags, statusLabel, pinnedOrder, homepage } = body;
 
     if (!repoName) {
       return NextResponse.json({ error: "repoName is required" }, { status: 400 });
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
         ...(displayTags !== undefined && { displayTags }),
         ...(statusLabel !== undefined && { statusLabel }),
         ...(pinnedOrder !== undefined && { pinnedOrder }),
+        ...(homepage !== undefined && { homepage }),
       },
     });
 
