@@ -296,12 +296,16 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   });
 
   // Compute category counts dynamically
-  const blogCategories = ["Venture", "Fintech", "Engineering", "Nigeria", "Tech", "Business"];
   const categoryCounts = initialBlogs.reduce((acc: Record<string, number>, curr) => {
     const cat = curr.category || "Tech";
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
   }, {});
+
+  // Extract all unique categories dynamically from the actual blog posts
+  const blogCategories = Array.from(
+    new Set(initialBlogs.map(b => b.category || "Tech"))
+  ).sort((a, b) => (categoryCounts[b] || 0) - (categoryCounts[a] || 0));
 
   const categories = ["Next.js", "Gemini AI", "Node.js", "React", "PostgreSQL", "TailwindCSS"];
   const totalLikes = Object.values(likes).reduce((sum, val) => sum + val, 0);
@@ -387,40 +391,13 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <span>Projects</span>
             </button>
             
-            {/* Feeds Tab (With Expandable categories) */}
-            <div className="space-y-1">
-              <button 
-                onClick={() => { changeTab("feeds"); setSelectedCategory(null); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "feeds" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Feeds</span>
-              </button>
-              
-              {activeTab === "feeds" && (
-                <div className="pl-6 pt-1 space-y-1.5 animate-in slide-in-from-top-2 duration-200">
-                  <button 
-                    onClick={() => setSelectedCategory(null)}
-                    className={`w-full text-left px-3 py-1 rounded-lg text-[10px] font-extrabold transition-all border border-transparent ${selectedCategory === null ? "text-[var(--coral)] bg-[var(--coral)]/5 border-[var(--coral)]/10" : "text-[var(--text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"}`}
-                  >
-                    • All ({initialBlogs.length})
-                  </button>
-                  {blogCategories.map(subCat => {
-                    const count = categoryCounts[subCat] || 0;
-                    const isSelected = selectedCategory === subCat;
-                    return (
-                      <button
-                        key={subCat}
-                        onClick={() => setSelectedCategory(subCat)}
-                        className={`w-full text-left px-3 py-1 rounded-lg text-[10px] font-extrabold transition-all border border-transparent ${isSelected ? "text-[var(--coral)] bg-[var(--coral)]/5 border-[var(--coral)]/10" : "text-[var(--text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"}`}
-                      >
-                        • {subCat} ({count})
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <button 
+              onClick={() => { changeTab("feeds"); setSelectedCategory(null); setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "feeds" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Feeds</span>
+            </button>
 
             <button 
               onClick={() => { changeTab("philosophy"); setSidebarOpen(false); }}
