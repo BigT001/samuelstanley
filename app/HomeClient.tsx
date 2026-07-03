@@ -108,6 +108,15 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       setActiveTab(savedTab);
     }
 
+    // Override if tab URL query parameter is provided
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tabParam = searchParams.get("tab") as TabId;
+      if (tabParam && ["projects", "feeds", "philosophy", "connect"].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    }
+
     // Load user for comments
     const savedUser = localStorage.getItem("comment_user");
     if (savedUser) {
