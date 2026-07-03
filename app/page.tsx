@@ -225,7 +225,7 @@ export default function Home() {
 
             {/* Bio Details */}
             <div className="text-[11px] leading-relaxed text-[var(--text-secondary)] font-medium">
-              I build and launch custom high-performance <span className="font-black text-[var(--text-primary)]">MVPs for startup founders</span> in 14-30 days flat. Let's turn your product vision into scaling SaaS.
+              I build and launch high-performance <span className="font-black text-[var(--text-primary)]">websites, SaaS platforms, and custom digital products</span> in 14-30 days flat. Let's turn your vision into clean, production-ready code.
             </div>
           </div>
 
