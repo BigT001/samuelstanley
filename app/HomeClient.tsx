@@ -295,6 +295,14 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
     return matchesSearch && matchesCategory;
   });
 
+  // Compute category counts dynamically
+  const blogCategories = ["Venture", "Fintech", "Engineering", "Nigeria", "Tech", "Business"];
+  const categoryCounts = initialBlogs.reduce((acc: Record<string, number>, curr) => {
+    const cat = curr.category || "Tech";
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+
   const categories = ["Next.js", "Gemini AI", "Node.js", "React", "PostgreSQL", "TailwindCSS"];
   const totalLikes = Object.values(likes).reduce((sum, val) => sum + val, 0);
 
@@ -378,13 +386,42 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <Grid className="w-4 h-4" />
               <span>Projects</span>
             </button>
-            <button 
-              onClick={() => { changeTab("feeds"); setSelectedCategory(null); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "feeds" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>Feeds</span>
-            </button>
+            
+            {/* Feeds Tab (With Expandable categories) */}
+            <div className="space-y-1">
+              <button 
+                onClick={() => { changeTab("feeds"); setSelectedCategory(null); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "feeds" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Feeds</span>
+              </button>
+              
+              {activeTab === "feeds" && (
+                <div className="pl-6 pt-1 space-y-1.5 animate-in slide-in-from-top-2 duration-200">
+                  <button 
+                    onClick={() => setSelectedCategory(null)}
+                    className={`w-full text-left px-3 py-1 rounded-lg text-[10px] font-extrabold transition-all border border-transparent ${selectedCategory === null ? "text-[var(--coral)] bg-[var(--coral)]/5 border-[var(--coral)]/10" : "text-[var(--text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"}`}
+                  >
+                    • All ({initialBlogs.length})
+                  </button>
+                  {blogCategories.map(subCat => {
+                    const count = categoryCounts[subCat] || 0;
+                    const isSelected = selectedCategory === subCat;
+                    return (
+                      <button
+                        key={subCat}
+                        onClick={() => setSelectedCategory(subCat)}
+                        className={`w-full text-left px-3 py-1 rounded-lg text-[10px] font-extrabold transition-all border border-transparent ${isSelected ? "text-[var(--coral)] bg-[var(--coral)]/5 border-[var(--coral)]/10" : "text-[var(--text-secondary)] hover:bg-black/5 dark:hover:bg-white/5"}`}
+                      >
+                        • {subCat} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <button 
               onClick={() => { changeTab("philosophy"); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "philosophy" ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
@@ -498,27 +535,29 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
         {/* FEED INNER SCROLL (FULL WIDTH) */}
         <div className="flex-1 overflow-y-auto py-6 space-y-6 w-full max-w-none">
           
-          {/* CLIENT REVIEWS / TESTIMONIALS STORIES (Instagram-style Stories with left margin alignment) */}
-          <div className="space-y-2 px-5 md:px-8">
-            <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold mb-1">Stories / Client Testimonials</h4>
-            <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
-              {testimonials.map((t, idx) => (
-                <div 
-                  key={t.handle}
-                  onClick={() => setActiveStoryIdx(idx)}
-                  className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer snap-start"
-                >
-                  <div className="w-[66px] h-[66px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 transition-all hover:scale-105 active:scale-95">
-                    {/* Centered avatar with solid white background inside gradient border */}
-                    <div className="w-full h-full rounded-full border-2 border-[var(--bg)] bg-white text-gray-900 flex items-center justify-center font-black text-sm">
-                      {t.avatar}
+          {/* CLIENT REVIEWS / TESTIMONIALS STORIES (Hidden on Feeds Page) */}
+          {activeTab !== "feeds" && (
+            <div className="space-y-2 px-5 md:px-8">
+              <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold mb-1">Stories / Client Testimonials</h4>
+              <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
+                {testimonials.map((t, idx) => (
+                  <div 
+                    key={t.handle}
+                    onClick={() => setActiveStoryIdx(idx)}
+                    className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer snap-start"
+                  >
+                    <div className="w-[66px] h-[66px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 transition-all hover:scale-105 active:scale-95">
+                      {/* Centered avatar with solid white background inside gradient border */}
+                      <div className="w-full h-full rounded-full border-2 border-[var(--bg)] bg-white text-gray-900 flex items-center justify-center font-black text-sm">
+                        {t.avatar}
+                      </div>
                     </div>
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">{t.handle}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-[var(--text-secondary)]">{t.handle}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* ACTIVE PROJECTS RENDER BLOCK (GRID LAYOUT) */}
           {activeTab === "projects" && (
@@ -711,34 +750,75 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             </div>
           )}
 
-          {/* ACTIVE FEEDS (REAL MARKDOWN BLOG POSTS) RENDER BLOCK */}
+          {/* ACTIVE FEEDS (REAL MARKDOWN BLOG POSTS & SCREENSHOT STYLING) RENDER BLOCK */}
           {activeTab === "feeds" && (
-            <div className="space-y-6">
+            <div className="space-y-6 px-5 md:px-8 w-full animate-in fade-in duration-300">
               
-              {/* Category/search info header */}
-              {(selectedCategory || searchQuery) && (
-                <div className="mx-5 md:mx-8 p-4 border border-[var(--border)] bg-black/5 dark:bg-white/2 rounded-2xl flex items-center justify-between text-xs">
-                  <span>
-                    Showing {filteredBlogs.length} blogs matching 
-                    {selectedCategory && <span className="font-bold text-[var(--coral)]"> #{selectedCategory.toLowerCase()}</span>}
-                    {searchQuery && <span className="italic font-bold"> "{searchQuery}"</span>}
-                  </span>
-                  <button 
-                    onClick={() => { setSelectedCategory(null); setSearchQuery(""); }}
-                    className="text-[10px] font-bold text-[var(--coral)] hover:underline"
-                  >
-                    Clear Filter
-                  </button>
+              {/* Blog Header (Stanley's Log - matching screenshot exactly) */}
+              <div className="pt-2 pb-6 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[var(--coral)] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--coral)] animate-pulse" />
+                    <span>Personal Blog</span>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tighter text-[var(--text-primary)]">
+                    Stanley's <span className="text-[var(--coral)]">Log</span>
+                  </h2>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed max-w-xl">
+                    My honest take on tech, business, and what's actually happening in the Nigerian ecosystem — from a developer's perspective.
+                  </p>
                 </div>
-              )}
+                
+                {/* Stats block from screenshot */}
+                <div className="flex gap-6 pt-2 bg-black/5 dark:bg-white/2 px-5 py-3 rounded-2xl border border-[var(--border)] self-stretch md:self-auto justify-around">
+                  <div className="text-center">
+                    <div className="font-extrabold text-lg text-[var(--text-primary)]">{initialBlogs.length}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Articles</div>
+                  </div>
+                  <div className="border-r border-[var(--border)] my-1" />
+                  <div className="text-center">
+                    <div className="font-extrabold text-lg text-[var(--text-primary)]">{Object.keys(categoryCounts).length}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Topics</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Category Pill Toggles Bar (matching screenshot exactly) */}
+              <div className="flex gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x border-b border-[var(--border)]">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all snap-start flex items-center gap-1.5 shrink-0 border ${selectedCategory === null ? "bg-[var(--coral)] text-white border-[var(--coral)]" : "bg-black/5 dark:bg-white/2 border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--coral)] hover:text-[var(--coral)]"}`}
+                >
+                  <span>All</span>
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono ${selectedCategory === null ? "bg-white/20 text-white" : "bg-black/10 dark:bg-white/10 text-[var(--text-secondary)]"}`}>
+                    {initialBlogs.length}
+                  </span>
+                </button>
+                {blogCategories.map(cat => {
+                  const count = categoryCounts[cat] || 0;
+                  const isSelected = selectedCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(isSelected ? null : cat)}
+                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all snap-start flex items-center gap-1.5 shrink-0 border ${isSelected ? "bg-[var(--coral)] text-white border-[var(--coral)]" : "bg-black/5 dark:bg-white/2 border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--coral)] hover:text-[var(--coral)]"}`}
+                    >
+                      <span>{cat}</span>
+                      <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono ${isSelected ? "bg-white/20 text-white" : "bg-black/10 dark:bg-white/10 text-[var(--text-secondary)]"}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
               {/* Blogs Feed Post Grid */}
               {filteredBlogs.length === 0 ? (
-                <div className="mx-5 md:mx-8 py-20 text-center text-xs text-[var(--text-secondary)] italic border border-dashed border-[var(--border)] rounded-2xl">
-                  No blog posts found. Try checking for other tags.
+                <div className="py-20 text-center text-xs text-[var(--text-secondary)] italic border border-dashed border-[var(--border)] rounded-2xl">
+                  No articles found in this category. Try selecting another topic.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-5 md:px-8 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
                   {filteredBlogs.map((b) => {
                     const isLiked = likedStates[b.slug];
                     const isBookmarked = bookmarkedStates[b.slug];
@@ -770,7 +850,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             <span className="text-[10px] text-[var(--text-secondary)] font-mono">{b.readTime}</span>
                           </div>
 
-                          {/* Cover Image from markdown */}
+                          {/* Cover Image */}
                           {b.coverImage && (
                             <div className="w-full h-40 overflow-hidden bg-black/10 relative">
                               <img 
@@ -1064,7 +1144,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       {/* SHARE ACTION HUD TOAST CONFIRMATION */}
       {showShareToast && (
         <div className="fixed bottom-6 right-6 z-[30000] bg-cyan-900 border border-cyan-700/50 text-cyan-200 text-[10px] font-black px-4 py-2 rounded-xl shadow-2xl animate-bounce">
-          ✓ Portfolio Post Link copied to clipboard!
+          ✓ Link copied to clipboard!
         </div>
       )}
 
