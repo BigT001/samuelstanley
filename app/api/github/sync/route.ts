@@ -19,18 +19,34 @@ function verifyWebhookSignature(body: string, signature: string): boolean {
 async function fetchAllRepos() {
   const repos: any[] = [];
   let page = 1;
+  let useToken = !!GITHUB_TOKEN;
+
   while (true) {
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "samuelstanley-portfolio",
+    };
+    if (useToken) {
+      headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+    }
+
     const res = await fetch(
       `https://api.github.com/users/${GITHUB_USERNAME}/repos?per_page=100&page=${page}&sort=pushed`,
-      {
-        headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-          Accept: "application/vnd.github.v3+json",
-          "User-Agent": "samuelstanley-portfolio",
-        },
-      }
+      { headers }
     );
-    if (!res.ok) break;
+    
+    if (!res.ok) {
+      if (res.status === 401 && useToken) {
+        console.warn("GitHub token expired or unauthorized. Retrying public fetch without token...");
+        useToken = false;
+        page = 1; // Restart page counters
+        repos.length = 0; // Clear any loaded partial repos to prevent duplicates
+        continue;
+      }
+      const errText = await res.text();
+      throw new Error(`GitHub API returned status ${res.status}: ${errText || res.statusText}`);
+    }
+    
     const data = await res.json();
     if (!data.length) break;
     repos.push(...data);
@@ -79,7 +95,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const repos = await fetchAllRepos();
-    const results = await Promise.all(repos.map(upsertRepo));
+    const results = [];
+    for (const repo of repos) {
+      const res = await upsertRepo(repo);
+      results.push(res);
+    }
     return NextResponse.json({ success: true, synced: results.length });
   } catch (err: any) {
     console.error("GitHub sync error:", err);
