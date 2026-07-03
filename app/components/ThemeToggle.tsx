@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from "react";
 
-export function ThemeToggle() {
+export function ThemeToggle({ inline }: { inline?: boolean }) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mounted, setMounted] = useState(false);
+  const [isHomepage, setIsHomepage] = useState(false);
 
   // Read saved theme on mount
   useEffect(() => {
     const saved = (localStorage.getItem("theme") as "dark" | "light") || "dark";
     setTheme(saved);
     setMounted(true);
+    if (typeof window !== "undefined") {
+      setIsHomepage(window.location.pathname === "/");
+    }
   }, []);
 
   // Apply class to <html> whenever theme changes
@@ -31,12 +35,18 @@ export function ThemeToggle() {
     });
   };
 
+  if (!mounted) return null;
+  if (!inline && isHomepage) return null;
+
   return (
     <button
       onClick={toggle}
       aria-label="Toggle theme"
       className={`theme-pill-static ${theme}`}
-      style={{
+      style={inline ? {
+        opacity: mounted ? 1 : 0,
+        transition: "opacity 0.3s ease",
+      } : {
         position: "fixed",
         top: "1.25rem",
         right: "1.25rem",
