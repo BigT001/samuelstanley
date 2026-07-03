@@ -154,6 +154,8 @@ export default function Home() {
     return matchesSearch && matchesCategory;
   });
 
+  const totalLikes = Object.values(likes).reduce((sum, val) => sum + val, 0);
+
   const categories = ["Next.js", "Gemini AI", "Node.js", "React", "PostgreSQL", "TailwindCSS"];
 
   return (
@@ -161,8 +163,8 @@ export default function Home() {
       
       {/* MOBILE NAVBAR */}
       <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-5 py-4 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
-        <span className="text-xl font-bold font-mono tracking-tight bg-gradient-to-r from-[var(--coral)] to-cyan-400 bg-clip-text text-transparent">
-          Stanleygram
+        <span className="text-xl font-black tracking-tight text-[var(--text-primary)]">
+          Samuel Stanley
         </span>
         <div className="flex items-center gap-3">
           <button 
@@ -183,51 +185,47 @@ export default function Home() {
       {/* LEFT SIDEBAR PANEL */}
       <aside className={`fixed md:sticky top-0 left-0 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-md p-6 z-[60] flex flex-col justify-between overflow-y-auto transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <span className="text-2xl font-black font-mono tracking-tight bg-gradient-to-r from-[var(--coral)] to-cyan-400 bg-clip-text text-transparent">
-              Stanleygram
-            </span>
-            <button className="md:hidden" onClick={() => setSidebarOpen(false)}>
+          <div className="flex justify-end md:hidden">
+            <button className="p-1" onClick={() => setSidebarOpen(false)}>
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Profile Card Summary */}
-          <div className="space-y-4 pb-4 border-b border-[var(--border)]">
-            <div className="flex items-center gap-4">
-              <div className="w-[64px] h-[64px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-lg relative">
-                <div className="w-full h-full rounded-full border-2 border-[var(--bg)] overflow-hidden">
-                  <ProfilePhoto />
-                </div>
-                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-[var(--bg)] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+          <div className="flex flex-col items-center text-center space-y-4 pb-4 border-b border-[var(--border)]">
+            <div className="w-[84px] h-[84px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-lg relative">
+              <div className="w-full h-full rounded-full border-2 border-[var(--bg)] overflow-hidden">
+                <ProfilePhoto />
               </div>
-              <div>
-                <h3 className="font-extrabold text-sm text-[var(--text-primary)]">Samuel Stanley</h3>
-                <p className="text-xs text-[var(--text-secondary)] font-mono">@samuelstanley</p>
-              </div>
+              <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-[var(--bg)] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+            </div>
+            
+            <div className="space-y-0.5">
+              <h3 className="font-black text-base text-[var(--text-primary)]">Samuel Stanley</h3>
+              <p className="text-xs text-[var(--text-secondary)] font-mono">@foundersdev</p>
             </div>
 
             {/* Performance Stats */}
-            <div className="flex justify-between text-center py-2 bg-black/5 dark:bg-white/2 rounded-xl">
-              <div>
-                <div className="font-black text-xs">8</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)]">Projects</div>
+            <div className="w-full flex justify-between text-center py-2 bg-black/5 dark:bg-white/2 rounded-xl">
+              <div className="flex-1">
+                <div className="font-black text-xs">14.2K</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Visits</div>
               </div>
               <div className="border-r border-[var(--border)] my-1" />
-              <div>
-                <div className="font-black text-xs">350+</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)]">Commits</div>
+              <div className="flex-1">
+                <div className="font-black text-xs">{(totalLikes || 0).toLocaleString()}</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Likes</div>
               </div>
               <div className="border-r border-[var(--border)] my-1" />
-              <div>
-                <div className="font-black text-xs">14d</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)]">MVP Delivery</div>
+              <div className="flex-1">
+                <div className="font-black text-xs">1.2K</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Followers</div>
               </div>
             </div>
 
             {/* Bio Details */}
-            <div className="text-[11px] leading-relaxed text-[var(--text-secondary)]">
-              <span className="font-bold text-[var(--text-primary)]">Founder's Dev</span>. Full-Stack Engineer specializing in Next.js, Node.js, and autonomous AI agents. I build MVPs fast.
+            <div className="text-[11px] leading-relaxed text-[var(--text-secondary)] font-medium">
+              I build and launch custom high-performance <span className="font-black text-[var(--text-primary)]">MVPs for startup founders</span> in 14-30 days flat. Let's turn your product vision into scaling SaaS.
             </div>
           </div>
 
