@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
   Heart, 
@@ -64,8 +64,9 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const [mounted, setMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   
-  // Likes and bookmarks states
+  // Database metrics states
   const [likes, setLikes] = useState<Record<string, number>>({});
+  const [shares, setShares] = useState<Record<string, number>>({});
   const [likedStates, setLikedStates] = useState<Record<string, boolean>>({});
   const [bookmarkedStates, setBookmarkedStates] = useState<Record<string, boolean>>({});
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
@@ -91,7 +92,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const [storyProgress, setStoryProgress] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Initialize and load persistent data
+  // Initialize and load metrics from Database + local storage
   useEffect(() => {
     setMounted(true);
     
@@ -113,72 +114,46 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       setCurrentUser(JSON.parse(savedUser));
     }
 
-    // Load comments map
-    const savedComments = localStorage.getItem("post_comments");
-    if (savedComments) {
-      setCommentsMap(JSON.parse(savedComments));
-    } else {
-      const seed: Record<string, Comment[]> = {};
-      const mockNames = ["Adekunle Kolawole", "Mark Jaquith", "Dan Peguine", "Tobi Olawale"];
-      const mockHandles = ["@adekunle_k", "@markjaquith", "@danpeguine", "@tobi_olawale"];
-      const mockTexts = [
-        "This is an absolute masterpiece! Clean architecture.",
-        "Spot on indexing advice, helped optimize our queries.",
-        "The design speed of this portfolio is next level.",
-        "Super clean MVP turnaround. Highly recommended developer!"
-      ];
-      
-      projects.forEach(p => {
-        seed[p.slug] = [
-          {
-            id: "1",
-            name: mockNames[0],
-            handle: mockHandles[0],
-            text: mockTexts[0],
-            timestamp: "2 hours ago"
-          },
-          {
-            id: "2",
-            name: mockNames[1],
-            handle: mockHandles[1],
-            text: mockTexts[1],
-            timestamp: "30 mins ago"
-          }
-        ];
-      });
-
-      initialBlogs.forEach(b => {
-        seed[b.slug] = [
-          {
-            id: "1",
-            name: mockNames[2],
-            handle: mockHandles[2],
-            text: mockTexts[2],
-            timestamp: "1 hour ago"
-          },
-          {
-            id: "2",
-            name: mockNames[3],
-            handle: mockHandles[3],
-            text: mockTexts[3],
-            timestamp: "10 mins ago"
-          }
-        ];
-      });
-
-      setCommentsMap(seed);
-      localStorage.setItem("post_comments", JSON.stringify(seed));
+    // Load liked states from localStorage
+    const savedLikedStates = localStorage.getItem("post_liked_states");
+    if (savedLikedStates) {
+      setLikedStates(JSON.parse(savedLikedStates));
     }
 
-    // Initialize likes counts to 0 for production readiness and to avoid hydration errors
-    const initialLikes: Record<string, number> = {};
-    projects.forEach(p => {
-      initialLikes[p.slug] = 0;
-    });
-    initialBlogs.forEach(b => {
-      initialLikes[b.slug] = 0;
-    });
-    setLikes(initialLikes);
+    // Fetch live metrics from Database
+    fetch("/api/metrics")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.metrics) {
+          const dbLikes: Record<string, number> = {};
+          const dbShares: Record<string, number> = {};
+          const dbComments: Record<string, Comment[]> = {};
+
+          // Seed defaults
+          projects.forEach((p) => {
+            dbLikes[p.slug] = 0;
+            dbShares[p.slug] = 0;
+            dbComments[p.slug] = [];
+          });
+          initialBlogs.forEach((b) => {
+            dbLikes[b.slug] = 0;
+            dbShares[b.slug] = 0;
+            dbComments[b.slug] = [];
+          });
+
+          // Override with values from DB
+          Object.entries(data.metrics).forEach(([slug, val]: [string, any]) => {
+            dbLikes[slug] = val.likes ?? 0;
+            dbShares[slug] = val.shares ?? 0;
+            dbComments[slug] = val.comments ?? [];
+          });
+
+          setLikes(dbLikes);
+          setShares(dbShares);
+          setCommentsMap(dbComments);
+        }
+      })
+      .catch((err) => console.error("Error loading metrics:", err));
   }, [initialBlogs]);
 
   const changeTab = (tab: TabId) => {
@@ -202,21 +177,62 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             return 0;
           }
         }
-        return prev + 2; // Increments to 100 in ~2.5s
+        return prev + 2;
       });
     }, 50);
 
     return () => clearInterval(interval);
   }, [activeStoryIdx]);
 
-  const handleLike = (slug: string) => {
-    if (likedStates[slug]) {
-      setLikes(prev => ({ ...prev, [slug]: prev[slug] - 1 }));
-      setLikedStates(prev => ({ ...prev, [slug]: false }));
-    } else {
-      setLikes(prev => ({ ...prev, [slug]: prev[slug] + 1 }));
-      setLikedStates(prev => ({ ...prev, [slug]: true }));
+  // Sync Likes with DB
+  const handleLike = async (slug: string) => {
+    const isLiked = likedStates[slug];
+    const change = isLiked ? -1 : 1;
+
+    // Update locally first
+    const updatedLikes = { ...likes, [slug]: Math.max(0, (likes[slug] || 0) + change) };
+    const updatedLikedStates = { ...likedStates, [slug]: !isLiked };
+    
+    setLikes(updatedLikes);
+    setLikedStates(updatedLikedStates);
+    localStorage.setItem("post_liked_states", JSON.stringify(updatedLikedStates));
+
+    if (!isLiked) {
       triggerConfetti();
+    }
+
+    try {
+      const res = await fetch("/api/metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, action: "like", likeChange: change }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLikes((prev) => ({ ...prev, [slug]: data.likes }));
+      }
+    } catch (err) {
+      console.error("Failed to sync like count:", err);
+    }
+  };
+
+  // Sync Shares with DB
+  const handleShareTrack = async (slug: string) => {
+    const updatedShares = { ...shares, [slug]: (shares[slug] || 0) + 1 };
+    setShares(updatedShares);
+
+    try {
+      const res = await fetch("/api/metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, action: "share" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShares((prev) => ({ ...prev, [slug]: data.shares }));
+      }
+    } catch (err) {
+      console.error("Failed to sync share metrics:", err);
     }
   };
 
@@ -245,7 +261,8 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
     localStorage.setItem("comment_user", JSON.stringify(user));
   };
 
-  const handlePostComment = (e: React.FormEvent) => {
+  // Sync Comments with DB
+  const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentInput.trim() || !activeCommentsSlug || !currentUser) return;
 
@@ -257,14 +274,24 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       timestamp: "Just now"
     };
 
-    const updatedComments = {
-      ...commentsMap,
-      [activeCommentsSlug]: [...(commentsMap[activeCommentsSlug] || []), newComment]
-    };
-
-    setCommentsMap(updatedComments);
-    localStorage.setItem("post_comments", JSON.stringify(updatedComments));
+    // Update locally first
+    const localThread = [...(commentsMap[activeCommentsSlug] || []), newComment];
+    setCommentsMap((prev) => ({ ...prev, [activeCommentsSlug]: localThread }));
     setCommentInput("");
+
+    try {
+      const res = await fetch("/api/metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeCommentsSlug, action: "comment", comment: newComment }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCommentsMap((prev) => ({ ...prev, [activeCommentsSlug]: data.comments }));
+      }
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+    }
   };
 
   // Filter projects
@@ -663,6 +690,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                                   <button 
                                     onClick={() => {
                                       const text = `Check out ${p.title}: ${pUrl}`;
+                                      handleShareTrack(p.slug);
                                       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
                                       setActiveShareSlug(null);
                                     }}
@@ -672,6 +700,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                                   </button>
                                   <button 
                                     onClick={() => {
+                                      handleShareTrack(p.slug);
                                       navigator.clipboard.writeText(pUrl).then(() => {
                                         setShowShareToast(true);
                                         setTimeout(() => setShowShareToast(false), 2000);
@@ -704,6 +733,8 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             <div className="font-extrabold flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                               <span>{likes[p.slug] || 0} Likes</span>
+                              <span className="text-[var(--text-secondary)]">•</span>
+                              <span>{shares[p.slug] || 0} Shares</span>
                             </div>
                             <div 
                               onClick={() => {
@@ -897,6 +928,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                                   <button 
                                     onClick={() => {
                                       const text = `Check out "${b.title}": ${blogUrl}`;
+                                      handleShareTrack(b.slug);
                                       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
                                       setActiveShareSlug(null);
                                     }}
@@ -906,6 +938,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                                   </button>
                                   <button 
                                     onClick={() => {
+                                      handleShareTrack(b.slug);
                                       navigator.clipboard.writeText(blogUrl).then(() => {
                                         setShowShareToast(true);
                                         setTimeout(() => setShowShareToast(false), 2000);
@@ -938,6 +971,8 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                             <div className="font-extrabold flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                               <span>{likes[b.slug] || 0} Likes</span>
+                              <span className="text-[var(--text-secondary)]">•</span>
+                              <span>{shares[b.slug] || 0} Shares</span>
                             </div>
                             <div 
                               onClick={() => {
@@ -1164,7 +1199,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                   onClick={() => setActiveStoryIdx(null)}
                   className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4.5 h-4.5" />
                 </button>
               </div>
             </div>

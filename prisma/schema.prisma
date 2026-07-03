@@ -41,3 +41,12 @@ model AlertEmail {
   sites     String[] // ClientSite IDs linked to this email
   createdAt DateTime @default(now())
 }
+
+model PostMetric {
+  slug      String   @id
+  likes     Int      @default(0)
+  shares    Int      @default(0)
+  comments  String   @default("[]") // JSON string of comments list
+  updatedAt DateTime @updatedAt
+}
+
