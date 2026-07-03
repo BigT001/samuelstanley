@@ -170,13 +170,13 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       localStorage.setItem("post_comments", JSON.stringify(seed));
     }
 
-    // Initialize randomized likes counts
+    // Initialize likes counts to 0 for production readiness and to avoid hydration errors
     const initialLikes: Record<string, number> = {};
     projects.forEach(p => {
-      initialLikes[p.slug] = Math.floor(Math.random() * 280) + 140;
+      initialLikes[p.slug] = 0;
     });
     initialBlogs.forEach(b => {
-      initialLikes[b.slug] = Math.floor(Math.random() * 150) + 50;
+      initialLikes[b.slug] = 0;
     });
     setLikes(initialLikes);
   }, [initialBlogs]);
@@ -712,7 +712,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                               }}
                               className="text-[9px] text-[var(--text-secondary)] font-bold cursor-pointer hover:underline"
                             >
-                              View all {commentsMap[p.slug]?.length || 0} comments
+                              View all {mounted ? (commentsMap[p.slug]?.length || 0) : 0} comments
                             </div>
                             <div className="text-[10px] text-[var(--text-secondary)] truncate">
                               <span className="font-bold text-[var(--text-primary)]">samuelstanley</span> {p.desc}
@@ -734,10 +734,6 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               {/* Blog Header (Stanley's Log - matching screenshot exactly) */}
               <div className="pt-2 pb-6 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-2">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[var(--coral)] flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--coral)] animate-pulse" />
-                    <span>Personal Blog</span>
-                  </div>
                   <h2 className="text-3xl md:text-4xl font-extrabold tracking-tighter text-[var(--text-primary)]">
                     Stanley's <span className="text-[var(--coral)]">Log</span>
                   </h2>
@@ -950,7 +946,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                               }}
                               className="text-[9px] text-[var(--text-secondary)] font-bold cursor-pointer hover:underline"
                             >
-                              View all {commentsMap[b.slug]?.length || 0} comments
+                              View all {mounted ? (commentsMap[b.slug]?.length || 0) : 0} comments
                             </div>
                             <div className="text-[10px] text-[var(--text-secondary)] truncate">
                               <span className="font-bold text-[var(--text-primary)]">samuelstanley</span> {b.excerpt}
