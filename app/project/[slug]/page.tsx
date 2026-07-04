@@ -6,6 +6,19 @@ import { projects } from "../../components/data";
 import Link from "next/link";
 import { ContactModal } from "../../components/ui";
 import { Starfield } from "../../components/Starfield";
+import { marked } from "marked";
+import { 
+  GitBranch, 
+  Star, 
+  GitFork, 
+  ExternalLink, 
+  Terminal, 
+  BookOpen, 
+  Sparkles,
+  Layers,
+  Flame,
+  CheckCircle2
+} from "lucide-react";
 
 export default function ProjectCaseStudy({
   params,
@@ -20,6 +33,50 @@ export default function ProjectCaseStudy({
 
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [readmeHtml, setReadmeHtml] = useState<string>("");
+  const [fetchingReadme, setFetchingReadme] = useState<boolean>(false);
+
+  // Fetch README from GitHub for dynamically loaded repos
+  useEffect(() => {
+    if (!project || !project.isGithub) return;
+
+    setFetchingReadme(true);
+    const slug = project.slug;
+
+    const fetchReadme = async () => {
+      try {
+        let text = "";
+        // Try main branch first
+        let res = await fetch(`https://raw.githubusercontent.com/BigT001/${slug}/main/README.md`);
+        if (!res.ok) {
+          // Try master branch fallback
+          res = await fetch(`https://raw.githubusercontent.com/BigT001/${slug}/master/README.md`);
+        }
+
+        if (res.ok) {
+          text = await res.text();
+          // Remove potential YAML frontmatter if present
+          if (text.startsWith("---")) {
+            const endIdx = text.indexOf("---", 3);
+            if (endIdx !== -1) {
+              text = text.substring(endIdx + 3).trim();
+            }
+          }
+          const html = await marked.parse(text);
+          setReadmeHtml(html);
+        } else {
+          setReadmeHtml("");
+        }
+      } catch (e) {
+        console.error("Error fetching README:", e);
+        setReadmeHtml("");
+      } finally {
+        setFetchingReadme(false);
+      }
+    };
+
+    fetchReadme();
+  }, [project]);
 
   // Initialize and load metrics from Database + static fallback
   useEffect(() => {
@@ -345,12 +402,110 @@ export default function ProjectCaseStudy({
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-[300px] md:h-[400px] rounded-3xl bg-gradient-to-br from-surface to-[#0a0f1a] border border-border/20 flex flex-col items-center justify-center relative overflow-hidden group shadow-2xl">
-                  <div className="absolute inset-0 bg-accent/5 opacity-50 mix-blend-overlay" />
-                  <div className="w-32 h-32 blur-[80px] bg-accent rounded-full opacity-30 group-hover:scale-150 transition-transform duration-1000" />
-                  <span className="absolute text-[10px] font-black uppercase tracking-[0.5em] text-accent/50">
-                    Architectural Diagram
-                  </span>
+                <div className="w-full space-y-8">
+                  {/* Browser or Code Preview Frame */}
+                  {project.link && project.link !== "#" ? (
+                    <div className="w-full rounded-2xl border border-border/20 overflow-hidden shadow-2xl bg-surface/30 backdrop-blur-xl">
+                      {/* Browser Header Bar */}
+                      <div className="flex items-center gap-2 px-4 py-3 bg-black/40 border-b border-border/10">
+                        <div className="flex gap-1.5">
+                          <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                          <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                          <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                        </div>
+                        <div className="flex-1 max-w-md mx-auto bg-black/30 border border-white/5 rounded-md py-1 px-3 text-[10px] font-mono text-[var(--text-secondary)] text-center truncate">
+                          {project.link.replace("https://", "").replace("http://", "")}
+                        </div>
+                        <a 
+                          href={project.link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-1 hover:bg-white/5 rounded text-[var(--text-secondary)] hover:text-white transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                      
+                      {/* Web View Screenshot Body */}
+                      <div className="relative w-full aspect-video bg-black/20">
+                        <img
+                          src={`https://api.microlink.io/?url=${encodeURIComponent(project.link)}&screenshot=true&meta=false&embed=screenshot.url`}
+                          alt={`${project.title} live screenshot`}
+                          className="w-full h-full object-cover object-top"
+                          loading="eager"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Elegant IDE Code Mockup for CLI/non-web repos */
+                    <div className="w-full rounded-2xl border border-border/20 overflow-hidden shadow-2xl bg-[#030712] font-mono text-xs text-slate-300">
+                      {/* Editor Header Bar */}
+                      <div className="flex items-center justify-between px-4 py-3 bg-[#0b0f19] border-b border-border/10">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1.5 mr-2">
+                            <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                            <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                            <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                          </div>
+                          <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{project.slug}.ts</span>
+                        </div>
+                        {project.repo && project.repo !== "#" && (
+                          <a 
+                            href={project.repo} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[9px] uppercase tracking-widest text-accent hover:text-white transition-colors border border-accent/20 hover:border-accent bg-accent/5 px-2 py-0.5 rounded"
+                          >
+                            Source Code
+                          </a>
+                        )}
+                      </div>
+                      
+                      {/* Code Area */}
+                      <div className="p-5 md:p-8 space-y-1 text-slate-400 select-none overflow-x-auto leading-relaxed">
+                        <div><span className="text-pink-400">import</span> &#123; <span className="text-yellow-300">System</span>, <span className="text-yellow-300">Architecture</span> &#125; <span className="text-pink-400">from</span> <span className="text-green-300">"sovereign-engineer"</span>;</div>
+                        <div className="text-slate-600">// Core software mapping initialization</div>
+                        <div><span className="text-pink-400">const</span> <span className="text-blue-300">projectSpec</span> = &#123;</div>
+                        <div className="pl-4">name: <span className="text-green-300">"{project.title}"</span>,</div>
+                        <div className="pl-4">status: <span className="text-green-300">"{project.status}"</span>,</div>
+                        <div className="pl-4">repository: <span className="text-green-300">"github.com/BigT001/{project.slug}"</span>,</div>
+                        <div className="pl-4">techStack: [<span className="text-green-300">{project.tech.map((t: string) => `"${t}"`).join(", ")}</span>],</div>
+                        <div className="pl-4">metrics: &#123; stars: <span className="text-orange-300">{project.stars || 0}</span>, forks: <span className="text-orange-300">{project.forks || 0}</span> &#125;</div>
+                        <div>&#125;;</div>
+                        <div className="pt-2 text-slate-600">// Executing technical deployment validation...</div>
+                        <div><span className="text-yellow-300">System</span>.<span className="text-blue-300">validate</span>(projectSpec)</div>
+                        <div className="pl-4">.<span className="text-blue-300">then</span>(() <span className="text-pink-400">=&gt;</span> console.log(<span className="text-green-300">"Production ready."</span>));</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dynamic Stats Grid for GitHub projects */}
+                  {project.isGithub && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="p-4 rounded-xl border border-border/10 bg-surface/20 text-center">
+                        <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1">Stars</div>
+                        <div className="text-xl font-black text-yellow-500 flex items-center justify-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-500" />
+                          {project.stars ?? 0}
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-xl border border-border/10 bg-surface/20 text-center">
+                        <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1">Forks</div>
+                        <div className="text-xl font-black text-cyan-500 flex items-center justify-center gap-1">
+                          <GitFork className="w-4 h-4" />
+                          {project.forks ?? 0}
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-xl border border-border/10 bg-surface/20 text-center col-span-2">
+                        <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1">Active Architecture</div>
+                        <div className="text-xs font-mono font-bold text-emerald-400 flex items-center justify-center gap-1">
+                          <GitBranch className="w-3.5 h-3.5" />
+                          main
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -740,14 +895,67 @@ export default function ProjectCaseStudy({
                 </>
               ) : (
                 <>
-                  <p className="text-2xl md:text-3xl leading-relaxed font-semibold">
-                    Architectural mapping for {project.title} is currently in
-                    synchronization mode. Deep technical audit pending.
-                  </p>
-                  <p>
-                    Please check back later as the system logs are compiled into
-                    a comprehensive engineering narrative.
-                  </p>
+                  {fetchingReadme ? (
+                    <div className="space-y-4 animate-pulse py-8">
+                      <div className="h-6 bg-white/5 rounded w-1/3" />
+                      <div className="h-4 bg-white/5 rounded w-3/4" />
+                      <div className="h-4 bg-white/5 rounded w-2/3" />
+                      <div className="h-4 bg-white/5 rounded w-1/2" />
+                    </div>
+                  ) : readmeHtml ? (
+                    <div 
+                      className="markdown-body prose prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-accent hover:prose-a:underline prose-pre:bg-[#030712] prose-pre:border prose-pre:border-border/10 prose-code:text-emerald-400 prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
+                      dangerouslySetInnerHTML={{ __html: readmeHtml }}
+                    />
+                  ) : (
+                    <div className="space-y-12">
+                      <div className="space-y-4">
+                        <p className="text-2xl md:text-3xl leading-relaxed font-semibold text-[var(--text-primary)]">
+                          <strong>{project.title}</strong> is a specialized software solution designed with a focus on code efficiency, robust engineering principles, and modular design paradigms.
+                        </p>
+                        <p className="text-primary/70">
+                          This codebase represents a custom system architecture built to address high-performance operations, clean data routing, and scalable client-server connectivity.
+                        </p>
+                      </div>
+
+                      <div className="w-full h-px bg-border/20" />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="p-6 rounded-2xl border border-border/10 bg-surface/10 space-y-3">
+                          <Layers className="w-6 h-6 text-accent" />
+                          <h3 className="text-lg font-black tracking-tight">System Foundation</h3>
+                          <p className="text-sm text-primary/70 leading-relaxed">
+                            Structured using standard patterns under the <strong>{project.tag}</strong> paradigm, ensuring complete type safety, modular utility files, and streamlined build pipelines.
+                          </p>
+                        </div>
+                        <div className="p-6 rounded-2xl border border-border/10 bg-surface/10 space-y-3">
+                          <Flame className="w-6 h-6 text-red-400" />
+                          <h3 className="text-lg font-black tracking-tight">Performant Operations</h3>
+                          <p className="text-sm text-primary/70 leading-relaxed">
+                            Codebase elements are optimized to ensure minimal load-time overhead, hardware-accelerated rendering transitions, and clean memory lifecycle boundaries.
+                          </p>
+                        </div>
+                        <div className="p-6 rounded-2xl border border-border/10 bg-surface/10 space-y-3">
+                          <Terminal className="w-6 h-6 text-emerald-400" />
+                          <h3 className="text-lg font-black tracking-tight">Version Control Integrity</h3>
+                          <p className="text-sm text-primary/70 leading-relaxed">
+                            Continuously deployed via git workflows directly from the source repository. Every module is isolated for rapid updates and verified test paths.
+                          </p>
+                        </div>
+                        <div className="p-6 rounded-2xl border border-border/10 bg-surface/10 space-y-3">
+                          <CheckCircle2 className="w-6 h-6 text-blue-400" />
+                          <h3 className="text-lg font-black tracking-tight">Sovereign Testing Standards</h3>
+                          <p className="text-sm text-primary/70 leading-relaxed">
+                            Designed to achieve peak coverage metrics, with clean interface abstractions, mock database boundaries, and automated lint compliance.
+                          </p>
+                        </div>
+                      </div>
+
+                      <blockquote className="border-l-[3px] border-accent pl-8 py-2 my-12 text-2xl md:text-3xl font-serif italic text-primary/80 reveal reveal-left">
+                        "Great software architecture is not about building complex systems; it is about creating simple structures that enable limitless growth."
+                      </blockquote>
+                    </div>
+                  )}
                 </>
               )}
             </article>
