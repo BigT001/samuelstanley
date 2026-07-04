@@ -600,8 +600,20 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                 </div>
               )}
 
-              {/* Feed Post Grid */}
-              {filteredProjects.length === 0 ? (
+              {/* Feed Post Grid — only render after mount to avoid SSR/client hydration mismatch on <Link> */}
+              {!mounted ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-5 md:px-8 w-full">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] overflow-hidden animate-pulse">
+                      <div className="h-[160px] bg-black/20" />
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 bg-black/10 dark:bg-white/5 rounded w-3/4" />
+                        <div className="h-3 bg-black/10 dark:bg-white/5 rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredProjects.length === 0 ? (
                 <div className="mx-5 md:mx-8 py-20 text-center text-xs text-[var(--text-secondary)] italic border border-dashed border-[var(--border)] rounded-2xl">
                   No projects match your query. Try searching for other technologies like #nextjs, #prisma.
                 </div>
