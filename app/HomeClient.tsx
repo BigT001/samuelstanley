@@ -619,25 +619,6 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                         className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] overflow-hidden shadow-sm animate-in fade-in duration-200 flex flex-col justify-between relative"
                       >
                         <div>
-                          {/* Post Header */}
-                          <div className="px-4 py-3 flex items-center justify-between border-b border-[var(--border)]">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-[28px] h-[28px] rounded-full border border-[var(--border)] overflow-hidden">
-                                <ProfilePhoto />
-                              </div>
-                              <div>
-                                <div className="font-extrabold text-[11px] flex items-center gap-1">
-                                  <span>Samuel</span>
-                                  <span className="text-[8px] text-green-500 font-bold bg-green-950/20 border border-green-500/20 px-1 py-0.2 rounded-full font-mono">Live</span>
-                                </div>
-                                <div className="text-[8px] text-[var(--text-secondary)] flex items-center gap-0.5 font-mono truncate max-w-[120px]">
-                                  <span>{p.link !== "#" ? p.link.replace("https://", "").replace("/", "") : "Remote"}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <span className="text-[10px] text-[var(--text-secondary)] font-bold">{p.tag}</span>
-                          </div>
-
                           {/* Live Site Screenshot – clickable to case study */}
                           <Link href={`/project/${p.slug}`} className="block group cursor-pointer">
                             <div className="relative border-b border-[var(--border)] overflow-hidden bg-black/20" style={{ height: "160px" }}>
@@ -683,20 +664,23 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                               >
                                 {p.status}
                               </span>
+                              {/* Language badge */}
+                              <span
+                                className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider text-[var(--text-secondary)] bg-black/60 backdrop-blur-sm border border-white/10 shadow-lg"
+                              >
+                                {p.tag}
+                              </span>
                             </div>
                           </Link>
 
-                          {/* Title + description + tech tags */}
+                          {/* Title + tech tags */}
                           <div className="px-4 pt-3 pb-3">
                             <Link href={`/project/${p.slug}`} className="group/title">
                               <h3 className="text-base font-black tracking-tight text-[var(--text-primary)] group-hover/title:text-[var(--coral)] transition-colors line-clamp-1">
                                 {p.title}
                               </h3>
                             </Link>
-                            <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed mt-0.5 mb-2 line-clamp-2">
-                              {p.desc}
-                            </p>
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-1 mt-2">
                               {p.tech.map((t: string) => (
                                 <span 
                                   key={t}
@@ -784,24 +768,23 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                           </div>
 
                           {/* Post engagement text info */}
-                          <div className="px-4 py-2 text-[10px] space-y-1 bg-black/10 dark:bg-white/2">
-                            <div className="font-extrabold flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                              <span>{likes[p.slug] || 0} Likes</span>
-                              <span className="text-[var(--text-secondary)]">•</span>
-                              <span>{shares[p.slug] || 0} Shares</span>
-                            </div>
-                            <div 
-                              onClick={() => {
-                                setActiveCommentsSlug(p.slug);
-                                setActiveCommentsTitle(p.title);
-                              }}
-                              className="text-[9px] text-[var(--text-secondary)] font-bold cursor-pointer hover:underline"
-                            >
-                              View all {mounted ? (commentsMap[p.slug]?.length || 0) : 0} comments
-                            </div>
-                            <div className="text-[10px] text-[var(--text-secondary)] truncate">
-                              <span className="font-bold text-[var(--text-primary)]">samuelstanley</span> {p.desc}
+                          <div className="px-4 py-2.5 text-[10px] bg-black/10 dark:bg-white/2 border-t border-[var(--border)]">
+                            <div className="font-extrabold flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                <span>{likes[p.slug] || 0} Likes</span>
+                                <span className="text-[var(--text-secondary)] font-normal">•</span>
+                                <span>{shares[p.slug] || 0} Shares</span>
+                              </div>
+                              <div 
+                                onClick={() => {
+                                  setActiveCommentsSlug(p.slug);
+                                  setActiveCommentsTitle(p.title);
+                                }}
+                                className="text-[9px] text-[var(--text-coral)] dark:text-[var(--text-secondary)] hover:text-[var(--coral)] font-bold cursor-pointer hover:underline"
+                              >
+                                View all {mounted ? (commentsMap[p.slug]?.length || 0) : 0} comments
+                              </div>
                             </div>
                           </div>
                         </div>
