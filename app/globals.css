@@ -927,3 +927,275 @@ body {
 .light-mode .cta-button-primary {
   box-shadow: 0 4px 15px rgba(225, 29, 72, 0.2);
 }
+
+/* Light mode overrides for Project Case Study details page */
+.light-mode {
+  /* Sticky section navigation styling overrides */
+  .sticky {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-bottom-color: rgba(31, 41, 55, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+    
+    a, button {
+      &.text-white\/60, &.text-white\/35, &.text-white\/70 {
+        color: var(--text-secondary) !important;
+      }
+      &:hover {
+        color: var(--text-primary) !important;
+      }
+    }
+    
+    button.bg-white\/5 {
+      background-color: rgba(31, 41, 55, 0.05) !important;
+      border-color: rgba(31, 41, 55, 0.08) !important;
+      color: var(--text-secondary) !important;
+      &:hover {
+        background-color: rgba(31, 41, 55, 0.08) !important;
+        border-color: rgba(31, 41, 55, 0.15) !important;
+        color: var(--text-primary) !important;
+      }
+    }
+    
+    nav button {
+      color: rgba(17, 24, 39, 0.55) !important;
+      &.border-\[var\(--coral\)\] {
+        color: var(--text-primary) !important;
+      }
+      &:hover {
+        color: var(--text-primary) !important;
+      }
+    }
+  }
+  
+  /* Main content area overrides */
+  main {
+    h2, h3, h4, h5, h6 {
+      color: var(--text-primary) !important;
+    }
+    
+    p, li, span, blockquote, div {
+      &.text-white\/70, &.text-white\/60, &.text-white\/50, &.text-white\/40, &.text-white\/30, &.text-white\/35 {
+        color: var(--text-secondary) !important;
+      }
+      &.text-white {
+        color: var(--text-primary) !important;
+      }
+    }
+
+    strong {
+      color: var(--text-primary) !important;
+    }
+    
+    /* Background elements (cards, headers, metric boxes) */
+    .bg-white\/2, .bg-white\/3, .bg-white\/4, .bg-white\/5, .bg-white\/6, .bg-white\/8, .bg-white\/10 {
+      background-color: #ffffff !important;
+      border-color: rgba(31, 41, 55, 0.08) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+      color: var(--text-primary) !important;
+    }
+    
+    .bg-white\/2:hover, .bg-white\/3:hover, .bg-white\/4:hover, .bg-white\/5:hover, .bg-white\/6:hover {
+      border-color: var(--coral) !important;
+      box-shadow: 0 10px 30px rgba(225, 29, 72, 0.08) !important;
+    }
+    
+    /* Technical architecture code mockup blocks */
+    .font-mono.text-slate-400 {
+      background-color: #f9fafb !important;
+      border-color: rgba(31, 41, 55, 0.08) !important;
+      color: var(--text-secondary) !important;
+      
+      .text-white\/20, .text-white\/30, .text-white\/40 {
+        color: rgba(75, 85, 99, 0.4) !important;
+      }
+    }
+  }
+
+  /* Aside/Sidebar card overrides */
+  aside {
+    .bg-white\/3 {
+      background-color: #ffffff !important;
+      border-color: rgba(31, 41, 55, 0.08) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+    }
+    p, span, div {
+      &.text-white\/35, &.text-white\/30, &.text-white\/40, &.text-white\/60, &.text-white\/25 {
+        color: var(--text-secondary) !important;
+      }
+      &.text-white {
+        color: var(--text-primary) !important;
+      }
+    }
+    .bg-white\/5 {
+      background-color: rgba(31, 41, 55, 0.05) !important;
+      border-color: rgba(31, 41, 55, 0.1) !important;
+      color: var(--text-secondary) !important;
+    }
+    .bg-white\/5:hover {
+      border-color: rgba(31, 41, 55, 0.25) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  /* Footer adjustments */
+  footer p {
+    color: var(--text-secondary) !important;
+    opacity: 0.6;
+  }
+}
+
+/* ─── Mobile Sidebar Drawer Base Styles (dark mode) ─── */
+.mobile-drawer {
+  background-color: rgba(5, 8, 18, 0.97);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mobile-drawer-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mobile-drawer-project {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mobile-drawer-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mobile-drawer-label {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.mobile-drawer-subtext {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.mobile-drawer-title {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.mobile-drawer-close {
+  color: rgba(255, 255, 255, 0.35);
+}
+.mobile-drawer-close:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Drawer nav items */
+.drawer-nav-item {
+  border: 1px solid transparent;
+}
+.drawer-nav-active {
+  background-color: rgba(255, 77, 77, 0.1);
+  color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 77, 77, 0.22);
+}
+.drawer-nav-inactive {
+  color: rgba(255, 255, 255, 0.4);
+}
+.drawer-nav-inactive:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.drawer-nav-inactive svg {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* Bottom utility buttons */
+.mobile-drawer-btn {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.45);
+}
+.mobile-drawer-btn:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.09);
+}
+
+/* ─── Light Mode Overrides for Mobile Drawer ─── */
+.light-mode .mobile-drawer {
+  background-color: rgba(255, 255, 255, 0.97) !important;
+  border-right: 1px solid rgba(31, 41, 55, 0.08) !important;
+  box-shadow: 4px 0 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+.light-mode .mobile-drawer-header {
+  border-bottom-color: rgba(31, 41, 55, 0.08) !important;
+}
+
+.light-mode .mobile-drawer-project {
+  border-bottom-color: rgba(31, 41, 55, 0.06) !important;
+}
+
+.light-mode .mobile-drawer-footer {
+  border-top-color: rgba(31, 41, 55, 0.08) !important;
+}
+
+.light-mode .mobile-drawer-label {
+  color: rgba(17, 24, 39, 0.35) !important;
+}
+
+.light-mode .mobile-drawer-subtext {
+  color: rgba(17, 24, 39, 0.3) !important;
+}
+
+.light-mode .mobile-drawer-title {
+  color: rgba(17, 24, 39, 0.9) !important;
+}
+
+.light-mode .mobile-drawer-close {
+  color: rgba(17, 24, 39, 0.35) !important;
+}
+.light-mode .mobile-drawer-close:hover {
+  color: rgba(17, 24, 39, 0.9) !important;
+  background-color: rgba(17, 24, 39, 0.06) !important;
+}
+
+/* Drawer nav items in light mode */
+.light-mode .drawer-nav-active {
+  background-color: rgba(255, 77, 77, 0.08) !important;
+  color: rgba(17, 24, 39, 0.9) !important;
+  border-color: rgba(255, 77, 77, 0.2) !important;
+}
+
+.light-mode .drawer-nav-inactive {
+  color: rgba(17, 24, 39, 0.45) !important;
+}
+.light-mode .drawer-nav-inactive:hover {
+  color: rgba(17, 24, 39, 0.85) !important;
+  background-color: rgba(17, 24, 39, 0.05) !important;
+}
+.light-mode .drawer-nav-inactive svg {
+  color: rgba(17, 24, 39, 0.3) !important;
+}
+
+/* Bottom utility buttons in light mode */
+.light-mode .mobile-drawer-btn {
+  background-color: rgba(17, 24, 39, 0.05) !important;
+  border-color: rgba(17, 24, 39, 0.09) !important;
+  color: rgba(17, 24, 39, 0.45) !important;
+}
+.light-mode .mobile-drawer-btn:hover {
+  color: rgba(17, 24, 39, 0.85) !important;
+  background-color: rgba(17, 24, 39, 0.08) !important;
+}
+
+/* Light mode sticky topbar on mobile */
+.light-mode .sticky .md\:hidden a,
+.light-mode .sticky .md\:hidden span {
+  color: rgba(17, 24, 39, 0.5) !important;
+}
+.light-mode .sticky .md\:hidden button {
+  background-color: rgba(17, 24, 39, 0.05) !important;
+  border-color: rgba(17, 24, 39, 0.09) !important;
+  color: rgba(17, 24, 39, 0.5) !important;
+}
+
+/* Hide global theme toggle on mobile */
+@media (max-width: 767px) {
+  .theme-pill-static {
+    display: none !important;
+  }
+}
+

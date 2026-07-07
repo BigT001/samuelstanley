@@ -42,7 +42,7 @@ export function ThemeToggle({ inline }: { inline?: boolean }) {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className={`theme-pill-static ${theme}`}
+      className={`theme-pill-static ${theme} ${!inline ? "hidden md:flex" : ""}`}
       style={inline ? {
         opacity: mounted ? 1 : 0,
         transition: "opacity 0.3s ease",
