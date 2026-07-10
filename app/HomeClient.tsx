@@ -18,6 +18,7 @@ import {
   Grid, 
   BookOpen, 
   User, 
+  Home,
   Plus, 
   LogOut,
   MapPin,
@@ -25,12 +26,15 @@ import {
   X,
   Terminal,
   Activity,
-  HeartHandshake
+  HeartHandshake,
+  DollarSign,
+  ArrowLeft
 } from "lucide-react";
 import { projects, techStack, philosophies, testimonials } from "./components/data";
-import { ProfilePhoto, ContactModal } from "./components/ui";
+import { ProfilePhoto, ContactModal, CVModal } from "./components/ui";
 import { ContactForm } from "./components/ContactSection";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { Starfield } from "./components/Starfield";
 
 // Confetti helper
 const triggerConfetti = () => {
@@ -47,7 +51,7 @@ const triggerConfetti = () => {
   }
 };
 
-type TabId = "projects" | "feeds" | "philosophy" | "connect";
+type TabId = "home" | "projects" | "feeds" | "philosophy" | "connect" | "pricing";
 
 type Comment = {
   id: string;
@@ -77,7 +81,7 @@ function githubToProject(g: any) {
 }
 
 export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
-  const [activeTab, setActiveTab] = useState<TabId>("projects");
+  const [activeTab, setActiveTab] = useState<TabId>("home");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -108,6 +112,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
   // Modals state
   const [showHireModal, setShowHireModal] = useState(false);
+  const [showCVModal, setShowCVModal] = useState(false);
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null);
   const [storyProgress, setStoryProgress] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -134,15 +139,17 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
     // Load persistent tab
     const savedTab = localStorage.getItem("homepage_active_tab") as TabId;
-    if (savedTab && ["projects", "feeds", "philosophy", "connect"].includes(savedTab)) {
+    if (savedTab && ["home", "projects", "feeds", "philosophy", "connect", "pricing"].includes(savedTab)) {
       setActiveTab(savedTab);
+    } else {
+      setActiveTab("home");
     }
 
     // Override if tab URL query parameter is provided
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
       const tabParam = searchParams.get("tab") as TabId;
-      if (tabParam && ["projects", "feeds", "philosophy", "connect"].includes(tabParam)) {
+      if (tabParam && ["home", "projects", "feeds", "philosophy", "connect", "pricing"].includes(tabParam)) {
         setActiveTab(tabParam);
       }
     }
@@ -379,24 +386,180 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const categories = ["Next.js", "Gemini AI", "Node.js", "React", "PostgreSQL", "TailwindCSS"];
   const totalLikes = Object.values(likes).reduce((sum, val) => sum + val, 0);
 
+  if (activeTab === "pricing") {
+    return (
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-300 flex flex-col font-sans p-6 md:p-12 relative overflow-y-auto">
+        <Starfield />
+        
+        {/* Back Button */}
+        <div className="max-w-4xl mx-auto w-full mb-8 z-10 animate-in fade-in duration-200">
+          <button
+            onClick={() => changeTab("home")}
+            className="group flex items-center gap-2 px-4 py-2.5 rounded-full border border-[var(--border)] bg-[var(--surface)] text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span>Back to Portfolio</span>
+          </button>
+        </div>
+
+        {/* ACTIVE PRICING PANEL */}
+        <div className="max-w-4xl mx-auto px-5 w-full animate-in fade-in duration-200 space-y-8 flex-1 flex flex-col justify-center py-4 z-10">
+          <div className="text-center space-y-2">
+            <h3 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-primary)]">Developer Analytics Pricing</h3>
+            <p className="text-xs md:text-sm text-[var(--text-secondary)] leading-relaxed max-w-lg mx-auto">
+              Simple, transparent plans for developers looking to integrate lightweight, privacy-focused tracking tools into their apps and websites.
+            </p>
+          </div>
+
+          {/* Pricing Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            
+            {/* Starter Plan */}
+            <div className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] p-6 flex flex-col justify-between relative overflow-hidden transition-all hover:border-[var(--coral)]/40 hover:shadow-lg">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-[var(--text-secondary)]">Starter</h4>
+                  <div className="flex items-baseline gap-1 mt-2">
+                    <span className="text-3xl font-black text-[var(--text-primary)]">$28</span>
+                    <span className="text-xs text-[var(--text-secondary)]">/mo</span>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  Perfect for hobby projects and individual developers needing basic tracking capabilities.
+                </p>
+                <ul className="text-xs space-y-2.5 text-[var(--text-primary)] font-medium pt-2">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>Up to 10k visits/mo</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>1 active domain</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>Core Web Vitals tracking</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>24h data retention</span>
+                  </li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => setShowHireModal(true)}
+                className="w-full mt-6 py-2.5 rounded-xl border border-[var(--border)] text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-[var(--text-primary)]"
+              >
+                Get Started
+              </button>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="border-2 border-[var(--coral)] rounded-2xl bg-[var(--surface)] p-6 flex flex-col justify-between relative overflow-hidden shadow-md transition-all hover:shadow-xl">
+              {/* Badge */}
+              <div className="absolute top-3 right-3 bg-[var(--coral)] text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                Popular
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-[var(--coral)]">Pro</h4>
+                  <div className="flex items-baseline gap-1 mt-2">
+                    <span className="text-3xl font-black text-[var(--text-primary)]">$87</span>
+                    <span className="text-xs text-[var(--text-secondary)]">/mo</span>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  Ideal for growing SaaS applications and professional developers who need deep analytics.
+                </p>
+                <ul className="text-xs space-y-2.5 text-[var(--text-primary)] font-medium pt-2">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>Up to 100k visits/mo</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>5 active domains</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>Custom event goals</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>30-day data retention</span>
+                  </li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => setShowHireModal(true)}
+                className="w-full mt-6 py-2.5 rounded-xl bg-[var(--coral)] text-white text-xs font-bold hover:brightness-110 shadow-lg shadow-[var(--coral)]/10 transition-all"
+              >
+                Go Pro
+              </button>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] p-6 flex flex-col justify-between relative overflow-hidden transition-all hover:border-[var(--coral)]/40 hover:shadow-lg">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-[var(--text-secondary)]">Enterprise</h4>
+                  <div className="flex items-baseline gap-1 mt-2">
+                    <span className="text-3xl font-black text-[var(--text-primary)]">$200</span>
+                    <span className="text-xs text-[var(--text-secondary)]">/mo</span>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  For heavy workloads, agencies, and teams requiring full data ownership and dedicated support.
+                </p>
+                <ul className="text-xs space-y-2.5 text-[var(--text-primary)] font-medium pt-2">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>Unlimited visits</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>Unlimited domains</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>White-labeled analytics</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                    <span>1-year data retention</span>
+                  </li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => setShowHireModal(true)}
+                className="w-full mt-6 py-2.5 rounded-xl border border-[var(--border)] text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-[var(--text-primary)]"
+              >
+                Contact Sales
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Modal access */}
+        <ContactModal isOpen={showHireModal} onClose={() => setShowHireModal(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-300 flex flex-col md:flex-row font-sans">
       
       {/* MOBILE NAVBAR */}
       <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-5 py-4 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
         <span className="text-xl font-black tracking-tight text-[var(--text-primary)]">
-          Samuel Stanley
+          founders dev
         </span>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setShowHireModal(true)}
-            className="p-1.5 rounded-full bg-[var(--coral)] text-white hover:brightness-110 active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          <ThemeToggle inline />
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-primary)]"
+            className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-primary)] active:scale-95 transition-all"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -453,6 +616,14 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
           {/* Sidebar Nav Actions */}
           <nav className="space-y-1">
             <button 
+              onClick={() => { changeTab("home"); setSelectedCategory(null); setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "home" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+            >
+              <Home className="w-4 h-4" />
+              <span>Home</span>
+            </button>
+
+            <button 
               onClick={() => { changeTab("projects"); setSelectedCategory(null); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "projects" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
@@ -482,6 +653,20 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <HeartHandshake className="w-4 h-4 text-cyan-400" />
               <span>Connect</span>
             </button>
+            <button 
+              onClick={() => { changeTab("pricing"); setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${(activeTab as string) === "pricing" ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+            >
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+              <span>Pricing</span>
+            </button>
+            <button 
+              onClick={() => { setShowHireModal(true); setSidebarOpen(false); }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black transition-all bg-[var(--coral)] text-white hover:brightness-110 active:scale-95 shadow-[0_4px_12px_rgba(255,77,77,0.15)] mt-2"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>Hire Samuel</span>
+            </button>
           </nav>
         </div>
 
@@ -504,7 +689,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       <main className="flex-1 min-w-0 flex flex-col">
         
         {/* TOP BAR / NAVIGATION */}
-        <div className="sticky top-0 z-40 bg-[var(--surface)] backdrop-blur-md border-b border-[var(--border)] px-5 py-4 flex items-center justify-between gap-4">
+        <div className="hidden md:flex sticky top-0 z-40 bg-[var(--surface)] backdrop-blur-md border-b border-[var(--border)] px-5 py-4 items-center justify-between gap-4">
           
           {/* Search bar */}
           <div className="flex-1 max-w-md relative hidden sm:block">
@@ -536,27 +721,20 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             {/* Direct message icon */}
             <button 
               onClick={() => setShowHireModal(true)}
-              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all active:scale-95 group"
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all active:scale-95 group hidden sm:block"
             >
               <MessageSquare className="w-4.5 h-4.5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
             </button>
 
-            {/* Plus / Create Post CTA */}
-            <button 
-              onClick={() => setShowHireModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-orange-500 via-pink-500 to-red-500 text-white rounded-full text-xs font-black shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Hire Samuel</span>
-            </button>
+
           </div>
         </div>
 
         {/* FEED INNER SCROLL (FULL WIDTH) */}
         <div className="flex-1 overflow-y-auto py-6 space-y-6 w-full max-w-none">
           
-          {/* CLIENT REVIEWS / TESTIMONIALS STORIES (Hidden on Feeds Page) */}
-          {activeTab !== "feeds" && (
+          {/* CLIENT REVIEWS / TESTIMONIALS STORIES (Hidden on Feeds & Home Page) */}
+          {activeTab !== "feeds" && activeTab !== "home" && (
             <div className="space-y-2 px-5 md:px-8">
               <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold mb-1">Stories / Client Testimonials</h4>
               <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
@@ -576,6 +754,169 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ACTIVE HOME/ABOUT ME PANEL */}
+          {activeTab === "home" && (
+            <div className="max-w-3xl mx-auto px-5 md:px-8 w-full animate-in fade-in duration-300 space-y-10">
+              
+              {/* Profile Hero Layout (Not enclosed in a card, clean and integrated) */}
+              <div className="flex flex-col items-center text-center space-y-6 py-4 relative w-full">
+
+                {/* Profile Image with neon ring and active status dot */}
+                <div className="w-[120px] h-[120px] rounded-full p-[4px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-2xl relative transition-transform hover:scale-105 duration-300">
+                  <div className="w-full h-full rounded-full border-4 border-[#0a0f1a] overflow-hidden">
+                    <ProfilePhoto />
+                  </div>
+                  {/* Glowing active dot */}
+                  <span className="absolute bottom-1 right-2 w-5 h-5 rounded-full bg-green-500 border-4 border-[#0a0f1a] shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse" />
+                </div>
+
+                {/* Name & Handle */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <h2 className="text-2xl md:text-3xl font-black text-[var(--text-primary)] tracking-tight">Samuel Stanley</h2>
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--coral)] text-white text-[10px] font-black shadow-[0_2px_8px_rgba(255,77,77,0.3)]" title="Verified Professional">✓</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)] font-mono tracking-wider">@foundersdev</p>
+                </div>
+
+                {/* Counter Badges (Matching first screenshot stats) */}
+                <div className="w-full max-w-md flex justify-between text-center py-3.5 border-y border-[var(--border)]">
+                  <div className="flex-1">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">14.2K</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">Visits</div>
+                  </div>
+                  <div className="border-r border-[var(--border)] my-1" />
+                  <div className="flex-1">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">{mounted ? totalLikes.toLocaleString() : "0"}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">Likes</div>
+                  </div>
+                  <div className="border-r border-[var(--border)] my-1" />
+                  <div className="flex-1">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">1.2K</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">Followers</div>
+                  </div>
+                </div>
+
+                {/* Bio text */}
+                <div className="text-sm md:text-base leading-relaxed text-[var(--text-secondary)] font-medium max-w-xl">
+                  I build and launch high-performance <span className="font-black text-[var(--text-primary)]">websites, SaaS platforms, and custom digital products</span> in 14-30 days flat. Let's turn your vision into clean, production-ready code.
+                </div>
+
+                {/* CTA buttons */}
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2 w-full max-w-md animate-in fade-in duration-300">
+                  <button 
+                    onClick={() => setShowHireModal(true)}
+                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-black bg-[var(--coral)] text-white hover:brightness-110 active:scale-95 shadow-[0_4px_16px_rgba(255,77,77,0.2)] transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span>Hire me</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowCVModal(true)}
+                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Send className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>Download CV</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* CLIENT REVIEWS / TESTIMONIALS STORIES (Embedded on Home Page below profile hero) */}
+              <div className="space-y-2 w-full animate-in fade-in duration-300 border-t border-[var(--border)] pt-6">
+                <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold mb-1">Stories / Client Testimonials</h4>
+                <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
+                  {testimonials.map((t, idx) => (
+                    <div 
+                      key={t.handle}
+                      onClick={() => setActiveStoryIdx(idx)}
+                      className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer snap-start"
+                    >
+                      <div className="w-[66px] h-[66px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 transition-all hover:scale-105 active:scale-95">
+                        {/* Centered avatar with solid white background inside gradient border */}
+                        <div className="w-full h-full rounded-full border-2 border-[var(--bg)] bg-white text-gray-900 flex items-center justify-center font-black text-sm">
+                          {t.avatar}
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-[var(--text-secondary)]">{t.handle}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Focus Status Bar */}
+              <div className="border border-green-500/20 bg-green-500/5 rounded-2xl p-4 flex items-center gap-3.5 text-xs text-green-300 md:text-sm">
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                </span>
+                <div className="leading-relaxed">
+                  <span className="font-bold text-white">Current Focus:</span> Designing high-performance SaaS templates & accepting custom MVP development contracts for Q3 2026.
+                </div>
+              </div>
+
+              {/* Professional Summary */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-black tracking-tight border-b border-[var(--border)] pb-2 flex items-center gap-2 text-[var(--text-primary)]">
+                  <Terminal className="w-4.5 h-4.5 text-[var(--coral)]" />
+                  <span>Professional Summary</span>
+                </h3>
+                <p className="text-xs md:text-sm text-[var(--text-secondary)] leading-relaxed font-medium">
+                  Results-driven Full Stack Engineer with expertise in building scalable, high-performance web applications and backend systems. Proven track record of end-to-end ownership, from UI/UX design to backend microservices, database architecture, and CI/CD pipelines. Passionate about writing clean, maintainable code and solving complex business problems through technology.
+                </p>
+              </div>
+
+              {/* Core Competencies */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-black tracking-tight border-b border-[var(--border)] pb-2 flex items-center gap-2 text-[var(--text-primary)]">
+                  <Activity className="w-4.5 h-4.5 text-[var(--cyan)]" />
+                  <span>Core Competencies</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border border-[var(--border)] p-4 rounded-xl bg-black/5 dark:bg-white/2 space-y-1 hover:border-[var(--coral)]/40 transition-colors">
+                    <h4 className="font-bold text-xs text-[var(--text-primary)]">Full Stack Architecture</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Designing resilient, scalable, and persistent architectures using Next.js, Node.js, and NestJS.</p>
+                  </div>
+                  <div className="border border-[var(--border)] p-4 rounded-xl bg-black/5 dark:bg-white/2 space-y-1 hover:border-[var(--coral)]/40 transition-colors">
+                    <h4 className="font-bold text-xs text-[var(--text-primary)]">API & Backend Engineering</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Designing REST & GraphQL APIs, authentication, webhooks, and asynchronous background queues.</p>
+                  </div>
+                  <div className="border border-[var(--border)] p-4 rounded-xl bg-black/5 dark:bg-white/2 space-y-1 hover:border-[var(--coral)]/40 transition-colors">
+                    <h4 className="font-bold text-xs text-[var(--text-primary)]">Database Management</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Modeling and optimizing PostgreSQL, MongoDB, Redis, Prisma, and serverless databases like Neon.</p>
+                  </div>
+                  <div className="border border-[var(--border)] p-4 rounded-xl bg-black/5 dark:bg-white/2 space-y-1 hover:border-[var(--coral)]/40 transition-colors">
+                    <h4 className="font-bold text-xs text-[var(--text-primary)]">UI/UX Excellence</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Building pixel-perfect, highly responsive interfaces with TailwindCSS and rich interaction animations.</p>
+                  </div>
+                  <div className="border border-[var(--border)] p-4 rounded-xl bg-black/5 dark:bg-white/2 space-y-1 hover:border-[var(--coral)]/40 transition-colors">
+                    <h4 className="font-bold text-xs text-[var(--text-primary)]">DevOps & CI/CD</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Setting up Docker containers, Vercel deployments, AWS architecture, and automated GitHub Actions pipelines.</p>
+                  </div>
+                  <div className="border border-[var(--border)] p-4 rounded-xl bg-black/5 dark:bg-white/2 space-y-1 hover:border-[var(--coral)]/40 transition-colors">
+                    <h4 className="font-bold text-xs text-[var(--text-primary)]">Custom Integrations</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Integrating external APIs, automated notifications, Resend, and payment gateways like Paystack and Flutterwave.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Navigation to Projects */}
+              <div className="border border-[var(--border)] p-6 rounded-2xl bg-black/5 dark:bg-white/2 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-black text-sm text-[var(--text-primary)]">Want to see my live projects?</h4>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">Explore interactive case studies, GitHub source links, and direct deployments.</p>
+                </div>
+                <button 
+                  onClick={() => changeTab("projects")}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--coral)] text-white hover:brightness-110 active:scale-95 transition-all self-start md:self-auto flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Explore Projects</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
             </div>
           )}
 
@@ -1082,6 +1423,147 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             </div>
           )}
 
+          {/* ACTIVE PRICING PANEL */}
+          {(activeTab as string) === "pricing" && (
+            <div className="max-w-4xl mx-auto px-5 w-full animate-in fade-in duration-200 space-y-8">
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">Developer Analytics Pricing</h3>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed max-w-lg mx-auto">
+                  Simple, transparent plans for developers looking to integrate lightweight, privacy-focused tracking tools into their apps and websites.
+                </p>
+              </div>
+
+              {/* Pricing Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                
+                {/* Starter Plan */}
+                <div className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] p-6 flex flex-col justify-between relative overflow-hidden transition-all hover:border-[var(--coral)]/40 hover:shadow-lg">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-[var(--text-secondary)]">Starter</h4>
+                      <div className="flex items-baseline gap-1 mt-2">
+                        <span className="text-3xl font-black text-[var(--text-primary)]">$28</span>
+                        <span className="text-xs text-[var(--text-secondary)]">/mo</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                      Perfect for hobby projects and individual developers needing basic tracking capabilities.
+                    </p>
+                    <ul className="text-xs space-y-2.5 text-[var(--text-primary)] font-medium pt-2">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>Up to 10k visits/mo</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>1 active domain</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>Core Web Vitals tracking</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>24h data retention</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button 
+                    onClick={() => setShowHireModal(true)}
+                    className="w-full mt-6 py-2.5 rounded-xl border border-[var(--border)] text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-[var(--text-primary)]"
+                  >
+                    Get Started
+                  </button>
+                </div>
+
+                {/* Pro Plan */}
+                <div className="border-2 border-[var(--coral)] rounded-2xl bg-[var(--surface)] p-6 flex flex-col justify-between relative overflow-hidden shadow-md transition-all hover:shadow-xl">
+                  {/* Badge */}
+                  <div className="absolute top-3 right-3 bg-[var(--coral)] text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                    Popular
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-[var(--coral)]">Pro</h4>
+                      <div className="flex items-baseline gap-1 mt-2">
+                        <span className="text-3xl font-black text-[var(--text-primary)]">$87</span>
+                        <span className="text-xs text-[var(--text-secondary)]">/mo</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                      Ideal for growing SaaS applications and professional developers who need deep analytics.
+                    </p>
+                    <ul className="text-xs space-y-2.5 text-[var(--text-primary)] font-medium pt-2">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>Up to 100k visits/mo</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>5 active domains</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>Custom event goals</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>30-day data retention</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button 
+                    onClick={() => setShowHireModal(true)}
+                    className="w-full mt-6 py-2.5 rounded-xl bg-[var(--coral)] text-white text-xs font-bold hover:brightness-110 shadow-lg shadow-[var(--coral)]/10 transition-all"
+                  >
+                    Go Pro
+                  </button>
+                </div>
+
+                {/* Enterprise Plan */}
+                <div className="border border-[var(--border)] rounded-2xl bg-[var(--surface)] p-6 flex flex-col justify-between relative overflow-hidden transition-all hover:border-[var(--coral)]/40 hover:shadow-lg">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-[var(--text-secondary)]">Enterprise</h4>
+                      <div className="flex items-baseline gap-1 mt-2">
+                        <span className="text-3xl font-black text-[var(--text-primary)]">$200</span>
+                        <span className="text-xs text-[var(--text-secondary)]">/mo</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                      For heavy workloads, agencies, and teams requiring full data ownership and dedicated support.
+                    </p>
+                    <ul className="text-xs space-y-2.5 text-[var(--text-primary)] font-medium pt-2">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>Unlimited visits</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>Unlimited domains</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>White-labeled analytics</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-[var(--coral)]" />
+                        <span>1-year data retention</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button 
+                    onClick={() => setShowHireModal(true)}
+                    className="w-full mt-6 py-2.5 rounded-xl border border-[var(--border)] text-xs font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all text-[var(--text-primary)]"
+                  >
+                    Contact Sales
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
         </div>
       </main>
 
@@ -1293,6 +1775,9 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
       {/* CONTACT/BOOKING SCHEDULER MODAL */}
       <ContactModal isOpen={showHireModal} onClose={() => setShowHireModal(false)} />
+
+      {/* CV RESUME CONFIRMATION MODAL */}
+      <CVModal isOpen={showCVModal} onClose={() => setShowCVModal(false)} />
 
     </div>
   );
