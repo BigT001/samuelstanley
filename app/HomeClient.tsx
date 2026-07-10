@@ -615,7 +615,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       {/* MOBILE NAVBAR */}
       <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-5 py-4 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
         <span className="text-xl font-black tracking-tight text-[var(--text-primary)]">
-          founders dev
+          founder's dev
         </span>
         <div className="flex items-center gap-3">
           <ThemeToggle inline />
@@ -654,12 +654,12 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             {/* Performance Stats */}
             <div className="w-full flex justify-between text-center py-2 bg-black/5 dark:bg-white/2 rounded-xl">
               <div className="flex-1">
-                <div className="font-black text-xs">{mounted ? visitsCount.toLocaleString() : "712"}</div>
+                <div className="font-black text-xs" suppressHydrationWarning>{mounted ? visitsCount.toLocaleString() : "712"}</div>
                 <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Visits</div>
               </div>
               <div className="border-r border-[var(--border)] my-1" />
               <div className="flex-1">
-                <div className="font-black text-xs">{mounted ? totalLikes.toLocaleString() : "0"}</div>
+                <div className="font-black text-xs" suppressHydrationWarning>{mounted ? totalLikes.toLocaleString() : "0"}</div>
                 <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Likes</div>
               </div>
               <div className="border-r border-[var(--border)] my-1" />
@@ -668,7 +668,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                 disabled={hasFollowed}
                 className={`flex-1 rounded-lg transition-all ${hasFollowed ? 'cursor-default' : 'hover:bg-white/5 active:scale-95 group'}`}
               >
-                <div className="font-black text-xs group-hover:text-[var(--coral)] transition-colors">{mounted ? followersCount.toLocaleString() : "80"}</div>
+                <div className="font-black text-xs group-hover:text-[var(--coral)] transition-colors" suppressHydrationWarning>{mounted ? followersCount.toLocaleString() : "80"}</div>
                 <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold flex items-center justify-center gap-0.5">
                   <span>Followers</span>
                   {!hasFollowed && <span className="text-[7px] text-[var(--coral)] font-bold">+</span>}
@@ -854,7 +854,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                 {/* Counter Badges (Matching first screenshot stats) */}
                 <div className="w-full max-w-md flex justify-between items-center text-center py-3 border-y border-[var(--border)] font-sans">
                   <div className="flex-1 py-1">
-                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]" suppressHydrationWarning>
                       {mounted ? visitsCount.toLocaleString() : "712"}
                     </div>
                     <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">
@@ -865,7 +865,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                   <div className="border-l border-[var(--border)] h-8" />
                   
                   <div className="flex-1 py-1">
-                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]" suppressHydrationWarning>
                       {mounted ? totalLikes.toLocaleString() : "0"}
                     </div>
                     <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">
@@ -880,7 +880,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                     disabled={hasFollowed}
                     className={`flex-1 py-1 rounded-xl transition-all ${hasFollowed ? 'cursor-default' : 'hover:bg-white/5 active:scale-95 group'}`}
                   >
-                    <div className="font-black text-sm md:text-base text-[var(--text-primary)] group-hover:text-[var(--coral)] transition-colors">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)] group-hover:text-[var(--coral)] transition-colors" suppressHydrationWarning>
                       {mounted ? followersCount.toLocaleString() : "80"}
                     </div>
                     <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5 flex items-center justify-center gap-1">
@@ -909,11 +909,25 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                     <span>Hire me</span>
                   </button>
                   <button 
-                    onClick={() => setShowCVModal(true)}
-                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+                    onClick={handleFollow}
+                    disabled={hasFollowed}
+                    className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      hasFollowed 
+                        ? "bg-green-500/10 border border-green-500/30 text-green-400" 
+                        : "bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 active:scale-95"
+                    }`}
                   >
-                    <Send className="w-4 h-4 shrink-0 text-emerald-400" />
-                    <span>Download CV</span>
+                    {hasFollowed ? (
+                      <>
+                        <Check className="w-4 h-4 shrink-0 text-green-400 animate-scale-up" />
+                        <span>Following</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 shrink-0 text-cyan-400" />
+                        <span>Follow</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
