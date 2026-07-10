@@ -8,7 +8,20 @@ export async function GET() {
     const metrics = await db.postMetric.findMany();
     const result: Record<string, { likes: number; shares: number; comments: any[] }> = {};
     
+    // Default values for global metrics if not in database
+    let globalVisits = 712;
+    let globalFollowers = 80;
+
     metrics.forEach((m) => {
+      if (m.slug === "global-visits") {
+        globalVisits = m.likes;
+        return;
+      }
+      if (m.slug === "global-followers") {
+        globalFollowers = m.likes;
+        return;
+      }
+
       let parsedComments = [];
       try {
         parsedComments = JSON.parse(m.comments || "[]");
@@ -22,7 +35,31 @@ export async function GET() {
       };
     });
     
-    return NextResponse.json({ success: true, metrics: result });
+    // Seed global metrics in background if they don't exist yet
+    const visitsExist = metrics.some(m => m.slug === "global-visits");
+    if (!visitsExist) {
+      await db.postMetric.upsert({
+        where: { slug: "global-visits" },
+        create: { slug: "global-visits", likes: 712 },
+        update: {}
+      }).catch(() => {});
+    }
+
+    const followersExist = metrics.some(m => m.slug === "global-followers");
+    if (!followersExist) {
+      await db.postMetric.upsert({
+        where: { slug: "global-followers" },
+        create: { slug: "global-followers", likes: 80 },
+        update: {}
+      }).catch(() => {});
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      metrics: result,
+      globalVisits,
+      globalFollowers
+    });
   } catch (err: any) {
     console.error("GET metrics error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
@@ -36,6 +73,32 @@ export async function POST(req: Request) {
 
     if (!slug) {
       return NextResponse.json({ success: false, error: "Missing slug" }, { status: 400 });
+    }
+
+    // Global Metrics actions
+    if (slug === "global") {
+      if (action === "visit") {
+        const metric = await db.postMetric.findUnique({ where: { slug: "global-visits" } });
+        const currentVisits = metric?.likes ?? 712;
+        const updated = await db.postMetric.upsert({
+          where: { slug: "global-visits" },
+          create: { slug: "global-visits", likes: currentVisits + 1 },
+          update: { likes: currentVisits + 1 }
+        });
+        return NextResponse.json({ success: true, visits: updated.likes });
+      }
+      
+      if (action === "follow") {
+        const metric = await db.postMetric.findUnique({ where: { slug: "global-followers" } });
+        const currentFollowers = metric?.likes ?? 80;
+        const updated = await db.postMetric.upsert({
+          where: { slug: "global-followers" },
+          create: { slug: "global-followers", likes: currentFollowers + 1 },
+          update: { likes: currentFollowers + 1 }
+        });
+        return NextResponse.json({ success: true, followers: updated.likes });
+      }
+      return NextResponse.json({ success: false, error: "Invalid global action" }, { status: 400 });
     }
 
     // Find existing metrics to update

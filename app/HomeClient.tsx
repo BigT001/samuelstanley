@@ -95,6 +95,11 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const [bookmarkedStates, setBookmarkedStates] = useState<Record<string, boolean>>({});
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
 
+  // Global site metrics
+  const [visitsCount, setVisitsCount] = useState(712);
+  const [followersCount, setFollowersCount] = useState(80);
+  const [hasFollowed, setHasFollowed] = useState(false);
+
   // Share popover state
   const [activeShareSlug, setActiveShareSlug] = useState<string | null>(null);
   const [showShareToast, setShowShareToast] = useState(false);
@@ -166,37 +171,70 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       setLikedStates(JSON.parse(savedLikedStates));
     }
 
+    // Load followed state
+    const savedFollowed = localStorage.getItem("global_has_followed");
+    if (savedFollowed === "true") {
+      setHasFollowed(true);
+    }
+
+    // Log visit in database (session-based)
+    const visitLogged = sessionStorage.getItem("global_visit_logged");
+    if (!visitLogged) {
+      fetch("/api/metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: "global", action: "visit" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && typeof data.visits === "number") {
+          setVisitsCount(data.visits);
+          sessionStorage.setItem("global_visit_logged", "true");
+        }
+      })
+      .catch(() => {});
+    }
+
     // Fetch live metrics from Database (with cache buster)
     fetch("/api/metrics?t=" + Date.now())
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.metrics) {
-          const dbLikes: Record<string, number> = {};
-          const dbShares: Record<string, number> = {};
-          const dbComments: Record<string, Comment[]> = {};
+        if (data.success) {
+          if (typeof data.globalVisits === "number") {
+            setVisitsCount(data.globalVisits);
+          }
+          if (typeof data.globalFollowers === "number") {
+            setFollowersCount(data.globalFollowers);
+          }
 
-          // Seed defaults
-          projects.forEach((p) => {
-            dbLikes[p.slug] = 0;
-            dbShares[p.slug] = 0;
-            dbComments[p.slug] = [];
-          });
-          initialBlogs.forEach((b) => {
-            dbLikes[b.slug] = 0;
-            dbShares[b.slug] = 0;
-            dbComments[b.slug] = [];
-          });
+          if (data.metrics) {
+            const dbLikes: Record<string, number> = {};
+            const dbShares: Record<string, number> = {};
+            const dbComments: Record<string, Comment[]> = {};
 
-          // Override with values from DB
-          Object.entries(data.metrics).forEach(([slug, val]: [string, any]) => {
-            dbLikes[slug] = val.likes ?? 0;
-            dbShares[slug] = val.shares ?? 0;
-            dbComments[slug] = val.comments ?? [];
-          });
+            // Seed defaults
+            projects.forEach((p) => {
+              dbLikes[p.slug] = 0;
+              dbShares[p.slug] = 0;
+              dbComments[p.slug] = [];
+            });
+            initialBlogs.forEach((b) => {
+              dbLikes[b.slug] = 0;
+              dbShares[b.slug] = 0;
+              dbComments[b.slug] = [];
+            });
 
-          setLikes(dbLikes);
-          setShares(dbShares);
-          setCommentsMap(dbComments);
+            // Override with values from DB
+            Object.entries(data.metrics).forEach(([slug, val]: [string, any]) => {
+              dbLikes[slug] = val.likes ?? 0;
+              dbShares[slug] = val.shares ?? 0;
+              dbComments[slug] = val.comments ?? [];
+            });
+
+            setLikes(dbLikes);
+            setShares(dbShares);
+            setCommentsMap(dbComments);
+          }
         }
       })
       .catch((err) => console.error("Error loading metrics:", err));
@@ -205,6 +243,30 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const changeTab = (tab: TabId) => {
     setActiveTab(tab);
     localStorage.setItem("homepage_active_tab", tab);
+  };
+
+  const handleFollow = async () => {
+    if (hasFollowed) return;
+    setHasFollowed(true);
+    localStorage.setItem("global_has_followed", "true");
+    
+    // Optimistic UI update
+    setFollowersCount(prev => prev + 1);
+    triggerConfetti();
+
+    try {
+      const res = await fetch("/api/metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: "global", action: "follow" }),
+      });
+      const data = await res.json();
+      if (data.success && typeof data.followers === "number") {
+        setFollowersCount(data.followers);
+      }
+    } catch (err) {
+      console.error("Failed to sync follow metrics:", err);
+    }
   };
 
   // Story slideshow timer
@@ -592,7 +654,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             {/* Performance Stats */}
             <div className="w-full flex justify-between text-center py-2 bg-black/5 dark:bg-white/2 rounded-xl">
               <div className="flex-1">
-                <div className="font-black text-xs">14.2K</div>
+                <div className="font-black text-xs">{mounted ? visitsCount.toLocaleString() : "712"}</div>
                 <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Visits</div>
               </div>
               <div className="border-r border-[var(--border)] my-1" />
@@ -601,10 +663,17 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                 <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Likes</div>
               </div>
               <div className="border-r border-[var(--border)] my-1" />
-              <div className="flex-1">
-                <div className="font-black text-xs">1.2K</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Followers</div>
-              </div>
+              <button 
+                onClick={handleFollow}
+                disabled={hasFollowed}
+                className={`flex-1 rounded-lg transition-all ${hasFollowed ? 'cursor-default' : 'hover:bg-white/5 active:scale-95 group'}`}
+              >
+                <div className="font-black text-xs group-hover:text-[var(--coral)] transition-colors">{mounted ? followersCount.toLocaleString() : "80"}</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold flex items-center justify-center gap-0.5">
+                  <span>Followers</span>
+                  {!hasFollowed && <span className="text-[7px] text-[var(--coral)] font-bold">+</span>}
+                </div>
+              </button>
             </div>
 
             {/* Bio Details */}
@@ -765,12 +834,12 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <div className="flex flex-col items-center text-center space-y-6 py-4 relative w-full">
 
                 {/* Profile Image with neon ring and active status dot */}
-                <div className="w-[120px] h-[120px] rounded-full p-[4px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-2xl relative transition-transform hover:scale-105 duration-300">
-                  <div className="w-full h-full rounded-full border-4 border-[#0a0f1a] overflow-hidden">
+                <div className="w-[144px] h-[144px] rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-2xl relative transition-transform hover:scale-105 duration-300">
+                  <div className="w-full h-full rounded-full overflow-hidden">
                     <ProfilePhoto />
                   </div>
                   {/* Glowing active dot */}
-                  <span className="absolute bottom-1 right-2 w-5 h-5 rounded-full bg-green-500 border-4 border-[#0a0f1a] shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse" />
+                  <span className="absolute bottom-1.5 right-1.5 w-4.5 h-4.5 rounded-full bg-green-500 border-2.5 border-[#050810] shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse" />
                 </div>
 
                 {/* Name & Handle */}
@@ -783,21 +852,46 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
                 </div>
 
                 {/* Counter Badges (Matching first screenshot stats) */}
-                <div className="w-full max-w-md flex justify-between text-center py-3.5 border-y border-[var(--border)]">
-                  <div className="flex-1">
-                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">14.2K</div>
-                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">Visits</div>
+                <div className="w-full max-w-md flex justify-between items-center text-center py-3 border-y border-[var(--border)] font-sans">
+                  <div className="flex-1 py-1">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">
+                      {mounted ? visitsCount.toLocaleString() : "712"}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">
+                      Visits
+                    </div>
                   </div>
-                  <div className="border-r border-[var(--border)] my-1" />
-                  <div className="flex-1">
-                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">{mounted ? totalLikes.toLocaleString() : "0"}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">Likes</div>
+                  
+                  <div className="border-l border-[var(--border)] h-8" />
+                  
+                  <div className="flex-1 py-1">
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">
+                      {mounted ? totalLikes.toLocaleString() : "0"}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">
+                      Likes
+                    </div>
                   </div>
-                  <div className="border-r border-[var(--border)] my-1" />
-                  <div className="flex-1">
-                    <div className="font-black text-sm md:text-base text-[var(--text-primary)]">1.2K</div>
-                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5">Followers</div>
-                  </div>
+                  
+                  <div className="border-l border-[var(--border)] h-8" />
+                  
+                  <button 
+                    onClick={handleFollow}
+                    disabled={hasFollowed}
+                    className={`flex-1 py-1 rounded-xl transition-all ${hasFollowed ? 'cursor-default' : 'hover:bg-white/5 active:scale-95 group'}`}
+                  >
+                    <div className="font-black text-sm md:text-base text-[var(--text-primary)] group-hover:text-[var(--coral)] transition-colors">
+                      {mounted ? followersCount.toLocaleString() : "80"}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold mt-0.5 flex items-center justify-center gap-1">
+                      <span>Followers</span>
+                      {!hasFollowed && (
+                        <span className="text-[9px] font-black bg-[var(--coral)] text-white px-1 py-0.2 rounded shadow-[0_2px_6px_rgba(255,77,77,0.3)] animate-pulse shrink-0">
+                          +
+                        </span>
+                      )}
+                    </div>
+                  </button>
                 </div>
 
                 {/* Bio text */}
