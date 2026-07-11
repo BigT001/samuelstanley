@@ -631,13 +631,10 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       {/* LEFT SIDEBAR PANEL */}
       <aside className={`fixed md:sticky top-0 left-0 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-md p-6 z-[60] flex flex-col justify-between overflow-y-auto transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <ThemeToggle inline />
-            <div className="md:hidden">
-              <button className="p-1" onClick={() => setSidebarOpen(false)}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="flex justify-end md:hidden">
+            <button className="p-1" onClick={() => setSidebarOpen(false)}>
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Profile Card Summary */}
@@ -734,40 +731,26 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             </button>
             <button 
               onClick={() => { setShowHireModal(true); setSidebarOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black transition-all bg-[var(--coral)] text-white hover:brightness-110 active:scale-95 shadow-[0_4px_12px_rgba(255,77,77,0.15)] mt-2"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 hover:border-[var(--coral)]/40 active:scale-95 mt-2 cursor-pointer"
             >
-              <Plus className="w-4 h-4 shrink-0" />
+              <Plus className="w-4 h-4 shrink-0 text-[var(--coral)]" />
               <span>Hire me</span>
             </button>
           </nav>
-
-          {/* Online Workstation Status Info */}
-          <div className="pt-6 border-t border-[var(--border)] space-y-3">
-            <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold">Online Workstation</h4>
-            <div className="space-y-2 text-xs font-medium">
-              <div className="flex items-center gap-2.5 text-[var(--text-secondary)]">
-                <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="truncate">foundersdev.com</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-[var(--text-secondary)]">
-                <MapPin className="w-3.5 h-3.5 text-[var(--coral)] shrink-0" />
-                <span>Remote / Worldwide</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-[var(--text-secondary)]">
-                <Activity className="w-3.5 h-3.5 text-green-400 shrink-0" />
-                <span className="flex items-center gap-1.5">
-                  <span>99.9% Uptime</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Footer info */}
-        <div className="pt-4 border-t border-[var(--border)] text-[9px] text-[var(--text-secondary)] space-y-1">
-          <div>© 2026 Samuel Stanley. All rights reserved.</div>
-          <div>Built with Next.js, Antigravity, and AI.</div>
+        {/* Footer info & appearance status */}
+        <div className="space-y-4 pt-4 border-t border-[var(--border)]">
+          {/* Theme Toggle aligned to the bottom */}
+          <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] font-bold px-1">
+            <span>Appearance</span>
+            <ThemeToggle inline />
+          </div>
+          
+          <div className="text-[9px] text-[var(--text-secondary)] space-y-0.5 pt-3 border-t border-[var(--border)]/30">
+            <div>© 2026 Samuel Stanley. All rights reserved.</div>
+            <div>Built with Next.js, Antigravity, and AI.</div>
+          </div>
         </div>
       </aside>
 
