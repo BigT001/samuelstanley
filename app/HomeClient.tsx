@@ -631,10 +631,13 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       {/* LEFT SIDEBAR PANEL */}
       <aside className={`fixed md:sticky top-0 left-0 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-md p-6 z-[60] flex flex-col justify-between overflow-y-auto transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className="space-y-6">
-          <div className="flex justify-end md:hidden">
-            <button className="p-1" onClick={() => setSidebarOpen(false)}>
-              <X className="w-5 h-5" />
-            </button>
+          <div className="flex justify-between items-center">
+            <ThemeToggle inline />
+            <div className="md:hidden">
+              <button className="p-1" onClick={() => setSidebarOpen(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Profile Card Summary */}
@@ -737,6 +740,28 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <span>Hire me</span>
             </button>
           </nav>
+
+          {/* Online Workstation Status Info */}
+          <div className="pt-6 border-t border-[var(--border)] space-y-3">
+            <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold">Online Workstation</h4>
+            <div className="space-y-2 text-xs font-medium">
+              <div className="flex items-center gap-2.5 text-[var(--text-secondary)]">
+                <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">foundersdev.com</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-[var(--text-secondary)]">
+                <MapPin className="w-3.5 h-3.5 text-[var(--coral)] shrink-0" />
+                <span>Remote / Worldwide</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-[var(--text-secondary)]">
+                <Activity className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                <span className="flex items-center gap-1.5">
+                  <span>99.9% Uptime</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Footer info */}
@@ -757,74 +782,12 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       {/* MAIN CONTENT FEED WINDOW (FULL WIDTH & NO SIDE PADDING) */}
       <main className="flex-1 min-w-0 flex flex-col">
         
-        {/* TOP BAR / NAVIGATION */}
-        <div className="hidden md:flex sticky top-0 z-40 bg-[var(--surface)] backdrop-blur-md border-b border-[var(--border)] px-5 py-4 items-center justify-between gap-4">
-          
-          {/* Search bar */}
-          <div className="flex-1 max-w-md relative hidden sm:block">
-            <Search className="w-4 h-4 text-[var(--text-secondary)] absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text"
-              placeholder="Search projects, stack, keywords..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/5 dark:bg-white/2 border border-[var(--border)] pl-10 pr-4 py-2 rounded-full text-xs focus:outline-none focus:border-[var(--coral)] text-[var(--text-primary)] transition-all font-mono"
-            />
-          </div>
 
-          <div className="flex items-center gap-4 ml-auto">
-            
-            {/* Inline Theme Toggle */}
-            <div className="flex items-center">
-              <ThemeToggle inline />
-            </div>
-
-            {/* Notification Bell (Only visible to authenticated owner) */}
-            {isAdmin && (
-              <button className="relative p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all active:scale-95 group">
-                <Bell className="w-4.5 h-4.5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--coral)] animate-pulse" />
-              </button>
-            )}
-
-            {/* Direct message icon */}
-            <button 
-              onClick={() => setShowHireModal(true)}
-              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all active:scale-95 group hidden sm:block"
-            >
-              <MessageSquare className="w-4.5 h-4.5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
-            </button>
-
-
-          </div>
-        </div>
 
         {/* FEED INNER SCROLL (FULL WIDTH) */}
         <div className="flex-1 overflow-y-auto py-6 space-y-6 w-full max-w-none">
           
-          {/* CLIENT REVIEWS / TESTIMONIALS STORIES (Hidden on Feeds & Home Page) */}
-          {activeTab !== "feeds" && activeTab !== "home" && (
-            <div className="space-y-2 px-5 md:px-8">
-              <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold mb-1">Stories / Client Testimonials</h4>
-              <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
-                {testimonials.map((t, idx) => (
-                  <div 
-                    key={t.handle}
-                    onClick={() => setActiveStoryIdx(idx)}
-                    className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer snap-start"
-                  >
-                    <div className="w-[66px] h-[66px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 transition-all hover:scale-105 active:scale-95">
-                      {/* Centered avatar with solid white background inside gradient border */}
-                      <div className="w-full h-full rounded-full border-2 border-[var(--bg)] bg-white text-gray-900 flex items-center justify-center font-black text-sm">
-                        {t.avatar}
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)]">{t.handle}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           {/* ACTIVE HOME/ABOUT ME PANEL */}
           {activeTab === "home" && (
