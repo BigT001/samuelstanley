@@ -269,6 +269,15 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
     }
   };
 
+  const handleShareWhatsApp = () => {
+    if (typeof window !== "undefined") {
+      const url = window.location.origin;
+      const text = `Check out Samuel Stanley's professional profile: ${url}`;
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(whatsappUrl, "_blank");
+    }
+  };
+
   // Story slideshow timer
   useEffect(() => {
     if (activeStoryIdx === null) return;
@@ -612,31 +621,27 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-300 flex flex-col md:flex-row font-sans">
       
-      {/* MOBILE NAVBAR */}
-      <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-5 py-4 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
-        <span className="text-xl font-black tracking-tight text-[var(--text-primary)]">
-          founder's dev
-        </span>
-        <div className="flex items-center gap-3">
-          <ThemeToggle inline />
-          <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-primary)] active:scale-95 transition-all"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
-
-      {/* LEFT SIDEBAR PANEL */}
-      <aside className={`fixed md:sticky top-0 left-0 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-md p-6 z-[60] flex flex-col justify-between overflow-y-auto transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
-        <div className="space-y-6">
-          <div className="flex justify-end md:hidden">
-            <button className="p-1" onClick={() => setSidebarOpen(false)}>
-              <X className="w-5 h-5" />
+      {/* MOBILE NAVBAR (Hidden on Home tab, shown on others) */}
+      {activeTab !== "home" && (
+        <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-5 py-4 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
+          <span className="text-xl font-black tracking-tight text-[var(--text-primary)]">
+            founder's dev
+          </span>
+          <div className="flex items-center gap-3">
+            <ThemeToggle inline />
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-primary)] active:scale-95 transition-all"
+            >
+              <Menu className="w-5 h-5" />
             </button>
           </div>
+        </header>
+      )}
 
+      {/* LEFT SIDEBAR PANEL */}
+      <aside className={`fixed md:sticky top-0 left-0 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-md pt-3 pb-6 px-6 z-[60] flex flex-col justify-between overflow-y-auto transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+        <div className="space-y-6">
           {/* Profile Card Summary */}
           <div className="flex flex-col items-center text-center space-y-4 pb-4 border-b border-[var(--border)]">
             <div className="w-[84px] h-[84px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-lg relative">
@@ -777,7 +782,28 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             <div className="max-w-3xl mx-auto px-5 md:px-8 w-full animate-in fade-in duration-300 space-y-10">
               
               {/* Profile Hero Layout (Shown on mobile, hidden on desktop since it's already in the sidebar) */}
-              <div className="md:hidden flex flex-col items-center text-center space-y-6 py-4 relative w-full">
+              <div className="md:hidden flex flex-col items-center text-center space-y-6 pt-1 pb-4 relative w-full">
+
+                {/* Mobile Floating Action Buttons (Top Right) */}
+                <div className="absolute top-0.5 right-0.5 flex items-center gap-2 z-30">
+                  {/* WhatsApp Share Button */}
+                  <button 
+                    onClick={handleShareWhatsApp}
+                    className="p-2 rounded-xl bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Share Profile to WhatsApp"
+                  >
+                    <Send className="w-4 h-4 text-green-400 rotate-[-30deg] translate-x-[1px] translate-y-[-1px]" />
+                  </button>
+
+                  {/* Hamburger menu button */}
+                  <button 
+                    onClick={() => setSidebarOpen(true)}
+                    className="p-2 rounded-xl bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Open Menu"
+                  >
+                    <Menu className="w-4 h-4" />
+                  </button>
+                </div>
 
                 {/* Profile Image with neon ring and active status dot */}
                 <div className="w-[144px] h-[144px] rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-2xl relative transition-transform hover:scale-105 duration-300">
