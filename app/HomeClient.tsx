@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { 
   Heart, 
@@ -120,6 +120,8 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   const [showCVModal, setShowCVModal] = useState(false);
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null);
   const [storyProgress, setStoryProgress] = useState(0);
+  const [storyPaused, setStoryPaused] = useState(false);
+  const [dynamicTestimonials, setDynamicTestimonials] = useState<any[]>(testimonials);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Initialize and load metrics from Database + local storage
@@ -234,6 +236,37 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             setLikes(dbLikes);
             setShares(dbShares);
             setCommentsMap(dbComments);
+
+            // Compile dynamic testimonials from database comments
+            const commentsList: any[] = [];
+            Object.entries(dbComments).forEach(([slug, comments]) => {
+              if (Array.isArray(comments)) {
+                comments.forEach((c) => {
+                  if (c.text && c.text.length > 15) {
+                    const initials = c.name 
+                      ? c.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) 
+                      : "US";
+                    const handleStr = c.handle || `@${c.name.toLowerCase().replace(/\s+/g, "_")}`;
+                    
+                    commentsList.push({
+                      avatar: initials,
+                      handle: handleStr,
+                      text: `"${c.text}"`,
+                      color: "#ff7c5c"
+                    });
+                  }
+                });
+              }
+            });
+
+            // Combine static and dynamic reviews, avoiding duplicates
+            const merged = [...testimonials];
+            commentsList.forEach((c) => {
+              if (!merged.some((m) => m.text.toLowerCase() === c.text.toLowerCase())) {
+                merged.push(c);
+              }
+            });
+            setDynamicTestimonials(merged);
           }
         }
       })
@@ -282,11 +315,15 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
   useEffect(() => {
     if (activeStoryIdx === null) return;
     setStoryProgress(0);
+  }, [activeStoryIdx]);
+
+  useEffect(() => {
+    if (activeStoryIdx === null || storyPaused) return;
 
     const interval = setInterval(() => {
       setStoryProgress((prev) => {
         if (prev >= 100) {
-          if (activeStoryIdx < testimonials.length - 1) {
+          if (activeStoryIdx < dynamicTestimonials.length - 1) {
             setActiveStoryIdx(activeStoryIdx + 1);
             return 0;
           } else {
@@ -296,10 +333,54 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
         }
         return prev + 2;
       });
-    }, 50);
+    }, 100);
 
     return () => clearInterval(interval);
-  }, [activeStoryIdx]);
+  }, [activeStoryIdx, storyPaused, dynamicTestimonials.length]);
+
+  const pressTimeRef = useRef<number>(0);
+
+  const handleStoryPressStart = () => {
+    pressTimeRef.current = Date.now();
+    setStoryPaused(true);
+  };
+
+  const handleStoryPressEnd = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    setStoryPaused(false);
+    const duration = Date.now() - pressTimeRef.current;
+    
+    if (duration >= 250) {
+      return;
+    }
+
+    let clientX = 0;
+    if ("touches" in e) {
+      if (e.changedTouches && e.changedTouches[0]) {
+        clientX = e.changedTouches[0].clientX;
+      } else {
+        return;
+      }
+    } else {
+      clientX = e.clientX;
+    }
+
+    const width = window.innerWidth;
+    const isLeft = clientX < width * 0.35;
+
+    if (isLeft) {
+      if (activeStoryIdx !== null && activeStoryIdx > 0) {
+        setActiveStoryIdx(activeStoryIdx - 1);
+      } else {
+        setActiveStoryIdx(null);
+      }
+    } else {
+      if (activeStoryIdx !== null && activeStoryIdx < dynamicTestimonials.length - 1) {
+        setActiveStoryIdx(activeStoryIdx + 1);
+      } else {
+        setActiveStoryIdx(null);
+      }
+    }
+  };
 
   // Sync Likes with DB
   const handleLike = async (slug: string) => {
@@ -644,11 +725,17 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
         <div className="space-y-6">
           {/* Profile Card Summary */}
           <div className="flex flex-col items-center text-center space-y-4 pb-4 border-b border-[var(--border)]">
-            <div className="w-[84px] h-[84px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-lg relative">
-              <div className="w-full h-full rounded-full border-2 border-[var(--bg)] overflow-hidden">
-                <ProfilePhoto />
+            <div className="flex items-center gap-6 justify-center w-full">
+              <div className="w-[84px] h-[84px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-red-500 shadow-lg relative shrink-0">
+                <div className="w-full h-full rounded-full border-2 border-[var(--bg)] overflow-hidden">
+                  <ProfilePhoto />
+                </div>
+                <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-[var(--bg)] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
               </div>
-              <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-[var(--bg)] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+              {/* Clean theme toggle beside avatar */}
+              <div className="shrink-0">
+                <ThemeToggle inline />
+              </div>
             </div>
             
             <div className="space-y-0.5">
@@ -744,18 +831,10 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
           </nav>
         </div>
 
-        {/* Footer info & appearance status */}
-        <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-          {/* Theme Toggle aligned to the bottom */}
-          <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] font-bold px-1">
-            <span>Appearance</span>
-            <ThemeToggle inline />
-          </div>
-          
-          <div className="text-[9px] text-[var(--text-secondary)] space-y-0.5 pt-3 border-t border-[var(--border)]/30">
-            <div>© 2026 Samuel Stanley. All rights reserved.</div>
-            <div>Built with Next.js, Antigravity, and AI.</div>
-          </div>
+        {/* Footer info */}
+        <div className="pt-4 border-t border-[var(--border)] text-[9px] text-[var(--text-secondary)] space-y-1">
+          <div>© 2026 Samuel Stanley. All rights reserved.</div>
+          <div>Built with Next.js, Antigravity, and AI.</div>
         </div>
       </aside>
 
@@ -908,7 +987,7 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <div className="space-y-2 w-full animate-in fade-in duration-300 border-t border-[var(--border)] pt-6 md:border-t-0 md:pt-0">
                 <h4 className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-extrabold mb-1">Stories / Client Testimonials</h4>
                 <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
-                  {testimonials.map((t, idx) => (
+                  {dynamicTestimonials.map((t, idx) => (
                     <div 
                       key={t.handle}
                       onClick={() => setActiveStoryIdx(idx)}
@@ -1794,16 +1873,22 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       )}
 
       {/* INSTAGRAM-STYLE STORIES SLIDESHOW MODAL */}
-      {activeStoryIdx !== null && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/95 select-none animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg h-full max-h-[85vh] p-4 flex flex-col justify-between">
+      {activeStoryIdx !== null && activeStoryIdx < dynamicTestimonials.length && (
+        <div 
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/95 select-none animate-in fade-in duration-200 cursor-pointer"
+          onMouseDown={handleStoryPressStart}
+          onMouseUp={handleStoryPressEnd}
+          onTouchStart={handleStoryPressStart}
+          onTouchEnd={handleStoryPressEnd}
+        >
+          <div className="relative w-full max-w-lg h-full max-h-[85vh] p-4 flex flex-col justify-between pointer-events-none">
             
             {/* Header: Testimonial details & Progress Bar */}
-            <div className="space-y-4">
+            <div className="space-y-4 pointer-events-auto">
               
               {/* Slideshow Progress indicator */}
               <div className="flex gap-1.5">
-                {testimonials.map((_, idx) => (
+                {dynamicTestimonials.map((_, idx) => (
                   <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-white transition-all duration-75"
@@ -1823,17 +1908,20 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
               <div className="flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-black text-sm">
-                    {testimonials[activeStoryIdx].avatar}
+                    {dynamicTestimonials[activeStoryIdx].avatar}
                   </div>
                   <div>
                     <h4 className="font-bold text-xs">Samuel Stanley (Client Review)</h4>
-                    <p className="text-[10px] text-white/60 font-mono">{testimonials[activeStoryIdx].handle}</p>
+                    <p className="text-[10px] text-white/60 font-mono">{dynamicTestimonials[activeStoryIdx].handle}</p>
                   </div>
                 </div>
                 
                 {/* Close Button */}
                 <button 
-                  onClick={() => setActiveStoryIdx(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveStoryIdx(null);
+                  }}
                   className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
                 >
                   <X className="w-4.5 h-4.5" />
@@ -1845,33 +1933,14 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             <div className="text-center px-6">
               <span className="text-3xl text-[var(--coral)] font-mono">“</span>
               <p className="text-white text-lg md:text-xl font-bold leading-relaxed italic">
-                {testimonials[activeStoryIdx].text.replace(/"/g, "")}
+                {dynamicTestimonials[activeStoryIdx].text.replace(/"/g, "")}
               </p>
               <span className="text-3xl text-[var(--coral)] font-mono">”</span>
             </div>
 
-            {/* Navigation buttons */}
-            <div className="flex justify-between items-center text-white px-2">
-              <button 
-                disabled={activeStoryIdx === 0}
-                onClick={() => setActiveStoryIdx(activeStoryIdx - 1)}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition-all disabled:opacity-30"
-              >
-                ◀ Previous
-              </button>
-              <span className="text-[10px] text-white/50">{activeStoryIdx + 1} / {testimonials.length}</span>
-              <button 
-                onClick={() => {
-                  if (activeStoryIdx < testimonials.length - 1) {
-                    setActiveStoryIdx(activeStoryIdx + 1);
-                  } else {
-                    setActiveStoryIdx(null);
-                  }
-                }}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition-all"
-              >
-                {activeStoryIdx === testimonials.length - 1 ? "Close ✕" : "Next ▶"}
-              </button>
+            {/* Minimal Indicators at bottom */}
+            <div className="flex justify-center items-center text-white px-2">
+              <span className="text-[10px] text-white/50">{activeStoryIdx + 1} / {dynamicTestimonials.length}</span>
             </div>
 
           </div>

@@ -36,6 +36,18 @@ export const testimonials = [
     text: "\"Samuel is a game changer. The ability to build custom extensions is huge, and he really speeds up the process. Partner with him once and you'll never go back.\"",
     color: "#4ecdc4",
   },
+  {
+    avatar: "NL",
+    handle: "@nathan_l",
+    text: "\"Working with Samuel was exceptionally smooth. He has a rare combination of strong design instincts and deep backend logic. Highly recommended.\"",
+    color: "#ffaa00",
+  },
+  {
+    avatar: "SC",
+    handle: "@sarah_c",
+    text: "\"Samuel delivered our SaaS landing page and payment processing flows in less than 3 weeks. Conversion rate went up by 40% from day one.\"",
+    color: "#10b981",
+  },
 ];
 
 // ─── Development Philosophy ──────────────────────────────────────────────────
