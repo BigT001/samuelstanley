@@ -144,21 +144,21 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
       })
       .catch(() => {}); // Silent fallback to static data.ts
 
-    // Load persistent tab
-    const savedTab = localStorage.getItem("homepage_active_tab") as TabId;
-    if (savedTab && ["home", "projects", "feeds", "philosophy", "connect", "pricing", "insight"].includes(savedTab)) {
-      setActiveTab(savedTab);
-    } else {
-      setActiveTab("home");
-    }
-
-    // Override if tab URL query parameter is provided
+    // Start on the homepage by default. Only honor an explicit tab query
+    // parameter if the URL requests a different view.
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
       const tabParam = searchParams.get("tab") as TabId;
-      if (tabParam && ["home", "projects", "feeds", "philosophy", "connect", "pricing", "insight"].includes(tabParam)) {
+      const validTabs: TabId[] = ["home", "projects", "feeds", "philosophy", "connect", "pricing", "insight"];
+
+      if (tabParam && validTabs.includes(tabParam)) {
         setActiveTab(tabParam);
+      } else {
+        setActiveTab("home");
+        localStorage.removeItem("homepage_active_tab");
       }
+    } else {
+      setActiveTab("home");
     }
 
     // Load user for comments
@@ -275,7 +275,6 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
   const changeTab = (tab: TabId) => {
     setActiveTab(tab);
-    localStorage.setItem("homepage_active_tab", tab);
   };
 
   const handleFollow = async () => {

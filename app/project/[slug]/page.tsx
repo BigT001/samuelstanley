@@ -4,33 +4,27 @@ import { use, useState, useEffect, useRef } from "react";
 import { notFound } from "next/navigation";
 import { projects } from "../../components/data";
 import Link from "next/link";
+import Image from "next/image";
+import projectGallery from "../../project-gallery.generated.json";
 import { ContactModal } from "../../components/ui";
 import { Starfield } from "../../components/Starfield";
-import { marked } from "marked";
 import {
   GitBranch,
   Star,
   GitFork,
-  ExternalLink,
-  Terminal,
   Layers,
-  Flame,
-  CheckCircle2,
   ArrowLeft,
   Globe,
   Code2,
   BarChart3,
+  Activity,
   Cpu,
   Zap,
-  Shield,
   Clock,
-  Users,
-  TrendingUp,
   ChevronRight,
   Copy,
   Check,
   Mail,
-  Phone,
   ArrowUpRight,
   BookOpen,
   Menu,
@@ -88,6 +82,175 @@ const SECTIONS = [
   { id: "related", label: "Related Projects", icon: ChevronRight },
 ];
 
+type ProjectIdentity = {
+  accent: string;
+  accent2: string;
+  background: string;
+  surface: string;
+  text: string;
+  muted: string;
+  font: string;
+  displayFont: string;
+  image?: string;
+  eyebrow: string;
+  buildNotes: Array<{ title: string; text: string }>;
+};
+
+type ProjectRecord = {
+  title: string;
+  slug: string;
+  tag: string;
+  desc: string;
+  tech: string[];
+  color?: string;
+  link?: string;
+  homepage?: string;
+  repo?: string;
+  status?: string;
+  stars?: number;
+  forks?: number;
+  language?: string | null;
+  lastPushedAt?: string | Date | null;
+  isGithub?: boolean;
+};
+
+type ProjectScreenshot = {
+  id: string;
+  label: string;
+  description: string;
+  src: string;
+  width: number;
+  height: number;
+  capturedAt?: string;
+};
+
+type GithubProjectRecord = {
+  repoName: string;
+  displayTitle?: string | null;
+  statusLabel?: string | null;
+  language?: string | null;
+  displayDesc?: string | null;
+  description?: string | null;
+  displayTags?: string[];
+  homepage?: string | null;
+  repoUrl?: string | null;
+  stars?: number;
+  forks?: number;
+  lastPushedAt?: string | null;
+};
+
+const PROJECT_THEMES: Record<string, ProjectIdentity> = {
+  "opnmrt": {
+    accent: "#10b981",
+    accent2: "#60a5fa",
+    background: "#060a10",
+    surface: "#0a0f18",
+    text: "#f8fafc",
+    muted: "#9ca3af",
+    font: "Inter, ui-sans-serif, system-ui, sans-serif",
+    displayFont: "Inter, ui-sans-serif, system-ui, sans-serif",
+    image: "/opnmrt/Screenshot 2026-04-01 161854.png",
+    eyebrow: "Open Merchant Retail Technology",
+    buildNotes: [
+      { title: "One engine, separate stores", text: "The application keeps each merchant’s catalogue, orders and settings within a clear tenant boundary." },
+      { title: "Payments stay with the seller", text: "Merchants connect their own payment account. OPNMRT does not sit between a seller and their revenue." },
+      { title: "Built around local trade", text: "Storefront, stock and delivery tools are designed for the way independent businesses actually operate." },
+    ],
+  },
+  "empi-costumes": {
+    accent: "#b28a5b",
+    accent2: "#e8cda8",
+    background: "#140f0d",
+    surface: "#211815",
+    text: "#fffaf2",
+    muted: "#c7b8a7",
+    font: "Georgia, 'Times New Roman', serif",
+    displayFont: "Georgia, 'Times New Roman', serif",
+    image: "/empiimages/Screenshot 2026-04-01 070059.png",
+    eyebrow: "Costume atelier · Lagos",
+    buildNotes: [
+      { title: "Rental is not regular retail", text: "Availability, return dates and damage deposits are treated as first-class parts of an order." },
+      { title: "Bespoke requests need context", text: "Measurements and references travel with the request, so the studio does not have to reconstruct a brief from chat messages." },
+      { title: "The studio has one order view", text: "Sales, rentals and custom work meet in the same operational queue for the team." },
+    ],
+  },
+  "study-express-uk": {
+    accent: "#008200",
+    accent2: "#4d8eff",
+    background: "#f7faf7",
+    surface: "#ffffff",
+    text: "#111827",
+    muted: "#6b7280",
+    font: "Inter, ui-sans-serif, system-ui, sans-serif",
+    displayFont: "Inter, ui-sans-serif, system-ui, sans-serif",
+    image: "/studyexpress/Screenshot 2026-04-01 093838.png",
+    eyebrow: "Professional learning · United Kingdom",
+    buildNotes: [
+      { title: "Courses and events share a home", text: "Learners can move between self-paced programmes, live events and corporate training without changing platforms." },
+      { title: "Roles remain explicit", text: "Learner, instructor and administrator journeys are separated so each dashboard stays focused." },
+      { title: "Designed for decisions", text: "Course information, accreditation and enrolment actions are surfaced before secondary content." },
+    ],
+  },
+  "stanleys-log": {
+    accent: "#d6ff4b",
+    accent2: "#62e9d5",
+    background: "#080a08",
+    surface: "#10130f",
+    text: "#f4f7ed",
+    muted: "#9ca68e",
+    font: "'Courier New', ui-monospace, monospace",
+    displayFont: "Arial Black, Inter, ui-sans-serif, sans-serif",
+    image: "/stanleyslog/image.png",
+    eyebrow: "Automated field notes",
+    buildNotes: [
+      { title: "Research runs on a schedule", text: "A GitHub Actions job gathers source material and prepares drafts without keeping a server awake." },
+      { title: "Publishing is still inspectable", text: "Posts live as files in the repository, so every change has a visible history and can be corrected." },
+      { title: "Failure is expected", text: "The pipeline can move between model options when one is unavailable instead of dropping the entire run." },
+    ],
+  },
+  "portfolio-v2": {
+    accent: "#ff705d",
+    accent2: "#b189ff",
+    background: "#08090d",
+    surface: "#101218",
+    text: "#f7f7f4",
+    muted: "#9ca3af",
+    font: "Inter, ui-sans-serif, system-ui, sans-serif",
+    displayFont: "Inter, ui-sans-serif, system-ui, sans-serif",
+    eyebrow: "Digital experience",
+    buildNotes: [
+      { title: "One site, several working systems", text: "Portfolio, publishing, project sync and monitoring share a codebase without sharing responsibilities." },
+      { title: "Repository-backed work", text: "Visible GitHub projects are synced into the portfolio and can be curated without duplicating the source data." },
+      { title: "Mobile comes first", text: "Navigation and content density are tuned for a small screen before desktop enhancements are added." },
+    ],
+  },
+};
+
+function getProjectTheme(slug?: string) {
+  if (slug && PROJECT_THEMES[slug]) return PROJECT_THEMES[slug];
+
+  const generatedIdentities = [
+    { accent: "#7c9cff", accent2: "#70e1c8", background: "#090b12", surface: "#111522", font: "Inter, ui-sans-serif, system-ui, sans-serif" },
+    { accent: "#f0b35a", accent2: "#ef7e6c", background: "#120e0a", surface: "#1d1710", font: "Georgia, 'Times New Roman', serif" },
+    { accent: "#c6f36b", accent2: "#66d9cc", background: "#090c08", surface: "#12170f", font: "'Courier New', ui-monospace, monospace" },
+    { accent: "#d89cff", accent2: "#7aa9ff", background: "#0e0912", surface: "#18101e", font: "ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif" },
+  ];
+  const identityIndex = [...(slug || "project")].reduce((total, character) => total + character.charCodeAt(0), 0) % generatedIdentities.length;
+  const generated = generatedIdentities[identityIndex];
+
+  return {
+    ...generated,
+    text: "#f8fafc",
+    muted: "#9ca3af",
+    displayFont: generated.font,
+    eyebrow: "Product engineering",
+    buildNotes: [
+      { title: "Repository-led profile", text: "The technology, activity and links on this page come from the project’s GitHub record." },
+      { title: "A focused implementation", text: "The interface describes what is visible in the repository instead of making claims the code cannot prove." },
+    ],
+  };
+}
+
 export default function ProjectCaseStudy({
   params,
 }: {
@@ -96,43 +259,28 @@ export default function ProjectCaseStudy({
   const resolvedParams = use(params);
   const [showModal, setShowModal] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [copied, setCopied] = useState(false);
-  const [navHovered, setNavHovered] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
 
-  const [project, setProject] = useState<any>(null);
+  const staticProject = projects.find((candidate) => candidate.slug === resolvedParams.slug);
+  const [project, setProject] = useState<ProjectRecord | null>(staticProject || null);
   const [loading, setLoading] = useState(true);
-  const [readmeHtml, setReadmeHtml] = useState<string>("");
-  const [fetchingReadme, setFetchingReadme] = useState<boolean>(false);
-
   // Related projects (excluding current)
   const relatedProjects = projects.filter((p) => p.slug !== resolvedParams.slug).slice(0, 3);
-
-  // Fetch README for GitHub projects - Disabled to remove GitHub references
-  useEffect(() => {
-    if (!project || !project.isGithub) return;
-    setReadmeHtml("");
-    setFetchingReadme(false);
-  }, [project]);
 
   // Initialize project + theme
   useEffect(() => {
     const savedTheme = (localStorage.getItem("theme") as "dark" | "light") || "dark";
-    setTheme(savedTheme);
-    setMounted(true);
-
     const slug = resolvedParams.slug;
-    const staticProject = projects.find((p) => p.slug === slug);
-    if (staticProject) setProject(staticProject);
+    const themeFrame = window.requestAnimationFrame(() => setTheme(savedTheme));
 
     fetch("/api/github/projects")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.projects) {
-          const dbProj = data.projects.find((p: any) => p.repoName === slug);
+          const dbProj = (data.projects as GithubProjectRecord[]).find((candidate) => candidate.repoName === slug);
           if (dbProj) {
             setProject({
               title: dbProj.displayTitle || dbProj.repoName.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
@@ -142,31 +290,34 @@ export default function ProjectCaseStudy({
               tech: dbProj.displayTags?.length ? dbProj.displayTags : (dbProj.language ? [dbProj.language] : []),
               color: dbProj.repoName === "opnmrt" ? "#ff4d4d" : "#6b8cff",
               link: dbProj.homepage || dbProj.repoUrl || "#",
-              repo: "#",
+              homepage: dbProj.homepage || undefined,
+              repo: dbProj.repoUrl || "#",
               status: dbProj.statusLabel || "Live",
               stars: dbProj.stars,
               forks: dbProj.forks,
+              language: dbProj.language,
               lastPushedAt: dbProj.lastPushedAt,
               isGithub: true,
             });
-          } else if (!staticProject) {
+          } else if (!projects.some((candidate) => candidate.slug === slug)) {
             setLoading(false);
           }
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    return () => window.cancelAnimationFrame(themeFrame);
   }, [resolvedParams.slug]);
 
   // Sync theme to DOM
   useEffect(() => {
-    if (!mounted) return;
     if (theme === "light") {
       document.documentElement.classList.add("light-mode");
     } else {
       document.documentElement.classList.remove("light-mode");
     }
-  }, [theme, mounted]);
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme((prev) => {
@@ -246,120 +397,155 @@ export default function ProjectCaseStudy({
   }
 
   if (!loading && !project) notFound();
+  if (!project) notFound();
 
-  const accentColor = "#ff4d4d";
+  const projectTheme = getProjectTheme(project?.slug);
+  const accentColor = projectTheme.accent;
   const hasLiveLink = project?.link && project.link !== "#";
+  const galleryItems = ((projectGallery as Record<string, ProjectScreenshot[]>)[project.slug] || []);
+  const previewTarget = project.homepage || (staticProject?.link && staticProject.link !== "#" ? staticProject.link : project.repo);
+  const automaticScreenshotUrl = previewTarget
+    ? `https://api.microlink.io/?url=${encodeURIComponent(previewTarget)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1440&viewport.height=1000`
+    : null;
 
   return (
-    <div className="relative min-h-screen bg-[var(--bg)] transition-colors duration-300">
+    <div
+      className="project-native relative min-h-screen transition-colors duration-300"
+      style={{
+        "--project-accent": projectTheme.accent,
+        "--project-accent-2": projectTheme.accent2,
+        "--project-bg": projectTheme.background,
+        "--project-surface": projectTheme.surface,
+        "--project-text": projectTheme.text,
+        "--project-muted": projectTheme.muted,
+        "--project-font": projectTheme.font,
+        "--project-display-font": projectTheme.displayFont,
+      } as React.CSSProperties}
+    >
       <Starfield />
       <ContactModal isOpen={showModal} onClose={() => setShowModal(false)} />
 
       {/* Reading progress */}
       <div className="fixed top-0 left-0 w-full h-[3px] z-[1000] bg-transparent">
-        <div ref={progressRef} className="h-full bg-gradient-to-r from-[var(--coral)] via-purple-500 to-rose-500 shadow-[0_0_15px_rgba(255,77,77,0.5)] transition-all ease-linear" />
+        <div ref={progressRef} className="h-full project-progress transition-all ease-linear" />
       </div>
 
 
 
-      {/* ── CINEMATIC HERO ── */}
-      <section className="relative min-h-[70vh] flex flex-col justify-end overflow-hidden">
-        {/* Background gradient layer */}
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 80% 60% at 50% -10%, ${accentColor}33 0%, transparent 70%),
-              radial-gradient(ellipse 60% 40% at 80% 50%, ${accentColor}1a 0%, transparent 60%),
-              linear-gradient(180deg, #030712 0%, var(--bg) 100%)
-            `,
-          }}
-        />
+      {/* ── PROJECT-AWARE EDITORIAL HERO ── */}
+      <section
+        className="case-hero"
+      >
+        <div className="case-hero-noise" aria-hidden="true" />
+        <div className="case-hero-orb case-hero-orb-one" aria-hidden="true" />
+        <div className="case-hero-orb case-hero-orb-two" aria-hidden="true" />
 
-        {/* Hero image layer */}
-        {hasLiveLink && (
-          <div className="absolute inset-0 z-0 opacity-[0.22]">
-            <img
-              src={`https://api.microlink.io/?url=${encodeURIComponent(project.link)}&screenshot=true&meta=false&embed=screenshot.url`}
-              alt=""
-              className="w-full h-full object-cover object-top scale-110"
-              aria-hidden="true"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--bg)]/60 to-[var(--bg)]" />
-          </div>
-        )}
+        <div className="case-hero-shell">
+          <div className="case-hero-copy">
+            <Link href="/?tab=projects" className="case-back-link">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Selected work
+            </Link>
 
-        {/* Hero content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pt-28 pb-12 md:pt-36 md:pb-16 w-full">
-          {/* Tag pill */}
-          <div className="flex items-center gap-3 mb-6 reveal" data-delay="0">
-            <span
-              className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border"
-              style={{
-                color: accentColor,
-                borderColor: `${accentColor}40`,
-                backgroundColor: `${accentColor}15`,
-              }}
-            >
-              {project?.tag}
-            </span>
-            <span className="flex items-center gap-1.5 text-[10px] font-mono text-white/40 uppercase tracking-widest">
-              <span
-                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                style={{ backgroundColor: project?.status === "Live" ? "#22c55e" : project?.status === "Launching Soon" ? "#eab308" : "#94a3b8" }}
-              />
-              {project?.status}
-            </span>
-          </div>
+            <div className="case-kicker">
+              <span>{projectTheme.eyebrow}</span>
+              <span className="case-kicker-line" />
+              <span>Case study</span>
+            </div>
 
-          {/* Title */}
-          <h1
-            className="text-[clamp(2.2rem,8vw,4.5rem)] md:text-[clamp(4rem,10vw,8rem)] font-black tracking-tighter leading-[0.9] mb-6 reveal"
-            style={{
-              background: `linear-gradient(135deg, #fff 0%, ${accentColor} 60%, #fff 100%)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            {project?.title}
-          </h1>
+            <h1 className="case-title">{project?.title}</h1>
+            <p className="case-description">{project?.desc}</p>
 
-          {/* Description */}
-          <p className="text-lg md:text-xl text-white/60 max-w-2xl leading-relaxed font-light reveal">
-            {project?.desc}
-          </p>
-
-          {/* Hero action row */}
-          <div className="flex items-center gap-2 md:gap-4 mt-8 reveal">
-            {project?.slug === "opnmrt" ? (
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-                Launching Soon
+            <div className="case-meta-row">
+              <span className="case-tag">{project?.tag}</span>
+              <span className="case-status">
+                <span
+                  className="case-status-dot"
+                  style={{
+                    backgroundColor: ["Live", "Active"].includes(project.status || "") ? "#43d17b" : "#f4bd50",
+                  }}
+                />
+                {project?.status}
               </span>
-            ) : hasLiveLink ? (
-              <a
-                href={project.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 md:px-6 md:py-3 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider text-white shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 whitespace-nowrap"
-                style={{
-                  background: `linear-gradient(135deg, ${accentColor}, ${accentColor}99)`,
-                  boxShadow: `0 0 25px ${accentColor}30`,
-                }}
-              >
-                <Globe className="w-3.5 h-3.5" /> Visit Site
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </a>
-            ) : null}
+            </div>
 
-            <button
-              onClick={() => scrollToSection("overview")}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 md:px-6 md:py-3 rounded-full bg-white/5 border border-white/10 text-[10px] md:text-xs font-black uppercase tracking-wider text-white/60 hover:text-white hover:border-white/25 hover:bg-white/10 transition-all duration-300 whitespace-nowrap"
-            >
-              Case Study ↓
-            </button>
+            <div className="case-actions">
+              {hasLiveLink && (
+                <a href={project.link} target="_blank" rel="noopener noreferrer" className="case-primary-action">
+                  Explore the product
+                  <ArrowUpRight className="w-4 h-4" />
+                </a>
+              )}
+              <button onClick={() => scrollToSection("overview")} className="case-secondary-action">
+                Read the story
+                <span aria-hidden="true">↓</span>
+              </button>
+            </div>
           </div>
+
+          <div className="case-visual-wrap" aria-label={`${project?.title} product preview`}>
+            <div className="case-visual-index" aria-hidden="true">
+              {String(projects.findIndex((item) => item.slug === project?.slug) + 1).padStart(2, "0")}
+            </div>
+            <div className="case-product-window">
+              <div className="case-window-bar">
+                <div className="case-window-dots"><i /><i /><i /></div>
+                <span>{project?.title?.toLowerCase().replace(/\s+/g, "")}.product</span>
+                <span className="case-window-secure">● live</span>
+              </div>
+              <div className="case-window-content">
+                {projectTheme.image ? (
+                  <Image
+                    src={projectTheme.image}
+                    alt={`${project?.title} interface preview`}
+                    fill
+                    priority
+                    sizes="(max-width: 900px) 92vw, 56vw"
+                  />
+                ) : automaticScreenshotUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={automaticScreenshotUrl}
+                    alt={`${project.title} homepage preview`}
+                    className="case-automatic-screenshot"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="case-interface-fallback">
+                    <div className="case-interface-nav" />
+                    <div className="case-interface-grid">
+                      <div className="case-interface-main">
+                        <span>{projectTheme.eyebrow}</span>
+                        <strong>{project?.title}</strong>
+                        <i />
+                        <i />
+                      </div>
+                      <div className="case-interface-side">
+                        <i /><i /><i />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="case-window-sheen" />
+              </div>
+            </div>
+            <div className="case-floating-note case-floating-note-top">
+              <span>Built for</span>
+              <strong>clarity + scale</strong>
+            </div>
+            <div className="case-floating-note case-floating-note-bottom">
+              <Zap className="w-4 h-4" />
+              <span>Fast by design</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="case-hero-footer">
+          <span>Strategy</span><i />
+          <span>Interface</span><i />
+          <span>Engineering</span>
+          <button onClick={() => scrollToSection("overview")} aria-label="Scroll to project overview">Scroll to discover ↓</button>
         </div>
       </section>
 
@@ -462,7 +648,7 @@ export default function ProjectCaseStudy({
       </div>
 
       {/* ── SECTION NAV (Sticky) ── */}
-      <div className="sticky top-0 z-50 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-white/5 shadow-lg transition-all duration-300">
+      <div className="case-sticky-nav sticky top-0 z-50 bg-[var(--bg)]/95 backdrop-blur-xl border-b border-white/5 shadow-lg transition-all duration-300">
 
         {/* ─ MOBILE: Slim topbar with hamburger ─ */}
         <div className="md:hidden flex items-center justify-between px-4 h-12">
@@ -548,7 +734,7 @@ export default function ProjectCaseStudy({
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 py-16">
+      <main className="case-study-main relative z-10 max-w-7xl mx-auto px-6 lg:px-12 py-16">
         <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-16">
 
           {/* Left column: Sections */}
@@ -568,7 +754,7 @@ export default function ProjectCaseStudy({
                 {project?.slug === "empi-costumes" && <EmpiOverview accentColor={accentColor} />}
                 {project?.slug === "study-express-uk" && <StudyExpressOverview accentColor={accentColor} />}
                 {project?.slug === "stanleys-log" && <StanleysLogOverview accentColor={accentColor} />}
-                {!["opnmrt", "samuelstanley", "empi-costumes", "study-express-uk", "stanleys-log"].includes(project?.slug) && (
+                {!["opnmrt", "samuelstanley", "empi-costumes", "study-express-uk", "stanleys-log"].includes(project.slug) && (
                   <GenericOverview project={project} accentColor={accentColor} />
                 )}
               </div>
@@ -630,84 +816,28 @@ export default function ProjectCaseStudy({
                 color={accentColor}
               />
 
-              {project?.slug === "empi-costumes" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <img src="/empiimages/Screenshot%202026-04-01%20070059.png" alt="EMPI Costumes" className="w-full h-auto rounded-2xl border border-white/10 shadow-2xl hover:scale-[1.02] transition-transform duration-500" />
-                  <img src="/empiimages/Screenshot%202026-04-01%20070204.png" alt="EMPI Costumes" className="w-full h-auto rounded-2xl border border-white/10 shadow-2xl hover:scale-[1.02] transition-transform duration-500" />
-                </div>
-              ) : project?.slug === "study-express-uk" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <img src="/studyexpress/Screenshot%202026-04-01%20093838.png" alt="Study Express UK" className="w-full h-auto rounded-2xl border border-white/10 shadow-2xl hover:scale-[1.02] transition-transform duration-500" />
-                  <img src="/studyexpress/Screenshot%202026-04-01%20093955.png" alt="Study Express UK" className="w-full h-auto rounded-2xl border border-white/10 shadow-2xl hover:scale-[1.02] transition-transform duration-500" />
-                </div>
-              ) : project?.slug === "opnmrt" ? (
-                <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                  <img src="/opnmrt/Screenshot%202026-04-01%20161854.png" alt="OPNMRT" className="w-full h-auto hover:scale-[1.02] transition-transform duration-500" />
-                </div>
-              ) : project?.slug === "stanleys-log" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                    <img src="/stanleyslog/image.png" alt="Stanley's Log" className="w-full h-auto hover:scale-[1.02] transition-transform duration-500" />
-                  </div>
-                  <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                    <img src="/stanleyslog/imagecopy.png" alt="Stanley's Log Article" className="w-full h-auto hover:scale-[1.02] transition-transform duration-500" />
-                  </div>
-                </div>
-              ) : hasLiveLink ? (
-                /* Browser mockup frame */
-                <div className="rounded-2xl border border-white/10 overflow-hidden shadow-2xl bg-[#070b14]">
-                  {/* Browser chrome */}
-                  <div className="flex items-center gap-2 px-4 py-3 bg-[#0b0f19] border-b border-white/5">
-                    <div className="flex gap-1.5">
-                      <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
-                      <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-                      <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
-                    </div>
-                    <div className="flex-1 max-w-sm mx-auto bg-black/30 border border-white/5 rounded-md py-1 px-3 text-[10px] font-mono text-white/40 text-center truncate">
-                      {project.link.replace("https://", "").replace("http://", "")}
-                    </div>
-                    <a href={project.link} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-white/5 rounded text-white/30 hover:text-white/70 transition-colors">
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                  {/* Screenshot */}
-                  <div className="relative aspect-video bg-black/20">
-                    <img
-                      src={`https://api.microlink.io/?url=${encodeURIComponent(project.link)}&screenshot=true&meta=false&embed=screenshot.url`}
-                      alt={`${project.title} live screenshot`}
-                      className="w-full h-full object-cover object-top"
-                      loading="eager"
-                    />
-                  </div>
-                </div>
+              {galleryItems.length > 0 ? (
+                <ProjectGallery projectTitle={project.title} items={galleryItems} />
+              ) : automaticScreenshotUrl && previewTarget ? (
+                <AutomaticProjectPreview
+                  project={project}
+                  screenshotUrl={automaticScreenshotUrl}
+                  targetUrl={previewTarget}
+                />
               ) : (
-                /* IDE code mockup for non-web projects */
-                <div className="rounded-2xl border border-white/10 overflow-hidden shadow-2xl bg-[#030712] font-mono text-xs text-slate-300">
-                  <div className="flex items-center justify-between px-4 py-3 bg-[#0b0f19] border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1.5">
-                        <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
-                        <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-                        <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
-                      </div>
-                      <Terminal className="w-3.5 h-3.5 text-blue-400" />
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{project?.slug}.ts</span>
-                    </div>
-                    {null}
+                <div className="native-repository-preview">
+                  <GitBranch className="w-6 h-6" />
+                  <p className="native-repository-label">Repository project</p>
+                  <h3>{project?.title}</h3>
+                  <p>{project?.desc || "This project does not publish a separate live preview."}</p>
+                  <div>
+                    {project?.tech?.map((technology: string) => <span key={technology}>{technology}</span>)}
                   </div>
-                  <div className="p-6 md:p-10 space-y-1 text-slate-400 select-none leading-relaxed">
-                    <div><span className="text-pink-400">import</span> &#123; <span className="text-yellow-300">System</span>, <span className="text-yellow-300">Architecture</span> &#125; <span className="text-pink-400">from</span> <span className="text-green-300">&quot;sovereign-engineer&quot;</span>;</div>
-                    <div className="text-slate-600">// Core software mapping initialization</div>
-                    <div><span className="text-pink-400">const</span> <span className="text-blue-300">projectSpec</span> = &#123;</div>
-                    <div className="pl-4">name: <span className="text-green-300">&quot;{project?.title}&quot;</span>,</div>
-                    <div className="pl-4">status: <span className="text-green-300">&quot;{project?.status}&quot;</span>,</div>
-                    <div className="pl-4">techStack: [<span className="text-green-300">{project?.tech?.map((t: string) => `"${t}"`).join(", ")}</span>],</div>
-                    <div className="pl-4">metrics: &#123; stars: <span className="text-orange-300">{project?.stars || 0}</span>, forks: <span className="text-orange-300">{project?.forks || 0}</span> &#125;</div>
-                    <div>&#125;;</div>
-                    <div className="pt-3 text-slate-600">// Executing technical deployment validation...</div>
-                    <div><span className="text-yellow-300">System</span>.<span className="text-blue-300">validate</span>(projectSpec)</div>
-                    <div className="pl-4">.<span className="text-blue-300">then</span>(() <span className="text-pink-400">=&gt;</span> console.log(<span className="text-green-300">&quot;Production ready.&quot;</span>));</div>
-                  </div>
+                  {project?.repo && project.repo !== "#" && (
+                    <a href={project.repo} target="_blank" rel="noopener noreferrer">
+                      Open repository <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  )}
                 </div>
               )}
             </section>
@@ -721,43 +851,19 @@ export default function ProjectCaseStudy({
                 color={accentColor}
               />
 
-              {fetchingReadme ? (
-                <div className="space-y-4 animate-pulse py-8">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className={`h-4 bg-white/5 rounded`} style={{ width: `${75 - i * 10}%` }} />
-                  ))}
-                </div>
-              ) : readmeHtml ? (
-                <div
-                  className="markdown-body prose prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-accent hover:prose-a:underline prose-pre:bg-[#030712] prose-pre:border prose-pre:border-white/10 prose-code:text-emerald-400 prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
-                  dangerouslySetInnerHTML={{ __html: readmeHtml }}
-                />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    { icon: <Layers className="w-6 h-6" style={{ color: accentColor }} />, title: "System Foundation", desc: `Structured using modern ${project?.tag} paradigm, ensuring complete type safety, modular utility files, and streamlined build pipelines.` },
-                    { icon: <Flame className="w-6 h-6 text-red-400" />, title: "Performance First", desc: "Optimized for minimal load-time overhead, hardware-accelerated rendering, and clean memory lifecycle management." },
-                    { icon: <Terminal className="w-6 h-6 text-emerald-400" />, title: "CI/CD Pipeline", desc: "Continuously deployed via Git workflows directly from source. Every module is isolated for rapid updates and verified test paths." },
-                    { icon: <CheckCircle2 className="w-6 h-6 text-blue-400" />, title: "Quality Standards", desc: "Designed with comprehensive testing coverage, clean interface abstractions, and automated lint compliance across all modules." },
-                    { icon: <Shield className="w-6 h-6 text-purple-400" />, title: "Security by Design", desc: "Follows security-first principles: input validation, secure API gateways, secret management, and role-based access controls." },
-                    { icon: <Zap className="w-6 h-6 text-yellow-400" />, title: "Scalable by Nature", desc: "Horizontal scaling ready with stateless architecture, database indexing, and caching layers for peak traffic tolerance." },
-                  ].map((card, i) => (
-                    <div key={i} className="group p-6 rounded-2xl border border-white/8 bg-white/2 hover:bg-white/4 hover:border-white/15 transition-all duration-300 space-y-3 reveal">
-                      {card.icon}
-                      <h3 className="text-base font-black tracking-tight text-white">{card.title}</h3>
-                      <p className="text-sm text-white/50 leading-relaxed">{card.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {projectTheme.buildNotes.map((card, i) => (
+                  <div key={i} className="group p-6 rounded-2xl border border-white/8 bg-white/2 hover:bg-white/4 hover:border-white/15 transition-all duration-300 space-y-3 reveal">
+                    <span className="native-note-number">{String(i + 1).padStart(2, "0")}</span>
+                    <h3 className="text-base font-black tracking-tight text-white">{card.title}</h3>
+                    <p className="text-sm text-white/50 leading-relaxed">{card.text}</p>
+                  </div>
+                ))}
+              </div>
 
-              {/* Architecture quote */}
-              <blockquote
-                className="mt-12 pl-6 py-4 border-l-[3px] text-xl md:text-2xl font-serif italic text-white/60 reveal"
-                style={{ borderColor: accentColor }}
-              >
-                &ldquo;Great software architecture is not about building complex systems; it&rsquo;s about creating simple structures that enable limitless growth.&rdquo;
-              </blockquote>
+              <p className="native-source-note reveal">
+                This section is written from the implementation notes for {project?.title}. Repository activity and technology labels are synced from GitHub.
+              </p>
             </section>
 
             {/* ── SECTION: METRICS ── */}
@@ -765,68 +871,48 @@ export default function ProjectCaseStudy({
               <SectionHeader
                 icon={<BarChart3 className="w-5 h-5" />}
                 label="05"
-                title="Project Metrics"
+                title="Repository Snapshot"
                 color={accentColor}
               />
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
                   {
-                    icon: <Zap className="w-5 h-5 text-yellow-400" />,
-                    value: "92%",
-                    label: "Performance Score",
-                    color: "text-yellow-400",
+                    icon: <Code2 className="w-5 h-5" />,
+                    value: project?.language || project?.tech?.[0] || "—",
+                    label: "Primary language",
                   },
                   {
-                    icon: <Shield className="w-5 h-5 text-cyan-400" />,
-                    value: "95%",
-                    label: "Security Audit",
-                    color: "text-cyan-400",
+                    icon: <Star className="w-5 h-5" />,
+                    value: typeof project?.stars === "number" ? project.stars : "—",
+                    label: "GitHub stars",
                   },
                   {
-                    icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
-                    value: "99.9%",
-                    label: "Target Uptime",
-                    color: "text-emerald-400",
+                    icon: <GitFork className="w-5 h-5" />,
+                    value: typeof project?.forks === "number" ? project.forks : "—",
+                    label: "GitHub forks",
                   },
                   {
-                    icon: <TrendingUp className="w-5 h-5 text-purple-400" />,
+                    icon: <Activity className="w-5 h-5" />,
                     value: project?.status || "Live",
                     label: "Status",
-                    color: "text-purple-400",
                   },
                 ].map((metric, i) => (
-                  <div key={i} className="p-5 rounded-2xl border border-white/8 bg-white/2 hover:bg-white/4 hover:border-white/15 transition-all duration-300 text-center space-y-2 reveal">
-                    <div className="flex justify-center">{metric.icon}</div>
-                    <div className={`text-xl font-black font-mono ${metric.color}`}>{metric.value}</div>
+                  <div key={i} className="native-repo-stat p-5 rounded-2xl text-center space-y-2 reveal">
+                    <div className="flex justify-center native-repo-stat-icon">{metric.icon}</div>
+                    <div className="text-xl font-black font-mono">{metric.value}</div>
                     <div className="text-[10px] uppercase tracking-widest text-white/30">{metric.label}</div>
                   </div>
                 ))}
               </div>
 
-              {/* Performance indicators */}
-              <div className="mt-8 p-6 rounded-2xl border border-white/8 bg-white/2 space-y-5">
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/50">Performance Indicators</h3>
-                {[
-                  { label: "Code Quality", value: 95, color: "#22c55e" },
-                  { label: "Test Coverage", value: 88, color: "#3b82f6" },
-                  { label: "Performance Score", value: 92, color: accentColor },
-                  { label: "Scalability Index", value: 97, color: "#a855f7" },
-                ].map((bar) => (
-                  <div key={bar.label} className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-white/60">{bar.label}</span>
-                      <span className="text-xs font-mono font-bold" style={{ color: bar.color }}>{bar.value}%</span>
-                    </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-1000"
-                        style={{ width: `${bar.value}%`, background: `linear-gradient(90deg, ${bar.color}99, ${bar.color})` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {project?.repo && project.repo !== "#" && (
+                <a className="native-repo-link" href={project.repo} target="_blank" rel="noopener noreferrer">
+                  <GitBranch className="w-4 h-4" />
+                  View the source repository
+                  <ArrowUpRight className="w-4 h-4" />
+                </a>
+              )}
 
               {/* Timeline */}
               {project?.lastPushedAt && (
@@ -847,26 +933,27 @@ export default function ProjectCaseStudy({
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {relatedProjects.map((rp) => (
-                  <Link
+                {relatedProjects.map((rp) => {
+                  const relatedTheme = getProjectTheme(rp.slug);
+                  return <Link
                     key={rp.slug}
                     href={`/project/${rp.slug}`}
                     className="group relative p-5 rounded-2xl border border-white/8 bg-white/2 hover:bg-white/5 hover:border-white/20 transition-all duration-300 overflow-hidden reveal"
                   >
                     <div
                       className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{ background: `radial-gradient(ellipse at top left, ${rp.color || "#ff4d4d"}20 0%, transparent 70%)` }}
+                      style={{ background: `radial-gradient(ellipse at top left, ${relatedTheme.accent}20 0%, transparent 70%)` }}
                     />
                     <div className="relative z-10">
                       <div
                         className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center text-lg font-black"
-                        style={{ background: `${rp.color || "#ff4d4d"}20`, border: `1px solid ${rp.color || "#ff4d4d"}30` }}
+                        style={{ background: `${relatedTheme.accent}20`, border: `1px solid ${relatedTheme.accent}30` }}
                       >
                         {getTechIcon(rp.tech?.[0] || "")}
                       </div>
                       <div
                         className="text-[10px] font-black uppercase tracking-[0.25em] mb-2"
-                        style={{ color: rp.color || "#ff4d4d" }}
+                        style={{ color: relatedTheme.accent }}
                       >
                         {rp.tag}
                       </div>
@@ -877,7 +964,7 @@ export default function ProjectCaseStudy({
                       </div>
                     </div>
                   </Link>
-                ))}
+                })}
               </div>
             </section>
           </div>
@@ -1003,7 +1090,7 @@ export default function ProjectCaseStudy({
       </main>
 
       {/* ── BOTTOM CTA ── */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pb-24 mt-16">
+      <section className="case-study-cta relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pb-24 mt-16">
         <div className="relative p-12 md:p-20 rounded-[2rem] border border-white/10 overflow-hidden text-center">
           {/* Gradient background */}
           <div
@@ -1061,6 +1148,158 @@ export default function ProjectCaseStudy({
 
 /* ── Sub-components ── */
 
+function AutomaticProjectPreview({
+  project,
+  screenshotUrl,
+  targetUrl,
+}: {
+  project: ProjectRecord;
+  screenshotUrl: string;
+  targetUrl: string;
+}) {
+  return (
+    <a
+      className="automatic-project-preview"
+      href={targetUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <div className="automatic-project-browser">
+        <span><i /><i /><i /></span>
+        <small>{new URL(targetUrl, "https://samuelstanley.com").hostname}</small>
+        <ArrowUpRight className="w-4 h-4" />
+      </div>
+      <div className="automatic-project-image-wrap">
+        {/* Dynamic screenshot-service URLs cannot be passed through next/image safely. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={screenshotUrl}
+          alt={`${project.title} live homepage`}
+          className="automatic-project-image"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      <span className="automatic-project-caption">
+        <span>
+          <small>Automatically captured</small>
+          <strong>{project.title} homepage</strong>
+        </span>
+        <em>Open live product ↗</em>
+      </span>
+    </a>
+  );
+}
+
+function ProjectGallery({
+  projectTitle,
+  items,
+}: {
+  projectTitle: string;
+  items: ProjectScreenshot[];
+}) {
+  const [selected, setSelected] = useState<ProjectScreenshot | null>(null);
+  const featured = items[0];
+  const supporting = items.slice(1);
+
+  useEffect(() => {
+    if (!selected) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelected(null);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [selected]);
+
+  return (
+    <>
+      <div className="project-gallery">
+        <button className="project-gallery-feature" onClick={() => setSelected(featured)}>
+          <Image
+            src={featured.src}
+            width={featured.width}
+            height={featured.height}
+            sizes="(max-width: 1024px) 100vw, 850px"
+            alt={`${projectTitle}: ${featured.label}`}
+            className="project-gallery-image"
+          />
+          <span className="project-gallery-overlay">
+            <span>
+              <small>Featured screen</small>
+              <strong>{featured.label}</strong>
+            </span>
+            <span className="project-gallery-expand">View full screen ↗</span>
+          </span>
+        </button>
+
+        {supporting.length > 0 && (
+          <div className="project-gallery-grid">
+            {supporting.map((item, index) => (
+              <button
+                key={item.id}
+                className={`project-gallery-card ${item.height > item.width ? "is-portrait" : ""}`}
+                onClick={() => setSelected(item)}
+              >
+                <div className="project-gallery-media">
+                  <Image
+                    src={item.src}
+                    width={item.width}
+                    height={item.height}
+                    sizes="(max-width: 640px) 100vw, 420px"
+                    alt={`${projectTitle}: ${item.label}`}
+                    className="project-gallery-image"
+                  />
+                </div>
+                <span className="project-gallery-caption">
+                  <small>{String(index + 2).padStart(2, "0")}</small>
+                  <span>
+                    <strong>{item.label}</strong>
+                    <em>{item.description}</em>
+                  </span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {selected && (
+        <div
+          className="project-gallery-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${selected.label} screenshot`}
+          onClick={() => setSelected(null)}
+        >
+          <button className="project-gallery-close" onClick={() => setSelected(null)} aria-label="Close screenshot">
+            <X className="w-5 h-5" />
+          </button>
+          <div className="project-gallery-lightbox-inner" onClick={(event) => event.stopPropagation()}>
+            <Image
+              src={selected.src}
+              width={selected.width}
+              height={selected.height}
+              sizes="96vw"
+              alt={`${projectTitle}: ${selected.label}`}
+              className="project-gallery-lightbox-image"
+              priority
+            />
+            <div>
+              <strong>{selected.label}</strong>
+              <p>{selected.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function SectionHeader({ icon, label, title, color }: { icon: React.ReactNode; label: string; title: string; color: string }) {
   return (
     <div className="flex items-start gap-4 mb-10 reveal">
@@ -1100,28 +1339,20 @@ function OpnmrtOverview({ accentColor }: { accentColor: string }) {
   return (
     <div className="space-y-6 text-white/70 text-lg leading-relaxed">
       <p className="text-xl md:text-2xl font-semibold text-white/80">
-        <strong className="text-white">OPNMRT</strong> is a robust, multi-tenant e-commerce SaaS platform that functions as an intelligent &ldquo;storefront engine.&rdquo; Unlike traditional centralized marketplaces, OPNMRT empowers independent sellers to build and manage their own branded storefronts while providing buyers with a seamless, account-driven shopping experience.
+        <strong className="text-white">OPNMRT</strong> started with a practical question: can an independent seller run a proper online store without giving up their brand, customer data or a percentage of every sale?
       </p>
-      <SectionTitle>Core Architecture & Philosophy</SectionTitle>
+      <p>The result is a shared commerce engine that gives each merchant a separate storefront, catalogue and operating space. It is closer to infrastructure for sellers than a marketplace competing for their customers.</p>
+      <SectionTitle>How it is put together</SectionTitle>
       <ul className="space-y-4">
-        <BulletPoint color={accentColor}><strong className="text-white">Multi-Tenant Model:</strong> A single application serves all sellers securely. Data is strictly isolated at the database level using <code className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-sm">tenantId</code> / <code className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-sm">storeId</code>.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Custom Domains:</strong> Stores are accessed via subdomains (e.g., <code className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-sm">storename.opnmrt.com</code>) or custom domains connected by the seller.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Monorepo Structure:</strong> Uses pnpm workspaces dividing responsibilities into <code className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-sm">apps/web</code> (Next.js), <code className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-sm">apps/api</code> (NestJS), and <code className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-sm">packages/shared</code>.</BulletPoint>
+        <BulletPoint color={accentColor}><strong className="text-white">Tenant boundaries:</strong> every store is identified in the data model, so catalogue and order queries always run in the correct merchant context.</BulletPoint>
+        <BulletPoint color={accentColor}><strong className="text-white">Store identity:</strong> merchants can work from an OPNMRT subdomain or connect a domain they already own.</BulletPoint>
+        <BulletPoint color={accentColor}><strong className="text-white">Split responsibilities:</strong> the Next.js storefront, NestJS API and shared packages live in one workspace without becoming one large application.</BulletPoint>
       </ul>
-      <SectionTitle>Payment Model: BYOK (Bring Your Own Keys)</SectionTitle>
+      <SectionTitle>Money goes directly to the merchant</SectionTitle>
       <ul className="space-y-4">
-        <BulletPoint color={accentColor}><strong className="text-white">No Escrow:</strong> The platform does not hold funds, take commissions, or manage payouts.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Direct P2P Payments:</strong> Sellers integrate their own Paystack/Flutterwave keys. Money flows directly to the seller&apos;s merchant account.</BulletPoint>
+        <BulletPoint color={accentColor}>A seller connects their own Paystack or Flutterwave account.</BulletPoint>
+        <BulletPoint color={accentColor}>OPNMRT confirms the transaction and updates the order, but it does not hold the seller&apos;s funds.</BulletPoint>
       </ul>
-      <SectionTitle>AI-Powered Storefront Assistant</SectionTitle>
-      <ul className="space-y-4">
-        <BulletPoint color={accentColor}><strong className="text-white">Content Generation:</strong> Automatically writes compelling product descriptions using Gemini AI.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Business Intelligence:</strong> Translates raw analytics into plain-English sales insights.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Inventory Forecasting:</strong> Predicts stock run-outs and recommends restock timelines.</BulletPoint>
-      </ul>
-      <blockquote className="border-l-[3px] pl-8 py-2 my-8 text-xl md:text-2xl font-serif italic text-white/50" style={{ borderColor: accentColor }}>
-        &ldquo;Logistics must be hyper-local. Global mapping solutions often fail the last-mile test in emerging markets.&rdquo;
-      </blockquote>
     </div>
   );
 }
@@ -1147,15 +1378,15 @@ function EmpiOverview({ accentColor }: { accentColor: string }) {
   return (
     <div className="space-y-6 text-white/70 text-lg leading-relaxed">
       <p className="text-xl md:text-2xl font-semibold text-white/80">
-        EMPI Costumes isn&apos;t just a storefront — it&apos;s a comprehensive digital boutique operating system built to power an elite costume creation and rental studio in Lagos, Nigeria.
+        EMPI Costumes needed more than a product grid. A costume can be sold, rented for specific dates, or made from a client&apos;s measurements—and the studio still needs one reliable view of the work.
       </p>
-      <SectionTitle>Beyond E-Commerce: The Bespoke Workflow</SectionTitle>
-      <p>A sophisticated &ldquo;Bespoke&rdquo; pipeline where users submit custom design requests complete with individual measurements and thematic references. Under the hood, a unified <code className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-sm">UnifiedOrder</code> model seamlessly reconciles traditional rentals with complex tailoring requirements.</p>
-      <SectionTitle>Enterprise Resource Planning at the Core</SectionTitle>
+      <SectionTitle>One shop, three kinds of order</SectionTitle>
+      <p>The bespoke flow keeps measurements and visual references with the request. Rentals carry their availability and return obligations. Regular purchases stay quick. Those paths meet in a unified order view for the studio team.</p>
+      <SectionTitle>What the team works with</SectionTitle>
       <ul className="space-y-4">
-        <BulletPoint color={accentColor}><strong className="text-white">Automated Invoicing:</strong> Auto-generates professional PDF invoices via HTML-to-PDF pipelines for damage deposits and custom orders.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Real-Time Sync:</strong> Employs Socket.io websockets to keep admin dashboards instantly synchronized across the studio floor as orders and payments flow in.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Paystack Integration:</strong> Full payment gateway with webhook verification, receipt scanning, and multi-currency support.</BulletPoint>
+        <BulletPoint color={accentColor}>Invoices that account for custom work and rental deposits.</BulletPoint>
+        <BulletPoint color={accentColor}>Live order updates in the studio dashboard.</BulletPoint>
+        <BulletPoint color={accentColor}>Paystack verification tied back to the correct order.</BulletPoint>
       </ul>
     </div>
   );
@@ -1165,15 +1396,15 @@ function StudyExpressOverview({ accentColor }: { accentColor: string }) {
   return (
     <div className="space-y-6 text-white/70 text-lg leading-relaxed">
       <p className="text-xl md:text-2xl font-semibold text-white/80">
-        Study Express UK is a comprehensive educational technology (EdTech) platform empowering global learners with high-quality courses, events, and certifications.
+        Study Express UK brings courses, professional events and corporate training into one place. The important work was making a broad catalogue feel straightforward to someone deciding what to learn next.
       </p>
-      <SectionTitle>Core Stack & Architecture</SectionTitle>
-      <p>Built on the modern Next.js App Router, React, and TypeScript. Leverages MongoDB via Mongoose for adaptable, document-based storage. NextAuth.js guarantees multi-role security, while Stripe handles payments.</p>
-      <SectionTitle>Robust E-Learning Engine</SectionTitle>
+      <SectionTitle>Different jobs, different views</SectionTitle>
+      <p>Learners need enrolment and progress. Instructors need course delivery tools. Administrators need oversight. Authentication separates those responsibilities without sending people through unrelated screens.</p>
+      <SectionTitle>The working parts</SectionTitle>
       <ul className="space-y-4">
-        <BulletPoint color={accentColor}><strong className="text-white">Course Management:</strong> Tracking detailed enrollment metrics, learner progression paths, and completion rates.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Event Engine:</strong> Coordinates physical, online, and hybrid live events for global professionals.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Multi-role Auth:</strong> Separate learner, instructor, and admin portals with granular access controls.</BulletPoint>
+        <BulletPoint color={accentColor}>Course enrolment and learner progress.</BulletPoint>
+        <BulletPoint color={accentColor}>Bookings for physical, online and hybrid events.</BulletPoint>
+        <BulletPoint color={accentColor}>Separate learner, instructor and administrator access.</BulletPoint>
       </ul>
     </div>
   );
@@ -1183,31 +1414,31 @@ function StanleysLogOverview({ accentColor }: { accentColor: string }) {
   return (
     <div className="space-y-6 text-white/70 text-lg leading-relaxed">
       <p className="text-xl md:text-2xl font-semibold text-white/80">
-        <strong className="text-white">Stanley&apos;s Log v2</strong> is more than just a blog — it is a sophisticated, autonomous AI content ecosystem bridging the gap between intelligent data scraping and automated publishing.
+        <strong className="text-white">Stanley&apos;s Log</strong> is a publishing experiment: can research, drafting and deployment run on a dependable schedule while every published article remains easy to inspect and edit?
       </p>
-      <SectionTitle>Autonomous Intelligence & Fallback Resilience</SectionTitle>
+      <SectionTitle>The publishing loop</SectionTitle>
       <ul className="space-y-4">
-        <BulletPoint color={accentColor}><strong className="text-white">Multi-model Fallback:</strong> Uses a custom TypeScript engine to scrape RSS feeds with <strong className="text-white">Gemini 1.5 Pro, Flash, and 8B</strong> models for 100% uptime.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Automated Publishing:</strong> Scheduled GitHub Actions cron jobs trigger the pipeline daily, researching and publishing new posts without human intervention.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Smart Content:</strong> Each post is analyzed for relevance, deduplicated, and enriched with AI-generated context before publishing.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Secure Admin:</strong> A protected dashboard for monitoring the pipeline, managing posts, and triggering manual runs.</BulletPoint>
+        <BulletPoint color={accentColor}>A scheduled GitHub Action starts the research run.</BulletPoint>
+        <BulletPoint color={accentColor}>Sources are checked against existing posts before a draft is created.</BulletPoint>
+        <BulletPoint color={accentColor}>The finished article is committed as content, leaving an ordinary Git history rather than a hidden publishing database.</BulletPoint>
+        <BulletPoint color={accentColor}>A protected control screen shows what ran and allows a manual retry.</BulletPoint>
       </ul>
     </div>
   );
 }
 
-function GenericOverview({ project, accentColor }: { project: any; accentColor: string }) {
+function GenericOverview({ project, accentColor }: { project: ProjectRecord; accentColor: string }) {
   return (
     <div className="space-y-6 text-white/70 text-lg leading-relaxed">
       <p className="text-xl md:text-2xl font-semibold text-white/80">
-        <strong className="text-white">{project?.title}</strong> is a specialized software solution designed with a focus on code efficiency, robust engineering principles, and modular design paradigms.
+        <strong className="text-white">{project?.title}</strong> — {project?.desc || "a software project synced from the public repository."}
       </p>
-      <p>This codebase represents a custom system architecture built to address high-performance operations, clean data routing, and scalable client-server connectivity.</p>
-      <SectionTitle>Engineering Principles</SectionTitle>
+      <p>This page deliberately stays close to the repository record. It does not invent traffic, test coverage or architectural claims that are not part of the published project information.</p>
+      <SectionTitle>What is visible</SectionTitle>
       <ul className="space-y-4">
-        <BulletPoint color={accentColor}><strong className="text-white">Modular Architecture:</strong> Every component is decoupled, enabling independent testing, deployment, and replacement without affecting the rest of the system.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Type Safety:</strong> Comprehensive TypeScript typing across the entire codebase, catching errors at compile time rather than runtime.</BulletPoint>
-        <BulletPoint color={accentColor}><strong className="text-white">Production Ready:</strong> Designed from day one for production workloads with proper error handling, logging, and monitoring.</BulletPoint>
+        {project?.tech?.map((technology: string) => (
+          <BulletPoint key={technology} color={accentColor}>{technology} is listed in the project&apos;s curated technology set.</BulletPoint>
+        ))}
       </ul>
     </div>
   );

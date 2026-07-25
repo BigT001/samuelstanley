@@ -1,0 +1,106 @@
+{
+  "opnmrt": [
+    {
+      "id": "home",
+      "label": "Commerce homepage",
+      "description": "The public OPNMRT storefront and product introduction.",
+      "src": "/opnmrt/Screenshot 2026-04-01 161854.png",
+      "width": 1893,
+      "height": 1035
+    }
+  ],
+  "empi-costumes": [
+    {
+      "id": "home",
+      "label": "Atelier homepage",
+      "description": "The customer-facing rental and costume storefront.",
+      "src": "/empiimages/Screenshot 2026-04-01 070059.png",
+      "width": 1917,
+      "height": 1044
+    },
+    {
+      "id": "catalogue",
+      "label": "Costume catalogue",
+      "description": "Product discovery and costume browsing.",
+      "src": "/empiimages/Screenshot 2026-04-01 070204.png",
+      "width": 1901,
+      "height": 982
+    },
+    {
+      "id": "mobile-home",
+      "label": "Mobile storefront",
+      "description": "The shopping experience on a small screen.",
+      "src": "/empiimages/Screenshot 2026-04-01 070256.png",
+      "width": 436,
+      "height": 946
+    },
+    {
+      "id": "mobile-detail",
+      "label": "Mobile product view",
+      "description": "Costume details and actions on mobile.",
+      "src": "/empiimages/Screenshot 2026-04-01 070332.png",
+      "width": 431,
+      "height": 904
+    },
+    {
+      "id": "mobile-checkout",
+      "label": "Mobile booking flow",
+      "description": "A focused rental and checkout journey.",
+      "src": "/empiimages/Screenshot 2026-04-01 070409.png",
+      "width": 438,
+      "height": 946
+    },
+    {
+      "id": "operations",
+      "label": "Studio operations",
+      "description": "The working interface used to manage customer activity.",
+      "src": "/empiimages/Screenshot 2026-04-01 071449.png",
+      "width": 1914,
+      "height": 1034
+    }
+  ],
+  "study-express-uk": [
+    {
+      "id": "home",
+      "label": "Learning homepage",
+      "description": "The public entry point for courses and events.",
+      "src": "/studyexpress/Screenshot 2026-04-01 093838.png",
+      "width": 1862,
+      "height": 1003
+    },
+    {
+      "id": "courses",
+      "label": "Course discovery",
+      "description": "Programme browsing and learning pathways.",
+      "src": "/studyexpress/Screenshot 2026-04-01 093955.png",
+      "width": 1904,
+      "height": 1050
+    },
+    {
+      "id": "events",
+      "label": "Professional events",
+      "description": "Event discovery and booking information.",
+      "src": "/studyexpress/Screenshot 2026-04-01 094017.png",
+      "width": 1887,
+      "height": 865
+    }
+  ],
+  "stanleys-log": [
+    {
+      "id": "feed",
+      "label": "Editorial feed",
+      "description": "The automated publishing homepage.",
+      "src": "/stanleyslog/image.png",
+      "width": 1863,
+      "height": 978
+    },
+    {
+      "id": "article",
+      "label": "Article experience",
+      "description": "A focused long-form reading view.",
+      "src": "/stanleyslog/imagecopy.png",
+      "width": 1264,
+      "height": 970
+    }
+  ]
+}

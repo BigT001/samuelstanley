@@ -1,0 +1,55 @@
+name: Refresh project gallery
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [project-deployed]
+  schedule:
+    - cron: "30 4 * * 1"
+
+concurrency:
+  group: project-gallery
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout portfolio
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install capture browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Capture public and demo views
+        env:
+          OPNMRT_DEMO_EMAIL: ${{ secrets.OPNMRT_DEMO_EMAIL }}
+          OPNMRT_DEMO_PASSWORD: ${{ secrets.OPNMRT_DEMO_PASSWORD }}
+          STUDY_EXPRESS_DEMO_EMAIL: ${{ secrets.STUDY_EXPRESS_DEMO_EMAIL }}
+          STUDY_EXPRESS_DEMO_PASSWORD: ${{ secrets.STUDY_EXPRESS_DEMO_PASSWORD }}
+        run: pnpm capture:projects
+
+      - name: Commit refreshed gallery
+        run: |
+          git config user.name "Project Gallery Bot"
+          git config user.email "gallery-bot@samuelstanley.com"
+          git add app/project-gallery.generated.json public/project-gallery/
+          git diff --cached --quiet || git commit -m "chore: refresh project gallery"
+          git push

@@ -1,0 +1,52 @@
+{
+  "portfolioApi": "https://samuelstanley.com/api/github/projects",
+  "projects": [
+    {
+      "slug": "opnmrt",
+      "baseUrl": "https://www.opnmrt.com",
+      "routes": [
+        { "id": "home", "label": "Commerce homepage", "path": "/" },
+        { "id": "features", "label": "Product intelligence", "path": "/features" },
+        { "id": "pricing", "label": "Merchant pricing", "path": "/pricing" }
+      ],
+      "authenticatedRoutes": [
+        { "id": "dashboard", "label": "Merchant dashboard", "path": "/dashboard" }
+      ],
+      "auth": {
+        "loginPath": "/login",
+        "emailSelector": "input[name=\"email\"]",
+        "passwordSelector": "input[name=\"password\"]",
+        "submitSelector": "button[type=\"submit\"]",
+        "emailEnv": "OPNMRT_DEMO_EMAIL",
+        "passwordEnv": "OPNMRT_DEMO_PASSWORD"
+      }
+    },
+    {
+      "slug": "empi-costumes",
+      "baseUrl": "https://empicostumes.com",
+      "routes": [
+        { "id": "home", "label": "Atelier homepage", "path": "/" }
+      ]
+    },
+    {
+      "slug": "study-express-uk",
+      "baseUrl": "https://studyexpressuk.vercel.app",
+      "routes": [
+        { "id": "home", "label": "Learning homepage", "path": "/" },
+        { "id": "courses", "label": "Course discovery", "path": "/courses" },
+        { "id": "events", "label": "Professional events", "path": "/events" }
+      ],
+      "authenticatedRoutes": [
+        { "id": "dashboard", "label": "Learner dashboard", "path": "/dashboard" }
+      ],
+      "auth": {
+        "loginPath": "/auth/signin",
+        "emailSelector": "input[name=\"email\"]",
+        "passwordSelector": "input[name=\"password\"]",
+        "submitSelector": "button[type=\"submit\"]",
+        "emailEnv": "STUDY_EXPRESS_DEMO_EMAIL",
+        "passwordEnv": "STUDY_EXPRESS_DEMO_PASSWORD"
+      }
+    }
+  ]
+}
