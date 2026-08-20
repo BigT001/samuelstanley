@@ -35,8 +35,10 @@ export function ThemeToggle({ inline }: { inline?: boolean }) {
     });
   };
 
+  const isProjectPage = typeof window !== "undefined" && window.location.pathname.startsWith("/project");
+
   if (!mounted) return null;
-  if (!inline && isHomepage) return null;
+  if (!inline && (isHomepage || isProjectPage)) return null;
 
   return (
     <button

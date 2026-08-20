@@ -127,14 +127,29 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var html = document.documentElement;
+                  ['crxlauncher', 'crxlauncher-bridged'].forEach(function(attr) {
+                    if (html.hasAttribute(attr)) html.removeAttribute(attr);
+                  });
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#050810] text-[#f0f4ff]">
+      <body className="min-h-full flex flex-col bg-[#050810] text-[#f0f4ff]" suppressHydrationWarning>
         <ThemeToggle />
         {children}
         <Script id="microsoft-clarity" strategy="afterInteractive">

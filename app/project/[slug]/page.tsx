@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { projects } from "../../components/data";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import projectGallery from "../../project-gallery.generated.json";
 import { ContactModal } from "../../components/ui";
 import { Starfield } from "../../components/Starfield";
@@ -29,7 +30,12 @@ import {
   BookOpen,
   Menu,
   X,
+  Sparkles,
 } from "lucide-react";
+
+const ScrollScene3D = dynamic(() => import("../../components/three/ScrollScene"), {
+  ssr: false,
+});
 
 // Tech icon mapping
 const TECH_ICONS: Record<string, string> = {
@@ -75,10 +81,8 @@ function getTechIcon(name: string): string {
 // Section IDs
 const SECTIONS = [
   { id: "overview", label: "Overview", icon: BookOpen },
-  { id: "tech-stack", label: "Tech Stack", icon: Cpu },
   { id: "live-preview", label: "Live Preview", icon: Globe },
   { id: "architecture", label: "Architecture", icon: Layers },
-  { id: "metrics", label: "Metrics", icon: BarChart3 },
   { id: "related", label: "Related Projects", icon: ChevronRight },
 ];
 
@@ -164,7 +168,7 @@ const PROJECT_THEMES: Record<string, ProjectIdentity> = {
     surface: "#211815",
     text: "#fffaf2",
     muted: "#c7b8a7",
-    font: "Georgia, 'Times New Roman', serif",
+    font: "Inter, ui-sans-serif, system-ui, sans-serif",
     displayFont: "Georgia, 'Times New Roman', serif",
     image: "/empiimages/Screenshot 2026-04-01 070059.png",
     eyebrow: "Costume atelier · Lagos",
@@ -198,8 +202,8 @@ const PROJECT_THEMES: Record<string, ProjectIdentity> = {
     surface: "#10130f",
     text: "#f4f7ed",
     muted: "#9ca68e",
-    font: "'Courier New', ui-monospace, monospace",
-    displayFont: "Arial Black, Inter, ui-sans-serif, sans-serif",
+    font: "Inter, ui-sans-serif, system-ui, sans-serif",
+    displayFont: "Inter, ui-sans-serif, system-ui, sans-serif",
     image: "/stanleyslog/image.png",
     eyebrow: "Automated field notes",
     buildNotes: [
@@ -232,8 +236,8 @@ function getProjectTheme(slug?: string) {
   const generatedIdentities = [
     { accent: "#7c9cff", accent2: "#70e1c8", background: "#090b12", surface: "#111522", font: "Inter, ui-sans-serif, system-ui, sans-serif" },
     { accent: "#f0b35a", accent2: "#ef7e6c", background: "#120e0a", surface: "#1d1710", font: "Georgia, 'Times New Roman', serif" },
-    { accent: "#c6f36b", accent2: "#66d9cc", background: "#090c08", surface: "#12170f", font: "'Courier New', ui-monospace, monospace" },
-    { accent: "#d89cff", accent2: "#7aa9ff", background: "#0e0912", surface: "#18101e", font: "ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif" },
+    { accent: "#c6f36b", accent2: "#66d9cc", background: "#090c08", surface: "#12170f", font: "Inter, ui-sans-serif, system-ui, sans-serif" },
+    { accent: "#d89cff", accent2: "#7aa9ff", background: "#0e0912", surface: "#18101e", font: "Inter, ui-sans-serif, system-ui, sans-serif" },
   ];
   const identityIndex = [...(slug || "project")].reduce((total, character) => total + character.charCodeAt(0), 0) % generatedIdentities.length;
   const generated = generatedIdentities[identityIndex];
@@ -251,6 +255,28 @@ function getProjectTheme(slug?: string) {
   };
 }
 
+// In-memory module cache for GitHub project data to ensure 0ms instant transitions
+let githubProjectsCache: GithubProjectRecord[] | null = null;
+let githubProjectsPromise: Promise<GithubProjectRecord[]> | null = null;
+
+function fetchGithubProjects(): Promise<GithubProjectRecord[]> {
+  if (githubProjectsCache) return Promise.resolve(githubProjectsCache);
+  if (githubProjectsPromise) return githubProjectsPromise;
+
+  githubProjectsPromise = fetch("/api/github/projects")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success && Array.isArray(data.projects)) {
+        githubProjectsCache = data.projects;
+        return data.projects;
+      }
+      return [];
+    })
+    .catch(() => []);
+
+  return githubProjectsPromise;
+}
+
 export default function ProjectCaseStudy({
   params,
 }: {
@@ -266,7 +292,8 @@ export default function ProjectCaseStudy({
 
   const staticProject = projects.find((candidate) => candidate.slug === resolvedParams.slug);
   const [project, setProject] = useState<ProjectRecord | null>(staticProject || null);
-  const [loading, setLoading] = useState(true);
+  // If static project is present, page is NOT blocked by loading (0ms instant render!)
+  const [loading, setLoading] = useState(!staticProject);
   // Related projects (excluding current)
   const relatedProjects = projects.filter((p) => p.slug !== resolvedParams.slug).slice(0, 3);
 
@@ -276,32 +303,28 @@ export default function ProjectCaseStudy({
     const slug = resolvedParams.slug;
     const themeFrame = window.requestAnimationFrame(() => setTheme(savedTheme));
 
-    fetch("/api/github/projects")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.projects) {
-          const dbProj = (data.projects as GithubProjectRecord[]).find((candidate) => candidate.repoName === slug);
-          if (dbProj) {
-            setProject({
-              title: dbProj.displayTitle || dbProj.repoName.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
-              slug: dbProj.repoName,
-              tag: dbProj.statusLabel || dbProj.language || "GitHub Repo",
-              desc: dbProj.displayDesc || dbProj.description || "",
-              tech: dbProj.displayTags?.length ? dbProj.displayTags : (dbProj.language ? [dbProj.language] : []),
-              color: dbProj.repoName === "opnmrt" ? "#ff4d4d" : "#6b8cff",
-              link: dbProj.homepage || dbProj.repoUrl || "#",
-              homepage: dbProj.homepage || undefined,
-              repo: dbProj.repoUrl || "#",
-              status: dbProj.statusLabel || "Live",
-              stars: dbProj.stars,
-              forks: dbProj.forks,
-              language: dbProj.language,
-              lastPushedAt: dbProj.lastPushedAt,
-              isGithub: true,
-            });
-          } else if (!projects.some((candidate) => candidate.slug === slug)) {
-            setLoading(false);
-          }
+    fetchGithubProjects()
+      .then((githubProjects) => {
+        const dbProj = githubProjects.find((candidate) => candidate.repoName === slug);
+        if (dbProj) {
+          setProject((prev) => ({
+            ...prev,
+            title: dbProj.displayTitle || dbProj.repoName.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            slug: dbProj.repoName,
+            tag: dbProj.statusLabel || dbProj.language || prev?.tag || "GitHub Repo",
+            desc: dbProj.displayDesc || dbProj.description || prev?.desc || "",
+            tech: dbProj.displayTags?.length ? dbProj.displayTags : (dbProj.language ? [dbProj.language] : prev?.tech || []),
+            color: dbProj.repoName === "opnmrt" ? "#ff4d4d" : "#6b8cff",
+            link: dbProj.homepage || dbProj.repoUrl || prev?.link || "#",
+            homepage: dbProj.homepage || prev?.homepage,
+            repo: dbProj.repoUrl || prev?.repo || "#",
+            status: dbProj.statusLabel || prev?.status || "Live",
+            stars: dbProj.stars,
+            forks: dbProj.forks,
+            language: dbProj.language,
+            lastPushedAt: dbProj.lastPushedAt,
+            isGithub: true,
+          }));
         }
         setLoading(false);
       })
@@ -386,14 +409,7 @@ export default function ProjectCaseStudy({
   };
 
   if (loading && !project) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
-        <div className="space-y-4 text-center">
-          <div className="w-12 h-12 rounded-full border-2 border-accent border-t-transparent animate-spin mx-auto" />
-          <p className="text-xs font-mono tracking-widest uppercase text-[var(--text-secondary)] animate-pulse">Loading Case Study…</p>
-        </div>
-      </div>
-    );
+    return <ProjectSkeleton />;
   }
 
   if (!loading && !project) notFound();
@@ -414,10 +430,10 @@ export default function ProjectCaseStudy({
       style={{
         "--project-accent": projectTheme.accent,
         "--project-accent-2": projectTheme.accent2,
-        "--project-bg": projectTheme.background,
-        "--project-surface": projectTheme.surface,
-        "--project-text": projectTheme.text,
-        "--project-muted": projectTheme.muted,
+        "--project-bg": theme === "light" ? "#f8fafc" : projectTheme.background,
+        "--project-surface": theme === "light" ? "#ffffff" : projectTheme.surface,
+        "--project-text": theme === "light" ? "#0f172a" : projectTheme.text,
+        "--project-muted": theme === "light" ? "#475569" : projectTheme.muted,
         "--project-font": projectTheme.font,
         "--project-display-font": projectTheme.displayFont,
       } as React.CSSProperties}
@@ -436,28 +452,30 @@ export default function ProjectCaseStudy({
       <section
         className="case-hero"
       >
+        <div className="case-hero-3d" aria-hidden="true">
+          <ScrollScene3D
+            variant="project"
+            accent={projectTheme.accent}
+            secondary={projectTheme.accent2}
+          />
+        </div>
         <div className="case-hero-noise" aria-hidden="true" />
         <div className="case-hero-orb case-hero-orb-one" aria-hidden="true" />
         <div className="case-hero-orb case-hero-orb-two" aria-hidden="true" />
 
         <div className="case-hero-shell">
           <div className="case-hero-copy">
-            <Link href="/?tab=projects" className="case-back-link">
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Selected work
-            </Link>
-
             <div className="case-kicker">
               <span>{projectTheme.eyebrow}</span>
               <span className="case-kicker-line" />
-              <span>Case study</span>
+              <span>Featured Case Study</span>
             </div>
 
             <h1 className="case-title">{project?.title}</h1>
             <p className="case-description">{project?.desc}</p>
 
             <div className="case-meta-row">
-              <span className="case-tag">{project?.tag}</span>
+              <span className="case-tag">{project?.tag || "TypeScript"}</span>
               <span className="case-status">
                 <span
                   className="case-status-dot"
@@ -465,33 +483,18 @@ export default function ProjectCaseStudy({
                     backgroundColor: ["Live", "Active"].includes(project.status || "") ? "#43d17b" : "#f4bd50",
                   }}
                 />
-                {project?.status}
+                {project?.status || "Live"}
               </span>
-            </div>
-
-            <div className="case-actions">
-              {hasLiveLink && (
-                <a href={project.link} target="_blank" rel="noopener noreferrer" className="case-primary-action">
-                  Explore the product
-                  <ArrowUpRight className="w-4 h-4" />
-                </a>
-              )}
-              <button onClick={() => scrollToSection("overview")} className="case-secondary-action">
-                Read the story
-                <span aria-hidden="true">↓</span>
-              </button>
+              <span className="case-tag font-mono text-[9px] opacity-75">Full-Stack System</span>
             </div>
           </div>
 
           <div className="case-visual-wrap" aria-label={`${project?.title} product preview`}>
-            <div className="case-visual-index" aria-hidden="true">
-              {String(projects.findIndex((item) => item.slug === project?.slug) + 1).padStart(2, "0")}
-            </div>
             <div className="case-product-window">
               <div className="case-window-bar">
                 <div className="case-window-dots"><i /><i /><i /></div>
-                <span>{project?.title?.toLowerCase().replace(/\s+/g, "")}.product</span>
-                <span className="case-window-secure">● live</span>
+                <span>https://{project?.slug?.toLowerCase() || "app"}.samuelstanley.com</span>
+                <span className="case-window-secure">● live system</span>
               </div>
               <div className="case-window-content">
                 {projectTheme.image ? (
@@ -530,21 +533,27 @@ export default function ProjectCaseStudy({
                 <div className="case-window-sheen" />
               </div>
             </div>
-            <div className="case-floating-note case-floating-note-top">
-              <span>Built for</span>
-              <strong>clarity + scale</strong>
-            </div>
-            <div className="case-floating-note case-floating-note-bottom">
-              <Zap className="w-4 h-4" />
-              <span>Fast by design</span>
-            </div>
+          </div>
+
+          <div className="case-actions">
+            {hasLiveLink && (
+              <a href={project.link} target="_blank" rel="noopener noreferrer" className="case-primary-action">
+                Visit site
+                <ArrowUpRight className="w-4 h-4" />
+              </a>
+            )}
+            <button onClick={() => scrollToSection("overview")} className="case-secondary-action">
+              Read the story
+              <span aria-hidden="true">↓</span>
+            </button>
           </div>
         </div>
 
         <div className="case-hero-footer">
           <span>Strategy</span><i />
           <span>Interface</span><i />
-          <span>Engineering</span>
+          <span>Engineering</span><i />
+          <span>Reliability</span>
           <button onClick={() => scrollToSection("overview")} aria-label="Scroll to project overview">Scroll to discover ↓</button>
         </div>
       </section>
@@ -760,58 +769,11 @@ export default function ProjectCaseStudy({
               </div>
             </section>
 
-            {/* ── SECTION: TECH STACK DEEP DIVE ── */}
-            <section id="tech-stack" className="scroll-mt-32">
-              <SectionHeader
-                icon={<Cpu className="w-5 h-5" />}
-                label="02"
-                title="Tech Stack Deep Dive"
-                color={accentColor}
-              />
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {project?.tech?.map((tech: string, i: number) => (
-                  <div
-                    key={tech}
-                    className="group relative p-5 rounded-2xl border border-white/8 bg-white/3 hover:bg-white/6 hover:border-white/20 transition-all duration-300 cursor-default overflow-hidden reveal"
-                    style={{ animationDelay: `${i * 60}ms` }}
-                  >
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{ background: `radial-gradient(ellipse at top left, ${accentColor}15 0%, transparent 70%)` }}
-                    />
-                    <div className="relative z-10">
-                      <div className="text-2xl mb-3">{getTechIcon(tech)}</div>
-                      <div className="text-sm font-black text-white tracking-tight">{tech}</div>
-                      <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest mt-1">
-                        {getTechCategory(tech)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Tech architecture visual */}
-              <div className="mt-8 p-6 rounded-2xl border border-white/8 bg-white/2 font-mono text-xs space-y-1 text-slate-400">
-                <div className="text-[10px] uppercase tracking-widest text-white/30 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Stack Architecture
-                </div>
-                {project?.tech?.map((t: string, i: number) => (
-                  <div key={t} className="flex items-center gap-3">
-                    <span className="text-white/20">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="text-white/40">│</span>
-                    <span className="text-emerald-400">{t}</span>
-                    <span className="text-white/20">─── {getStackRole(t)}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
             {/* ── SECTION: LIVE PREVIEW ── */}
             <section id="live-preview" className="scroll-mt-32">
               <SectionHeader
                 icon={<Globe className="w-5 h-5" />}
-                label="03"
+                label="02"
                 title="Live Preview"
                 color={accentColor}
               />
@@ -846,15 +808,25 @@ export default function ProjectCaseStudy({
             <section id="architecture" className="scroll-mt-32">
               <SectionHeader
                 icon={<Layers className="w-5 h-5" />}
-                label="04"
+                label="03"
                 title="Architecture & Code"
                 color={accentColor}
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {projectTheme.buildNotes.map((card, i) => (
-                  <div key={i} className="group p-6 rounded-2xl border border-white/8 bg-white/2 hover:bg-white/4 hover:border-white/15 transition-all duration-300 space-y-3 reveal">
-                    <span className="native-note-number">{String(i + 1).padStart(2, "0")}</span>
+                  <div
+                    key={i}
+                    className="group p-6 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 space-y-3 reveal"
+                    style={{ borderColor: "rgba(255, 255, 255, 0.08)" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = `color-mix(in srgb, ${accentColor} 45%, rgba(255, 255, 255, 0.15))`;
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "rgba(255, 255, 255, 0.08)";
+                    }}
+                  >
+                    <span className="native-note-number" style={{ color: accentColor }}>{String(i + 1).padStart(2, "0")}</span>
                     <h3 className="text-base font-black tracking-tight text-white">{card.title}</h3>
                     <p className="text-sm text-white/50 leading-relaxed">{card.text}</p>
                   </div>
@@ -866,68 +838,11 @@ export default function ProjectCaseStudy({
               </p>
             </section>
 
-            {/* ── SECTION: METRICS ── */}
-            <section id="metrics" className="scroll-mt-32">
-              <SectionHeader
-                icon={<BarChart3 className="w-5 h-5" />}
-                label="05"
-                title="Repository Snapshot"
-                color={accentColor}
-              />
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[
-                  {
-                    icon: <Code2 className="w-5 h-5" />,
-                    value: project?.language || project?.tech?.[0] || "—",
-                    label: "Primary language",
-                  },
-                  {
-                    icon: <Star className="w-5 h-5" />,
-                    value: typeof project?.stars === "number" ? project.stars : "—",
-                    label: "GitHub stars",
-                  },
-                  {
-                    icon: <GitFork className="w-5 h-5" />,
-                    value: typeof project?.forks === "number" ? project.forks : "—",
-                    label: "GitHub forks",
-                  },
-                  {
-                    icon: <Activity className="w-5 h-5" />,
-                    value: project?.status || "Live",
-                    label: "Status",
-                  },
-                ].map((metric, i) => (
-                  <div key={i} className="native-repo-stat p-5 rounded-2xl text-center space-y-2 reveal">
-                    <div className="flex justify-center native-repo-stat-icon">{metric.icon}</div>
-                    <div className="text-xl font-black font-mono">{metric.value}</div>
-                    <div className="text-[10px] uppercase tracking-widest text-white/30">{metric.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {project?.repo && project.repo !== "#" && (
-                <a className="native-repo-link" href={project.repo} target="_blank" rel="noopener noreferrer">
-                  <GitBranch className="w-4 h-4" />
-                  View the source repository
-                  <ArrowUpRight className="w-4 h-4" />
-                </a>
-              )}
-
-              {/* Timeline */}
-              {project?.lastPushedAt && (
-                <div className="mt-6 flex items-center gap-3 p-4 rounded-xl border border-white/8 bg-white/2 text-sm text-white/40">
-                  <Clock className="w-4 h-4 text-white/25" />
-                  <span>Last updated: <span className="text-white/60 font-mono">{new Date(project.lastPushedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span></span>
-                </div>
-              )}
-            </section>
-
             {/* ── SECTION: RELATED PROJECTS ── */}
             <section id="related" className="scroll-mt-32">
               <SectionHeader
                 icon={<ChevronRight className="w-5 h-5" />}
-                label="06"
+                label="04"
                 title="Related Projects"
                 color={accentColor}
               />
@@ -938,16 +853,23 @@ export default function ProjectCaseStudy({
                   return <Link
                     key={rp.slug}
                     href={`/project/${rp.slug}`}
-                    className="group relative p-5 rounded-2xl border border-white/8 bg-white/2 hover:bg-white/5 hover:border-white/20 transition-all duration-300 overflow-hidden reveal"
+                    className="group relative p-5 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 overflow-hidden reveal"
+                    style={{ borderColor: "rgba(255, 255, 255, 0.08)" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = `color-mix(in srgb, ${relatedTheme.accent} 50%, rgba(255, 255, 255, 0.15))`;
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "rgba(255, 255, 255, 0.08)";
+                    }}
                   >
                     <div
                       className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{ background: `radial-gradient(ellipse at top left, ${relatedTheme.accent}20 0%, transparent 70%)` }}
+                      style={{ background: `radial-gradient(ellipse at top left, ${relatedTheme.accent}15 0%, transparent 70%)` }}
                     />
                     <div className="relative z-10">
                       <div
                         className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center text-lg font-black"
-                        style={{ background: `${relatedTheme.accent}20`, border: `1px solid ${relatedTheme.accent}30` }}
+                        style={{ background: `${relatedTheme.accent}18`, border: `1px solid ${relatedTheme.accent}30` }}
                       >
                         {getTechIcon(rp.tech?.[0] || "")}
                       </div>
@@ -974,11 +896,11 @@ export default function ProjectCaseStudy({
             <div className="sticky top-32 space-y-5">
 
               {/* Project info card */}
-              <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-xl overflow-hidden relative">
-                {/* Accent glow top */}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-xl overflow-hidden relative" style={{ borderColor: `color-mix(in srgb, ${accentColor} 25%, rgba(255, 255, 255, 0.08))` }}>
+                {/* Accent line top */}
                 <div
-                  className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-[60px] pointer-events-none opacity-40"
-                  style={{ background: accentColor }}
+                  className="w-full h-1"
+                  style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }}
                 />
 
                 <div className="p-6 space-y-6 relative z-10">
@@ -1024,8 +946,6 @@ export default function ProjectCaseStudy({
                     )}
                   </div>
 
-                  {/* GitHub stats removed */}
-
                   {/* Tech stack pills */}
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 mb-3">Tech Stack</p>
@@ -1044,23 +964,22 @@ export default function ProjectCaseStudy({
               </div>
 
               {/* CTA card */}
-              <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-xl p-6 space-y-4 text-center">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-xl p-6 space-y-4 text-center">
                 <div className="text-2xl">⚡</div>
                 <p className="text-sm font-black text-white tracking-tight">Build something like this?</p>
                 <p className="text-[11px] text-white/40 leading-relaxed">I&apos;m available for new projects and consulting.</p>
                 <button
                   onClick={() => setShowModal(true)}
-                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.15em] text-black bg-white hover:bg-zinc-200 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                   style={{
-                    background: `linear-gradient(135deg, ${accentColor}, ${accentColor}99)`,
-                    boxShadow: `0 0 20px ${accentColor}35`,
+                    boxShadow: `0 0 20px ${accentColor}30`,
                   }}
                 >
                   Hire Samuel
                 </button>
                 <a
                   href="mailto:stanley.samuel.stanley@gmail.com"
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] text-white/60 hover:text-white border border-white/10 hover:border-white/25 transition-all duration-300 hover:bg-white/5"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 hover:text-white border border-white/15 hover:border-white/30 transition-all duration-300 hover:bg-white/5"
                 >
                   <Mail className="w-3.5 h-3.5" /> Email Me
                 </a>
@@ -1498,3 +1417,31 @@ function getStackRole(name: string): string {
   };
   return roles[name] || "Core Dependency";
 }
+
+function ProjectSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#070709] text-white p-6 md:p-12 animate-pulse space-y-12">
+      <div className="max-w-7xl mx-auto space-y-12 pt-8">
+        <div className="w-32 h-8 bg-white/10 rounded-full" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <div className="w-28 h-4 bg-white/10 rounded-md" />
+            <div className="w-3/4 h-12 bg-white/15 rounded-xl" />
+            <div className="w-full h-20 bg-white/5 rounded-xl" />
+            <div className="flex gap-4 pt-2">
+              <div className="w-40 h-12 bg-white/20 rounded-full" />
+              <div className="w-36 h-12 bg-white/10 rounded-full" />
+            </div>
+          </div>
+          <div className="w-full aspect-[16/10] bg-white/5 rounded-2xl border border-white/10" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
+          <div className="h-32 bg-white/5 rounded-2xl border border-white/8" />
+          <div className="h-32 bg-white/5 rounded-2xl border border-white/8" />
+          <div className="h-32 bg-white/5 rounded-2xl border border-white/8" />
+        </div>
+      </div>
+    </div>
+  );
+}
+

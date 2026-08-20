@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { 
   Heart, 
   MessageCircle, 
@@ -35,6 +36,10 @@ import { ProfilePhoto, ContactModal, CVModal } from "./components/ui";
 import { ContactForm } from "./components/ContactSection";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { Starfield } from "./components/Starfield";
+
+const ScrollScene3D = dynamic(() => import("./components/three/ScrollScene"), {
+  ssr: false,
+});
 
 // Confetti helper
 const triggerConfetti = () => {
@@ -857,7 +862,10 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
 
           {/* ACTIVE HOME/ABOUT ME PANEL */}
           {activeTab === "home" && (
-            <div className="max-w-3xl mx-auto px-5 md:px-8 w-full animate-in fade-in duration-300 space-y-10">
+            <div className="home-3d-content max-w-3xl mx-auto px-5 md:px-8 w-full animate-in fade-in duration-300 space-y-10">
+              <div className="home-3d-stage" aria-hidden="true">
+                <ScrollScene3D variant="home" accent="#ff5f55" secondary="#58e4d5" />
+              </div>
               
               {/* Profile Hero Layout (Shown on mobile, hidden on desktop since it's already in the sidebar) */}
               <div className="md:hidden flex flex-col items-center text-center space-y-6 pt-1 pb-4 relative w-full">
