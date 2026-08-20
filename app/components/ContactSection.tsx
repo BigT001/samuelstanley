@@ -31,6 +31,8 @@ const socials = [
   { label: "Resume",    href: "/resume.pdf", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>, color: "#00e5cc" },
 ];
 
+const WHATSAPP_PHONE = "2348106889242";
+
 export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,41 +46,46 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
     const target = e.currentTarget;
     const formData = new FormData(target);
 
+    const name = (formData.get("name") as string) || "";
+    const email = (formData.get("email") as string) || "";
+    const subject = (formData.get("subject") as string) || "";
+    const message = (formData.get("message") as string) || "";
+
+    // 🚀 Send directly to WhatsApp
+    const text = `*New Inquiry via SamuelStanley.com*\n\n` +
+      `👤 *Name:* ${name}\n` +
+      `✉️ *Email:* ${email}\n` +
+      (subject ? `📌 *Subject:* ${subject}\n` : "") +
+      `💬 *Message:*\n${message}`;
+
+    const waUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, "_blank");
+
+    // Post to Web3Forms as backup
     try {
-      const response = await fetch("https://api.web3forms.com/submit", {
+      await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         body: formData
       });
+    } catch (err) {}
 
-      const data = await response.json();
+    setSent(true);
+    setLoading(false);
+    target.reset();
 
-      if (data.success) {
-        setSent(true);
-        setLoading(false);
-        target.reset();
+    // 🎉 Confetti explosion
+    confetti({
+      particleCount: 150,
+      spread: 80,
+      origin: { y: 0.7 },
+      colors: ["#25D366", "#ffffff", "#000000"],
+      zIndex: 10000,
+    });
 
-        // 🎉 Confetti explosion
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.7 },
-          colors: ["#ff4d4d", "#00e5cc", "#ffffff"],
-          zIndex: 10000,
-        });
-
-        // Auto-hide success message after 6 seconds
-        setTimeout(() => {
-          setSent(false);
-          if (onHideSuccess) onHideSuccess();
-        }, 6000);
-      } else {
-        setError(data.message || "Submission failed. Please check your access key.");
-        setLoading(false);
-      }
-    } catch (err) {
-      setError("Network error. Please try again later.");
-      setLoading(false);
-    }
+    setTimeout(() => {
+      setSent(false);
+      if (onHideSuccess) onHideSuccess();
+    }, 4000);
   };
 
   return (
@@ -97,20 +104,20 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
           <div
             style={{
               padding: "1rem 2rem",
-              background: "rgba(10,15,26,0.95)",
-              border: "1px solid #00e5cc",
+              background: "rgba(8,8,10,0.98)",
+              border: "1px solid #ffffff",
               borderRadius: "16px",
-              boxShadow: "0 10px 40px rgba(0, 229, 204, 0.25)",
+              boxShadow: "0 10px 40px rgba(255, 255, 255, 0.15)",
               display: "flex",
               alignItems: "center",
               gap: "1rem",
               backdropFilter: "blur(20px)",
             }}
           >
-            <span style={{ fontSize: "1.5rem" }}>🚀</span>
+            <span style={{ fontSize: "1.5rem" }}>💬</span>
             <div>
-              <p style={{ color: "white", fontWeight: 700, margin: 0, fontSize: "0.9rem" }}>Message Transmitted!</p>
-              <p style={{ color: "#00e5cc", fontSize: "0.75rem", margin: 0, fontWeight: 500 }}>I'll get back to you shortly.</p>
+              <p style={{ color: "white", fontWeight: 700, margin: 0, fontSize: "0.9rem" }}>WhatsApp Opened!</p>
+              <p style={{ color: "#a1a1aa", fontSize: "0.75rem", margin: 0, fontWeight: 500 }}>Redirected to WhatsApp to send your request.</p>
             </div>
             <button 
               onClick={() => setSent(false)}
@@ -130,7 +137,7 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
           <div key={f.id}>
             <label
               htmlFor={f.id}
-              style={{ display: "block", fontSize: "0.8rem", color: "#8892b0", fontWeight: 600, marginBottom: "0.4rem", letterSpacing: "0.04em" }}
+              style={{ display: "block", fontSize: "0.8rem", color: "#a1a1aa", fontWeight: 600, marginBottom: "0.4rem", letterSpacing: "0.04em" }}
             >
               {f.label}
             </label>
@@ -144,11 +151,11 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
                 className="light-mode-input"
                 style={{ ...inputStyle, resize: "vertical" }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#ff2222";
-                  e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 34, 34, 0.15)";
+                  e.currentTarget.style.borderColor = "#ffffff";
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.15)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(136,146,176,0.18)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -162,11 +169,11 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
                 className="light-mode-input"
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#ff2222";
-                  e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 34, 34, 0.15)";
+                  e.currentTarget.style.borderColor = "#ffffff";
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.15)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(136,146,176,0.18)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -184,22 +191,22 @@ export function ContactForm({ onHideSuccess }: { onHideSuccess?: () => void }) {
           type="submit"
           disabled={loading}
           style={{
-            padding: "0.85rem 2rem",
-            background: loading ? "rgba(255,77,77,0.5)" : "linear-gradient(135deg, #ff4d4d 0%, #cc2020 100%)",
-            color: "white",
+            padding: "0.9rem 2rem",
+            background: loading ? "rgba(255,255,255,0.5)" : "#ffffff",
+            color: "#000000",
             border: "none",
-            borderRadius: "10px",
-            fontWeight: 700,
+            borderRadius: "9999px",
+            fontWeight: 800,
             fontSize: "0.85rem",
             textTransform: "uppercase",
             cursor: loading ? "not-allowed" : "pointer",
-            transition: "all 0.2s ease",
-            letterSpacing: "0.05em",
-            boxShadow: loading ? "none" : "0 4px 20px rgba(255, 77, 77, 0.2)",
+            transition: "all 0.25s ease",
+            letterSpacing: "0.08em",
+            boxShadow: loading ? "none" : "0 4px 20px rgba(255, 255, 255, 0.15)",
             marginTop: "0.5rem"
           }}
         >
-          {loading ? "Transmitting..." : "Send Message →"}
+          {loading ? "Opening WhatsApp..." : "Send via WhatsApp →"}
         </button>
       </form>
     </div>

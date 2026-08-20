@@ -750,7 +750,7 @@ export default function ProjectCaseStudy({
           <div className="space-y-24 min-w-0">
 
             {/* ── SECTION: OVERVIEW ── */}
-            <section id="overview" className="scroll-mt-32">
+            <section id="overview" className="scroll-mt-32 reveal reveal-up">
               <SectionHeader
                 icon={<BookOpen className="w-5 h-5" />}
                 label="01"
@@ -770,7 +770,7 @@ export default function ProjectCaseStudy({
             </section>
 
             {/* ── SECTION: LIVE PREVIEW ── */}
-            <section id="live-preview" className="scroll-mt-32">
+            <section id="live-preview" className="scroll-mt-32 reveal reveal-up">
               <SectionHeader
                 icon={<Globe className="w-5 h-5" />}
                 label="02"
@@ -805,7 +805,7 @@ export default function ProjectCaseStudy({
             </section>
 
             {/* ── SECTION: ARCHITECTURE ── */}
-            <section id="architecture" className="scroll-mt-32">
+            <section id="architecture" className="scroll-mt-32 reveal reveal-up">
               <SectionHeader
                 icon={<Layers className="w-5 h-5" />}
                 label="03"
@@ -817,7 +817,7 @@ export default function ProjectCaseStudy({
                 {projectTheme.buildNotes.map((card, i) => (
                   <div
                     key={i}
-                    className="group p-6 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 space-y-3 reveal"
+                    className={`group p-6 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 space-y-3 reveal reveal-up reveal-delay-${(i % 4) + 1}`}
                     style={{ borderColor: "rgba(255, 255, 255, 0.08)" }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.borderColor = `color-mix(in srgb, ${accentColor} 45%, rgba(255, 255, 255, 0.15))`;
@@ -833,13 +833,13 @@ export default function ProjectCaseStudy({
                 ))}
               </div>
 
-              <p className="native-source-note reveal">
+              <p className="native-source-note reveal reveal-up">
                 This section is written from the implementation notes for {project?.title}. Repository activity and technology labels are synced from GitHub.
               </p>
             </section>
 
             {/* ── SECTION: RELATED PROJECTS ── */}
-            <section id="related" className="scroll-mt-32">
+            <section id="related" className="scroll-mt-32 reveal reveal-up">
               <SectionHeader
                 icon={<ChevronRight className="w-5 h-5" />}
                 label="04"
@@ -848,12 +848,12 @@ export default function ProjectCaseStudy({
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {relatedProjects.map((rp) => {
+                {relatedProjects.map((rp, i) => {
                   const relatedTheme = getProjectTheme(rp.slug);
                   return <Link
                     key={rp.slug}
                     href={`/project/${rp.slug}`}
-                    className="group relative p-5 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 overflow-hidden reveal"
+                    className={`group relative p-5 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300 overflow-hidden reveal reveal-up reveal-delay-${i + 1}`}
                     style={{ borderColor: "rgba(255, 255, 255, 0.08)" }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.borderColor = `color-mix(in srgb, ${relatedTheme.accent} 50%, rgba(255, 255, 255, 0.15))`;
@@ -1009,44 +1009,37 @@ export default function ProjectCaseStudy({
       </main>
 
       {/* ── BOTTOM CTA ── */}
-      <section className="case-study-cta relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pb-24 mt-16">
-        <div className="relative p-12 md:p-20 rounded-[2rem] border border-white/10 overflow-hidden text-center">
-          {/* Gradient background */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `
-                radial-gradient(ellipse 60% 80% at 20% 50%, ${accentColor}20 0%, transparent 60%),
-                radial-gradient(ellipse 60% 80% at 80% 50%, #7c3aed20 0%, transparent 60%),
-                linear-gradient(135deg, #030712 0%, #0d1224 100%)
-              `,
-            }}
-          />
-          <div className="absolute inset-0 border border-white/5 rounded-[2rem]" />
+      <section className="case-study-cta relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pb-24 mt-16 reveal reveal-up">
+        <div className="relative p-10 md:p-16 rounded-[2.5rem] border border-white/12 bg-[#070709] overflow-hidden text-center shadow-2xl">
+          {/* Subtle grid pattern background */}
+          <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
           <div className="relative z-10 space-y-6">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Start a Conversation</span>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white">
-              Let&apos;s build something<br />
-              <span style={{ color: accentColor }}>extraordinary.</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50">Start a Conversation</span>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter text-white">
+              Let&apos;s build something <span className="text-white underline decoration-white/30 underline-offset-8">extraordinary.</span>
             </h2>
-            <p className="text-white/50 text-lg max-w-xl mx-auto leading-relaxed">
+            <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
               Whether you need a product from scratch, a technical co-founder, or a senior engineer to level up your team.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+              <a
+                href="https://wa.me/2348106889242?text=Hi%20Samuel,%20I'd%20like%20to%20discuss%20a%20project."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-[#25D366] text-white font-black uppercase tracking-[0.18em] text-xs rounded-full hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+              >
+                💬 Chat on WhatsApp
+              </a>
               <button
                 onClick={() => setShowModal(true)}
-                className="px-10 py-4 text-white font-black uppercase tracking-[0.2em] text-xs rounded-full hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
-                style={{
-                  background: `linear-gradient(135deg, ${accentColor}, #7c3aed)`,
-                  boxShadow: `0 0 30px ${accentColor}40`,
-                }}
+                className="px-8 py-4 bg-white text-black font-black uppercase tracking-[0.18em] text-xs rounded-full hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-white/10"
               >
                 ⚡ Book a Call
               </button>
               <a
                 href="mailto:stanley.samuel.stanley@gmail.com"
-                className="px-10 py-4 bg-white/8 border border-white/15 text-white font-black uppercase tracking-[0.2em] text-xs rounded-full hover:scale-105 active:scale-95 transition-all hover:bg-white/12 flex items-center justify-center gap-2"
+                className="px-8 py-4 bg-white/5 border border-white/15 text-white font-black uppercase tracking-[0.18em] text-xs rounded-full hover:scale-105 active:scale-95 transition-all hover:bg-white/10 flex items-center justify-center gap-2"
               >
                 <Mail className="w-4 h-4" /> Email Me
               </a>

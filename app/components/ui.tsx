@@ -49,32 +49,50 @@ export function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in"
+        className="absolute inset-0 bg-black/85 backdrop-blur-xl animate-fade-in"
         onClick={onClose}
       />
       
       {/* Modal Content */}
       <div 
-        className="relative w-full max-w-xl animate-fade-in-up bg-[var(--surface)] border border-[var(--border)] rounded-[24px] backdrop-blur-xl"
+        className="relative w-full max-w-xl animate-fade-in-up bg-[#08080a] border border-white/15 rounded-[28px] backdrop-blur-2xl shadow-2xl overflow-hidden"
         style={{ 
           maxHeight: "90vh", 
           overflowY: "auto", 
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+          boxShadow: "0 30px 80px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)"
         }}
       >
         <div className="p-6 md:p-10">
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors text-xl p-2"
+            className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors text-xl p-2 rounded-full hover:bg-white/10"
           >
             ✕
           </button>
   
-          <div className="mb-8">
-            <SectionHeading>Schedule Interview</SectionHeading>
-            <p className="text-secondary text-sm leading-relaxed mt-2">
-              Fill out the form below to book a time or discuss your project. I usually respond within 24 hours.
+          <div className="mb-6">
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40 block mb-1">Direct Communication</span>
+            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">Start a Conversation</h2>
+            <p className="text-white/60 text-sm leading-relaxed mt-2">
+              Fill out the form below or message directly. All requests are routed straight to my WhatsApp (<span className="text-white font-bold">08106889242</span>).
             </p>
+          </div>
+
+          <div className="mb-6 pb-6 border-b border-white/10 flex flex-col sm:flex-row gap-3">
+            <a
+              href="https://wa.me/2348106889242?text=Hi%20Samuel,%20I'd%20like%20to%20discuss%20a%20project."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-3 px-4 bg-[#25D366] text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+            >
+              💬 Chat directly on WhatsApp
+            </a>
+            <a
+              href="mailto:stanley.samuel.stanley@gmail.com"
+              className="py-3 px-4 bg-white/5 border border-white/15 text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              ✉️ Send Email
+            </a>
           </div>
   
           <ContactForm onHideSuccess={onClose} />
