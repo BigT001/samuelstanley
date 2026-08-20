@@ -1,13 +1,13 @@
 ---
-    title: "Noise in the Headlines, Bugs in the Backlog"
-    date: "2026-08-13T10:59:15.980Z"
-    excerpt: "While foreign media obsesses over press secretaries resigning and secret flight detours, I'm stuck dealing with failed webhook retries and local bank API timeouts."
-    category: "Venture"
-    tags: ["Venture Capital", "Startups", "Investment"]
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1200&auto=format&fit=crop"
-    readTime: "4 min read"
-    sourceUrl: "https://news.google.com/home?hl=en-US&gl=US&ceid=US:en"
-    ---
+title: "Noise in the Headlines, Bugs in the Backlog"
+date: "2026-08-13T10:59:15.980Z"
+excerpt: "While foreign media obsesses over press secretaries resigning and secret flight detours, I'm stuck dealing with failed webhook retries and local bank API timeouts."
+category: "Venture"
+tags: ["Venture Capital", "Startups", "Investment"]
+image: "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1200&auto=format&fit=crop"
+readTime: "4 min read"
+sourceUrl: "https://news.google.com/home?hl=en-US&gl=US&ceid=US:en"
+---
 
     My generator died at 2:00 AM last night right in the middle of a staging deployment, and by the time I pulled up my newsfeed this morning, the internet was screaming about White House press secretary resignations and secret plane detours over Turkey. 
 
