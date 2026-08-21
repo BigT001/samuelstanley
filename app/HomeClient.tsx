@@ -29,7 +29,9 @@ import {
   Activity,
   HeartHandshake,
   DollarSign,
-  ArrowLeft
+  ArrowLeft,
+  Lightbulb,
+  Compass
 } from "lucide-react";
 import { projects, techStack, philosophies, testimonials } from "./components/data";
 import { ProfilePhoto, ContactModal, CVModal } from "./components/ui";
@@ -725,7 +727,7 @@ export default function HomeClient({ initialBlogs, initialInsights = [] }: { ini
       )}
 
       {/* LEFT SIDEBAR PANEL */}
-      <aside className={`fixed md:sticky top-0 left-0 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-md pt-3 pb-6 px-6 z-[60] flex flex-col justify-between overflow-y-auto transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+      <aside className={`fixed md:sticky top-0 left-0 h-screen w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-md pt-4 pb-6 px-6 z-[60] flex flex-col justify-between overflow-y-auto transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className="space-y-6">
           {/* Profile Card Summary */}
           <div className="flex flex-col items-center text-center space-y-4 pb-4 border-b border-[var(--border)]">
@@ -782,52 +784,55 @@ export default function HomeClient({ initialBlogs, initialInsights = [] }: { ini
           <nav className="space-y-1">
             <button 
               onClick={() => { changeTab("home"); setSelectedCategory(null); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "home" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all group ${activeTab === "home" && !selectedCategory ? "bg-[var(--coral)] text-white shadow-md shadow-coral/20" : "hover:bg-black/5 dark:hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-4 h-4 transition-transform group-hover:scale-110" />
               <span>Home</span>
             </button>
 
             <button 
               onClick={() => { changeTab("projects"); setSelectedCategory(null); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "projects" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all group ${activeTab === "projects" && !selectedCategory ? "bg-[var(--coral)] text-white shadow-md shadow-coral/20" : "hover:bg-black/5 dark:hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
             >
-              <Grid className="w-4 h-4" />
+              <Grid className="w-4 h-4 transition-transform group-hover:scale-110" />
               <span>Projects</span>
             </button>
             
             <button 
               onClick={() => { changeTab("feeds"); setSelectedCategory(null); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "feeds" && !selectedCategory ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all group ${activeTab === "feeds" && !selectedCategory ? "bg-[var(--coral)] text-white shadow-md shadow-coral/20" : "hover:bg-black/5 dark:hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-4 h-4 transition-transform group-hover:scale-110" />
               <span>Feeds</span>
             </button>
 
             <button 
               onClick={() => { changeTab("insight"); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "insight" ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all group ${activeTab === "insight" ? "bg-[var(--coral)] text-white shadow-md shadow-coral/20" : "hover:bg-black/5 dark:hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
             >
-              <Sparkles className="w-4 h-4 text-amber-400" />
+              <Lightbulb className={`w-4 h-4 transition-transform group-hover:scale-110 ${activeTab === "insight" ? "text-white" : "text-amber-400"}`} />
               <span>Founder's Insight</span>
             </button>
+
             <button 
               onClick={() => { changeTab("connect"); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === "connect" ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all group ${activeTab === "connect" ? "bg-[var(--coral)] text-white shadow-md shadow-coral/20" : "hover:bg-black/5 dark:hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
             >
-              <HeartHandshake className="w-4 h-4 text-cyan-400" />
+              <HeartHandshake className={`w-4 h-4 transition-transform group-hover:scale-110 ${activeTab === "connect" ? "text-white" : "text-cyan-400"}`} />
               <span>Connect</span>
             </button>
+
             <button 
               onClick={() => { changeTab("pricing"); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${(activeTab as string) === "pricing" ? "bg-[var(--coral)] text-white" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all group ${(activeTab as string) === "pricing" ? "bg-[var(--coral)] text-white shadow-md shadow-coral/20" : "hover:bg-black/5 dark:hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
             >
-              <DollarSign className="w-4 h-4 text-emerald-400" />
+              <DollarSign className={`w-4 h-4 transition-transform group-hover:scale-110 ${(activeTab as string) === "pricing" ? "text-white" : "text-emerald-400"}`} />
               <span>Pricing</span>
             </button>
+
             <button 
               onClick={() => { setShowHireModal(true); setSidebarOpen(false); }}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 hover:border-[var(--coral)]/40 active:scale-95 mt-2 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 hover:border-[var(--coral)]/40 active:scale-95 mt-3 cursor-pointer"
             >
               <Plus className="w-4 h-4 shrink-0 text-[var(--coral)]" />
               <span>Hire me</span>
