@@ -85,7 +85,7 @@ function githubToProject(g: any) {
   };
 }
 
-export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
+export default function HomeClient({ initialBlogs, initialInsights = [] }: { initialBlogs: any[]; initialInsights?: any[] }) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -1574,73 +1574,54 @@ export default function HomeClient({ initialBlogs }: { initialBlogs: any[] }) {
             </div>
           )}
 
-          {/* ACTIVE FOUNDER'S INSIGHT & ADVISOR STRATEGIC HUB */}
+          {/* ACTIVE FOUNDER'S INSIGHT PANEL (REAL AUTO-GENERATED INSIGHTS FEED) */}
           {activeTab === "insight" && (
-            <div className="max-w-4xl mx-auto px-5 w-full animate-in fade-in duration-300 space-y-8 py-6">
-              {/* Header Card */}
-              <div className="p-8 md:p-10 rounded-3xl border border-[var(--border)] bg-[var(--surface)] relative overflow-hidden text-center space-y-4 shadow-xl">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto shadow-inner">
-                  <Sparkles className="w-7 h-7 text-amber-400" />
+            <div className="max-w-4xl mx-auto px-5 w-full animate-in fade-in duration-300 space-y-6 py-4">
+              <div className="flex items-center justify-between border-b border-[var(--border)] pb-4">
+                <div>
+                  <h3 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">Founder's Insight</h3>
+                  <p className="text-xs text-[var(--text-secondary)]">Strategic breakdowns, market teardowns & builder intelligence</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[var(--coral)] font-bold">Strategic Intelligence Engine</span>
-                  <h3 className="text-2xl md:text-4xl font-black tracking-tight text-[var(--text-primary)]">Founder's Insight & Advisor</h3>
-                </div>
-                <p className="text-xs md:text-sm text-[var(--text-secondary)] leading-relaxed max-w-xl mx-auto">
-                  First-principles strategic advice, market teardowns, and architectural directives for founders, operators, and engineering leaders.
-                </p>
-                <div className="pt-2 flex flex-wrap gap-3 justify-center">
-                  <Link
-                    href="/agent"
-                    className="px-6 py-3 rounded-full text-xs font-black uppercase tracking-wider bg-[var(--coral)] text-white hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-coral/20 flex items-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" /> Run AI Agent Dispatch
-                  </Link>
-                  <button
-                    onClick={() => changeTab("feeds")}
-                    className="px-6 py-3 rounded-full text-xs font-black uppercase tracking-wider bg-white/5 border border-[var(--border)] text-[var(--text-primary)] hover:bg-white/10 active:scale-95 transition-all"
-                  >
-                    View All Strategic Posts ({initialBlogs.length})
-                  </button>
-                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--coral)] px-3 py-1 rounded-full bg-white/5 border border-[var(--border)]">
+                  {initialInsights.length} Articles
+                </span>
               </div>
 
-              {/* Latest Strategic Teardowns & Directives */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-2">
-                  <h4 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Latest Strategic Teardowns</h4>
-                  <span className="text-[10px] font-mono font-bold text-[var(--text-secondary)]">Automated Daily Feed</span>
+              {initialInsights.length === 0 ? (
+                <div className="p-12 text-center border border-[var(--border)] rounded-2xl bg-[var(--surface)] space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)] font-bold">No Founder's Insight posts found yet.</p>
+                  <p className="text-xs text-[var(--text-secondary)]">New strategic breakdowns are auto-generated daily by the agent.</p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredBlogs.slice(0, 4).map((post) => (
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {initialInsights.map((insight) => (
                     <Link
-                      key={post.slug}
-                      href={`/blog/${post.slug}`}
-                      className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--coral)]/50 transition-all duration-300 space-y-3 group flex flex-col justify-between"
+                      key={insight.slug}
+                      href={`/insight/${insight.slug}`}
+                      className="p-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--coral)]/60 transition-all duration-300 space-y-4 group flex flex-col justify-between shadow-sm hover:shadow-xl"
                     >
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="px-2.5 py-1 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-white/5 border border-[var(--border)] text-[var(--coral)]">
-                            {post.category || "Strategy"}
+                          <span className="px-3 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                            {insight.category || "Strategy"}
                           </span>
-                          <span className="text-[10px] text-[var(--text-secondary)] font-mono">{post.readTime || "4 min read"}</span>
+                          <span className="text-[10px] text-[var(--text-secondary)] font-mono">{insight.readTime || "5 min read"}</span>
                         </div>
-                        <h5 className="font-extrabold text-sm md:text-base text-[var(--text-primary)] group-hover:text-[var(--coral)] transition-colors leading-snug line-clamp-2">
-                          {post.title}
-                        </h5>
-                        <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-2">
-                          {post.excerpt}
+                        <h4 className="font-extrabold text-base md:text-lg text-[var(--text-primary)] group-hover:text-[var(--coral)] transition-colors leading-snug">
+                          {insight.title}
+                        </h4>
+                        <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-3">
+                          {insight.excerpt}
                         </p>
                       </div>
-                      <div className="pt-3 border-t border-[var(--border)]/50 flex items-center justify-between text-[10px] font-bold text-[var(--text-secondary)]">
-                        <span>Read Strategic Breakdown →</span>
-                        <span className="font-mono">{new Date(post.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                      <div className="pt-4 border-t border-[var(--border)]/50 flex items-center justify-between text-[11px] font-bold text-[var(--text-secondary)]">
+                        <span className="group-hover:text-[var(--text-primary)] transition-colors">Read Strategic Breakdown →</span>
+                        <span className="font-mono">{new Date(insight.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                       </div>
                     </Link>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
           )}
 
